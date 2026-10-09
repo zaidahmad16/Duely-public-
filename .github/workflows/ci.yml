@@ -1,0 +1,23 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npx electron-vite build
+      - name: Smoke (the app opens a window)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npx electron . --smoke --no-sandbox
+      - name: Smoke (the app opens a window)
+        if: runner.os != 'Linux'
+        run: npx electron . --smoke

@@ -1,0 +1,7 @@
+node_modules/
+out/
+dist/
+*.log
+.DS_Store
+# local test secrets / recorded data with personal info
+test/.local/

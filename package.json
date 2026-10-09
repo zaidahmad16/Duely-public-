@@ -1,0 +1,52 @@
+{
+  "name": "duely",
+  "productName": "Duely",
+  "version": "0.1.0",
+  "description": "Your course assistant: Brightspace deadlines, tests and classes in Google Calendar, with an AI that answers what's coming up.",
+  "license": "MIT",
+  "author": "Zaid Ahmad",
+  "main": "out/main/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "start": "electron-vite preview",
+    "test": "node --experimental-strip-types --no-warnings --test \"test/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit",
+    "smoke": "electron-vite build && electron . --smoke",
+    "dist": "electron-vite build && electron-builder"
+  },
+  "build": {
+    "appId": "app.duely.desktop",
+    "productName": "Duely",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "out/**",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.education"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Education"
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "electron": "^44.7.0",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^5.0.0",
+    "typescript": "^7.0.2",
+    "vite": "^7.3.7"
+  }
+}
