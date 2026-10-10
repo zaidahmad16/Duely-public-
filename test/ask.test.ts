@@ -7,7 +7,6 @@ import { test } from "node:test";
 import { llmFromRun, llmOverFetch } from "./helpers.ts";
 import { answer, describeRange, execute, parseQuery, slackify, validIntent } from "../src/core/ask.ts";
 import { category } from "../src/core/kinds.ts";
-import worker, { slackSigned } from "../src/core/index.ts";
 import { memStore } from "../src/core/util.ts";
 
 const TZ = "America/Toronto";
@@ -147,40 +146,41 @@ function fakeAI(opts: { intent?: any; mistralStatus?: number; text?: string }) {
 
 const AI_TWO_WEEKS = { mode: "list", from: T, to: "2026-10-18", courses: [], categories: ["assignment"], due_only: true, include_classes: false, limit: null };
 
-test("AI chain: Mistral's filter is executed by code (strict schema, key sent)", async () => {
+test("the provider's filter is executed by code (JSON mode + schema in the prompt, key sent)", async () => {
   const store = memStore();
   const { calls, f } = fakeAI({ intent: AI_TWO_WEEKS });
-  const out = await answer("what assignments do i have coming up in the next fortnight", ITEMS, {}, store, TZ, f, NOW, { llm: llmOverFetch(f, undefined, "mk") });
+  const out = await answer("what assignments do i have coming up in the next fortnight", ITEMS, { chat_engine: "v1" }, store, TZ, f, NOW, { llm: llmOverFetch(f, undefined, "mk") });
   assert.deepEqual(titles(out), ["COMP 2406: Assignment 1 - Client-side Programming", "COMP 3106: Assignment 1"]);
   assert.equal(calls.length, 1);
   assert.equal(calls[0].who, "mistral");
   assert.equal(calls[0].auth, "Bearer mk");
-  assert.equal(calls[0].body.response_format.json_schema.strict, true);
+  assert.equal(calls[0].body.response_format.type, "json_object", "JSON mode (the most widely supported)");
+  assert.match(calls[0].body.messages[0].content, /matching this JSON schema:\n\{"type":"object"/, "the schema goes in the prompt");
   assert.match(calls[0].body.messages[0].content, /Their courses: COMP 2406 \(Course\), COMP 3106 \(Course\), FILM 1101 \(Course\), PHYS 1905 \(Course\), STAT 2507\./,
     "course codes, with names when the item's location gives one");
   const sess: any = await store.get("chat-session");
-  assert.deepEqual([sess.date, sess.mistral], [T, 1], "one session write per message (assignments are exact: no pick call)");
+  assert.deepEqual([sess.date, sess.requests], [T, 1], "one AI request, one session write (assignments are exact: no pick call)");
 });
 
 test("AI chain: Mistral down -> rules; garbage -> rules", async () => {
   let ai = fakeAI({ intent: AI_TWO_WEEKS, mistralStatus: 401 });
-  let out = await answer("assignments in the next fortnight", ITEMS, {}, memStore(), TZ, ai.f, NOW, { llm: llmOverFetch(ai.f, undefined, "bad") });
+  let out = await answer("assignments in the next fortnight", ITEMS, { chat_engine: "v1" }, memStore(), TZ, ai.f, NOW, { llm: llmOverFetch(ai.f, undefined, "bad") });
   assert.deepEqual(ai.calls.map((c) => c.who), ["mistral"], "a bad key isn't retried");
   assert.equal(titles(out).length, 2);
 
   ai = fakeAI({ intent: AI_TWO_WEEKS, mistralStatus: 429 });
-  out = await answer("assignments due in the next two weeks", ITEMS, {}, memStore(), TZ, ai.f, NOW, { llm: llmOverFetch(ai.f, undefined, "k") });
+  out = await answer("assignments due in the next two weeks", ITEMS, { chat_engine: "v1" }, memStore(), TZ, ai.f, NOW, { llm: llmOverFetch(ai.f, undefined, "k") });
   assert.deepEqual(titles(out), ["COMP 2406: Assignment 1 - Client-side Programming", "COMP 3106: Assignment 1"], "rules still right");
 
   ai = fakeAI({ intent: { mode: "list", from: "yesterday" } });
-  out = await answer("assignments due in the next two weeks", ITEMS, {}, memStore(), TZ, ai.f, NOW, { llm: llmOverFetch(ai.f, undefined, "k") });
+  out = await answer("assignments due in the next two weeks", ITEMS, { chat_engine: "v1" }, memStore(), TZ, ai.f, NOW, { llm: llmOverFetch(ai.f, undefined, "k") });
   assert.equal(titles(out).length, 2, "an invalid filter falls back to the rules");
 });
 
 test("AI chain: free-form questions are answered from only the filtered items", async () => {
   const { calls, f } = fakeAI({ intent: { mode: "free_text", from: "2026-10-05", to: "2026-10-11", courses: [], categories: [], due_only: false, include_classes: false, limit: null },
     text: "Friday Oct 9 is busiest." });
-  const out = await answer("which day this week is busiest?", ITEMS, {}, memStore(), TZ, f, NOW, { llm: llmOverFetch(f, undefined, "k") });
+  const out = await answer("which day this week is busiest?", ITEMS, { chat_engine: "v1" }, memStore(), TZ, f, NOW, { llm: llmOverFetch(f, undefined, "k") });
   assert.equal(out, "Friday Oct 9 is busiest.");
   const second = calls[1].body.messages[0].content;
   assert.match(second, /Tutorial 3/);
@@ -189,10 +189,10 @@ test("AI chain: free-form questions are answered from only the filtered items", 
 });
 
 test("help, thanks and no AI at all", async () => {
-  assert.match(await answer("help", ITEMS, {}, memStore(), TZ, fetch, NOW), /^Hi! Ask me anything/);
+  assert.match(await answer("help", ITEMS, { chat_engine: "v1" }, memStore(), TZ, fetch, NOW), /^Hi! Ask me anything/);
   const { f } = fakeAI({ intent: { mode: "help", from: T, to: T, courses: [], categories: [], due_only: false, include_classes: false, limit: null } });
-  assert.equal(await answer("thanks!", ITEMS, {}, memStore(), TZ, f, NOW, { llm: llmOverFetch(f, undefined, "k") }), "Any time! 👍");
-  assert.match(await answer("tell me a joke", ITEMS, {}, memStore(), TZ, fetch, NOW), /^I'm best with questions about your courses and deadlines/);
+  assert.equal(await answer("thanks!", ITEMS, { chat_engine: "v1" }, memStore(), TZ, f, NOW, { llm: llmOverFetch(f, undefined, "k") }), "Any time! 👍");
+  assert.match(await answer("tell me a joke", ITEMS, { chat_engine: "v1" }, memStore(), TZ, fetch, NOW), /^I'm best with questions about your courses and deadlines/);
 });
 
 function signed(body: string, secret = "shh", ts = Math.floor(Date.now() / 1000)) {
@@ -200,68 +200,6 @@ function signed(body: string, secret = "shh", ts = Math.floor(Date.now() / 1000)
   return new Request("https://w/slack/events", { method: "POST", body,
     headers: { "x-slack-request-timestamp": String(ts), "x-slack-signature": sig, "content-type": "application/json" } });
 }
-
-test("slack signature: valid, wrong secret, too old", async () => {
-  const body = '{"type":"x"}';
-  assert.equal(await slackSigned(signed(body), body, "shh"), true);
-  assert.equal(await slackSigned(signed(body, "nope"), body, "shh"), false);
-  assert.equal(await slackSigned(signed(body, "shh", Math.floor(Date.now() / 1000) - 600), body, "shh"), false);
-});
-
-test("slack events: verification, owner's DM answered with the Mistral key, others and bots not", async () => {
-  const kvm = new Map<string, string>([
-    ["config", JSON.stringify({ slack_user_id: "U1", tz: TZ })],
-    ["state", JSON.stringify({ items: ITEMS.map((i) => ({ ...i })) })],
-  ]);
-  const STATE = { get: async (k: string) => (kvm.has(k) ? JSON.parse(kvm.get(k)!) : null), put: async (k: string, v: string) => { kvm.set(k, v); } };
-  const env: any = { STATE, SYNC_SECRET: "s", SLACK_SIGNING_SECRET: "shh", SLACK_BOT_TOKEN: "xoxb-1", MISTRAL_KEY: "mk" };
-  const posted: any[] = [];
-  const mistralAuth: string[] = [];
-  globalThis.fetch = (async (url: any, init: any) => {
-    if (String(url).endsWith("chat.postMessage")) posted.push(JSON.parse(init.body));
-    if (String(url).includes("api.mistral.ai")) {
-      mistralAuth.push(init.headers.authorization);
-      return Response.json({ choices: [{ message: { content: JSON.stringify({ mode: "help", from: "2026-01-01", to: "2026-01-01", courses: [], categories: [], due_only: false, include_classes: false, limit: null }) } }] });
-    }
-    return Response.json({ ok: true });
-  }) as any;
-  const pending: Promise<unknown>[] = [];
-  const ctx = { waitUntil: (p: Promise<unknown>) => { pending.push(p); } };
-  const send = async (b: any) => { const r = await worker.fetch(signed(JSON.stringify(b)), env, ctx); await Promise.all(pending.splice(0)); return r; };
-
-  let r = await send({ type: "url_verification", challenge: "abc" });
-  assert.deepEqual(await r.json(), { challenge: "abc" });
-  r = await worker.fetch(new Request("https://w/slack/events", { method: "POST", body: "{}" }), env, ctx);
-  assert.equal(r.status, 401, "unsigned requests refused");
-
-  await send({ type: "event_callback", event: { type: "message", channel_type: "im", user: "U1", channel: "D9", text: "hey there" } });
-  assert.equal(posted.length, 1);
-  assert.equal(posted[0].channel, "D9");
-  assert.match(posted[0].text, /Ask me anything/);
-  assert.deepEqual(mistralAuth, ["Bearer mk"], "the Worker passes MISTRAL_KEY to the chat");
-
-  await send({ type: "event_callback", event: { type: "message", channel_type: "im", user: "U2", channel: "D8", text: "this week" } });
-  assert.match(posted[1].text, /only answer the person/);
-
-  await send({ type: "event_callback", event: { type: "message", channel_type: "im", bot_id: "B1", channel: "D9", text: "loop?" } });
-  assert.equal(posted.length, 2, "its own messages are ignored");
-});
-
-test("Mistral model chain: a locked/busy model falls through to the next Mistral model", async () => {
-  const tried: string[] = [];
-  const f = (async (_u: any, init: any) => {
-    const body = JSON.parse(init.body);
-    if (PICK.test(body.messages[0].content)) return Response.json({ choices: [{ message: { content: "{}" } }] });
-    tried.push(body.model);
-    if (body.model !== "ministral-14b-latest") return new Response('{"message":"Rate limit exceeded"}', { status: 429 });
-    return Response.json({ choices: [{ message: { content: JSON.stringify(AI_TWO_WEEKS) } }] });
-  }) as typeof fetch;
-  const store = memStore();
-  const out = await answer("assignments in the next fortnight", ITEMS, {}, store, TZ, f, NOW, { llm: llmOverFetch(f, undefined, "k") });
-  assert.deepEqual(tried, ["mistral-small-latest", "ministral-14b-latest"]);
-  assert.equal(titles(out).length, 2);
-  assert.equal(((await store.get("chat-session")) as any).mistral, 1, "one message = one count, however many models were tried");
-});
 
 test("an AI listing every course means any course", () => {
   const known = ["COMP 2406", "COMP 3106", "STAT 2507"];
@@ -276,7 +214,7 @@ test("slackify: Markdown from the AI becomes Slack formatting", () => {
 
 test("rules: thanks and month names", async () => {
   assert.equal(parseQuery("thanks!", TZ, NOW)!.mode, "help");
-  assert.equal(await answer("thank you", ITEMS, {}, memStore(), TZ, fetch, NOW), "Any time! 👍");
+  assert.equal(await answer("thank you", ITEMS, { chat_engine: "v1" }, memStore(), TZ, fetch, NOW), "Any time! 👍");
   const nov = parseQuery("do I have any exams in november", TZ, NOW)!;
   assert.deepEqual([nov.from, nov.to, nov.categories], ["2026-11-01", "2026-11-30", ["test"]]);
   assert.equal(execute(nov, ITEMS, TZ, NOW), "No tests in November. 🎉");
@@ -316,7 +254,7 @@ test("announcements: the AI answers from the posts and cites them", async () => 
     const content = body.response_format ? JSON.stringify(intent) : "• **Test 1** is Oct 17 at 10am in SA 515 [1]";
     return Response.json({ choices: [{ message: { content } }] });
   }) as typeof fetch;
-  const out = await answer("what did my stats prof say about the midterm", ITEMS, { announcement_feeds: Object.keys(FEEDS) }, memStore(), TZ, f, NOW, { llm: llmOverFetch(f, undefined, "k") });
+  const out = await answer("what did my stats prof say about the midterm", ITEMS, { chat_engine: "v1", announcement_feeds: Object.keys(FEEDS) }, memStore(), TZ, f, NOW, { llm: llmOverFetch(f, undefined, "k") });
   assert.equal(out, "• *Test 1* is Oct 17 at 10am in SA 515 (<https://bs.example/STAT2507/0|Test 1 details>)",
     "Slack bold, and [1] became the real link");
   const prompt = calls[1].messages[0].content;

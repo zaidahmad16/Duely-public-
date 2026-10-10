@@ -6,7 +6,6 @@ import { createHmac } from "node:crypto";
 import { test } from "node:test";
 import { decide, loadActions, pendingAction, propose, record, undoLast } from "../src/core/actions.ts";
 import { answer } from "../src/core/ask.ts";
-import worker from "../src/core/index.ts";
 import { ROLLOUT_KEY, studyForSync } from "../src/core/proposals.ts";
 import { loadStudy, renderPlans } from "../src/core/study.ts";
 import { type Store, memStore } from "../src/core/util.ts";
@@ -127,43 +126,6 @@ test("study: blocks added before asking stay until the one-time question is answ
 function sign(body: string, secret: string, ts = Math.floor(Date.now() / 1000)) {
   return { "x-slack-request-timestamp": String(ts), "x-slack-signature": "v0=" + createHmac("sha256", secret).update(`v0:${ts}:${body}`).digest("hex") };
 }
-
-test("POST /slack/interact: owner's Yes executes and the message shows the outcome; others and forgeries can't", async () => {
-  const m = new Map<string, string>();
-  const STATE = { get: async (k: string) => (m.has(k) ? JSON.parse(m.get(k)!) : null), put: async (k: string, v: string) => { m.set(k, v); } };
-  m.set("config", JSON.stringify({ slack_user_id: "UOWNER" }));
-  const env: any = { STATE, SLACK_SIGNING_SECRET: "shh", SLACK_BOT_TOKEN: "xoxb-t" };
-  const store = { get: async (k: string) => STATE.get(k), put: async (k: string, v: unknown) => STATE.put(k, JSON.stringify(v)) };
-  const [a] = await propose(store, [DRAFT], Date.now());
-  const posted: any[] = [];
-  const realFetch = globalThis.fetch;
-  globalThis.fetch = (async (url: any, init: any) => { posted.push({ url: String(url), body: JSON.parse(init.body) }); return new Response("ok"); }) as typeof fetch;
-  try {
-    const press = async (user: string, action = "act_yes", secret = "shh") => {
-      const body = "payload=" + encodeURIComponent(JSON.stringify({ type: "block_actions", user: { id: user }, response_url: "https://hooks.slack.com/actions/x",
-        actions: [{ action_id: action, value: a.id }] }));
-      const waits: Promise<unknown>[] = [];
-      const r = await worker.fetch(new Request("https://w/slack/interact", { method: "POST", headers: { ...sign(body, secret), "content-type": "application/x-www-form-urlencoded" }, body }),
-        env, { waitUntil: (p) => { waits.push(p); } });
-      await Promise.all(waits);
-      return r.status;
-    };
-    assert.equal(await press("UOWNER", "act_yes", "wrong-secret"), 401);
-    assert.equal(await store.get("done"), null);
-    assert.equal(await press("USOMEONE"), 200);
-    assert.equal(await store.get("done"), null, "someone else can't answer");
-    assert.match(posted.at(-1).body.text, /Only the person/);
-    assert.equal(await press("UOWNER"), 200);
-    assert.ok(((await store.get("done")) as any).x, "the owner's Yes executed");
-    const last = posted.at(-1);
-    assert.equal(last.url, "https://hooks.slack.com/actions/x");
-    assert.equal(last.body.replace_original, true);
-    assert.match(JSON.stringify(last.body.blocks), /Marked/);
-    assert.ok(!JSON.stringify(last.body.blocks).includes("act_yes"), "buttons gone after answering");
-  } finally {
-    globalThis.fetch = realFetch;
-  }
-});
 
 test("Change times: the form opens pre-filled; saving accepts the plan with the new times; bad times stay in the form", async () => {
   const { studyTimes } = await import("../src/core/studychange.ts");

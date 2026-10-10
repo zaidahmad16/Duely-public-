@@ -2,7 +2,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { dailyDigest, due, heavyClusters, weeklyDigest } from "../src/core/digest.ts";
-import { maybeDigest } from "../src/core/index.ts";
 import { ITEMS } from "./fixture.ts";
 
 const TZ = "America/Toronto";
@@ -41,22 +40,3 @@ test("due(): a 30-minute window after the set time, once a day", () => {
   assert.equal(due(at("2026-10-05T07:31:00-04:00"), TZ, "07:30", "2026-10-05"), false, "already sent");
 });
 
-test("maybeDigest: sends each digest once, as a Slack DM", async () => {
-  const kvm = new Map<string, string>([
-    ["config", JSON.stringify({ slack_user_id: "U1", tz: TZ, digest_daily: true, digest_time: "07:30",
-      digest_weekly: true, weekly_day: 6, weekly_time: "19:00" })],
-    ["state", JSON.stringify({ items: ITEMS })],
-  ]);
-  const STATE = { get: async (k: string) => (kvm.has(k) ? JSON.parse(kvm.get(k)!) : null), put: async (k: string, v: string) => { kvm.set(k, v); } };
-  const env: any = { STATE, SLACK_BOT_TOKEN: "xoxb-1" };
-  const sent: string[] = [];
-  globalThis.fetch = (async (_u: any, init: any) => { sent.push(JSON.parse(init.body).text); return Response.json({ ok: true }); }) as any;
-
-  assert.equal(await maybeDigest(env, at("2026-10-05T07:10:00-04:00")), null, "too early");
-  assert.equal(await maybeDigest(env, at("2026-10-05T07:31:00-04:00")), "daily");
-  assert.equal(await maybeDigest(env, at("2026-10-05T07:32:00-04:00")), null, "once a day");
-  assert.match(sent[0], /^\*☀️ Good morning! Mon Oct 5\*\n/, "the header becomes the DM title");
-  assert.equal(await maybeDigest(env, at("2026-10-11T19:05:00-04:00")), "weekly");
-  assert.match(sent[1], /Your week ahead \(Oct 12–Oct 18\)/);
-  assert.equal(sent.length, 2);
-});

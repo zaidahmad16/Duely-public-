@@ -87,57 +87,28 @@ function fakeWorkers(pick: (prompt: string) => any, text = "ok") {
 }
 const base = { mode: "list", from: T, to: "2026-10-18", courses: [], categories: [], due_only: true, include_classes: false, limit: null, target: "", topic: "" };
 
-test("Workers AI goes first; over the daily neuron budget it moves on to Mistral", async () => {
-  const w = fakeWorkers(() => ({ ...base, categories: ["assignment"] }));
-  const store = memStore();
-  let mistral = 0;
-  const f = (async (_u: any, init: any) => {
-    if (/Pick exactly the items/.test(JSON.parse(init.body).messages[0].content)) return Response.json({ choices: [{ message: { content: "{}" } }] });
-    mistral++; return Response.json({ choices: [{ message: { content: JSON.stringify({ ...base, categories: ["assignment"] }) } }] });
-  }) as typeof fetch;
-  const out = await answer("assignments due", ITEMS, { chat_neuron_daily_limit: 150 }, store, TZ, f, NOW, { workersAI: w.ai, mistralKey: "k" });
-  assert.match(out, /2 assignments due/);
-  assert.equal(w.prompts.length, 1);
-  assert.equal(mistral, 0);
-  assert.equal(((await store.get("chat-session")) as any).neurons, 100);
-  await answer("assignments due", ITEMS, { chat_neuron_daily_limit: 150 }, store, TZ, f, NOW, { workersAI: w.ai, mistralKey: "k" });
-  await answer("assignments due", ITEMS, { chat_neuron_daily_limit: 150 }, store, TZ, f, NOW, { workersAI: w.ai, mistralKey: "k" });
-  assert.equal(w.prompts.length, 2, "third message: budget used, Workers AI skipped");
-  assert.equal(mistral, 1);
-});
-
-test("Workers AI failing falls through to the next AI", async () => {
-  const ai = { run: async () => { throw new Error("4006: daily free allocation used"); } };
-  let mistral = 0;
-  const f = (async (_u: any, init: any) => {
-    if (/Pick exactly the items/.test(JSON.parse(init.body).messages[0].content)) return Response.json({ choices: [{ message: { content: "{}" } }] });
-    mistral++; return Response.json({ choices: [{ message: { content: JSON.stringify({ ...base, categories: ["assignment"] }) } }] }); }) as typeof fetch;
-  assert.match(await answer("assignments due", ITEMS, {}, memStore(), TZ, f, NOW, { workersAI: ai, mistralKey: "k" }), /2 assignments due/);
-  assert.equal(mistral, 1);
-});
-
 test("follow-ups: the AI sees the last question and its filter; the rules keep the filter too", async () => {
   const store = memStore();
   const w = fakeWorkers((p) => (p.includes("Earlier in this chat") ? { ...base, categories: ["assignment"], from: "2026-10-12", to: "2026-10-18" } : { ...base, categories: ["assignment"] }));
-  await answer("assignments due", ITEMS, {}, store, TZ, fetch, NOW, { llm: llmFromRun((m: string, b: any) => w.ai.run(m, b)) });
-  await answer("what about next week", ITEMS, {}, store, TZ, fetch, NOW + 60e3, { llm: llmFromRun((m: string, b: any) => w.ai.run(m, b)) });
+  await answer("assignments due", ITEMS, { chat_engine: "v1" }, store, TZ, fetch, NOW, { llm: llmFromRun((m: string, b: any) => w.ai.run(m, b)) });
+  await answer("what about next week", ITEMS, { chat_engine: "v1" }, store, TZ, fetch, NOW + 60e3, { llm: llmFromRun((m: string, b: any) => w.ai.run(m, b)) });
   assert.match(w.prompts[1], /Earlier in this chat[^]*Q: assignments due\nfilter: \{"mode":"list"[^]*"categories":\["assignment"\]/);
 
   // no AI at all: "and for 3106?" keeps "assignments due" and changes the course
   const s2 = memStore();
-  await answer("assignments due in the next 2 weeks", ITEMS, {}, s2, TZ, fetch, NOW);
-  const out = await answer("and for 3106?", ITEMS, {}, s2, TZ, fetch, NOW + 60e3);
+  await answer("assignments due in the next 2 weeks", ITEMS, { chat_engine: "v1" }, s2, TZ, fetch, NOW);
+  const out = await answer("and for 3106?", ITEMS, { chat_engine: "v1" }, s2, TZ, fetch, NOW + 60e3);
   assert.match(out, /^\*1 COMP 3106 assignment due/);
   // stale after 30 minutes: not a follow-up any more
   const s3 = memStore();
-  await answer("assignments due in the next 2 weeks", ITEMS, {}, s3, TZ, fetch, NOW);
-  assert.doesNotMatch(await answer("and for 3106?", ITEMS, {}, s3, TZ, fetch, NOW + 40 * 60e3), /assignment due/);
+  await answer("assignments due in the next 2 weeks", ITEMS, { chat_engine: "v1" }, s3, TZ, fetch, NOW);
+  assert.doesNotMatch(await answer("and for 3106?", ITEMS, { chat_engine: "v1" }, s3, TZ, fetch, NOW + 40 * 60e3), /assignment due/);
 });
 
 test("'done the first one' after a list", async () => {
   const store = memStore();
-  await answer("assignments due in the next 2 weeks", ITEMS, {}, store, TZ, fetch, NOW);
-  const out = await answer("done the first one", ITEMS, {}, store, TZ, fetch, NOW + 60e3);
+  await answer("assignments due in the next 2 weeks", ITEMS, { chat_engine: "v1" }, store, TZ, fetch, NOW);
+  const out = await answer("done the first one", ITEMS, { chat_engine: "v1" }, store, TZ, fetch, NOW + 60e3);
   assert.match(out, /^✅ Marked \*COMP 2406: Assignment 1 - Client-side Programming\* done/);
 });
 
@@ -150,7 +121,7 @@ test("free-form: an answer with invented dates is retried, then replaced by the 
     n++;
     return { response: "• Your big exam is on *Nov 30*", usage: { neurons: 1 } };
   } };
-  const out = await answer("am i cooked", ITEMS, {}, memStore(), TZ, fetch, NOW, { llm: llmFromRun((m: string, b: any) => ai.run(m, b)) });
+  const out = await answer("am i cooked", ITEMS, { chat_engine: "v1" }, memStore(), TZ, fetch, NOW, { llm: llmFromRun((m: string, b: any) => ai.run(m, b)) });
   assert.equal(n, 2, "asked twice");
   assert.doesNotMatch(out, /Nov 30/);
   assert.match(out, /Assignment 1/, "the real list instead");
@@ -161,7 +132,7 @@ test("free-form: 'tonight' about tomorrow's deadline is corrected", async () => 
   const ai = { run: async (_m: string, input: any) => input.response_format
     ? { response: free, usage: { neurons: 1 } }
     : { response: "• Knock out the PHYS 1905 Quiz - Sports Module tonight, it's due tonight", usage: { neurons: 1 } } };
-  const out = await answer("what should i do", ITEMS, {}, memStore(), TZ, fetch, NOW, { llm: llmFromRun((m: string, b: any) => ai.run(m, b)) });
+  const out = await answer("what should i do", ITEMS, { chat_engine: "v1" }, memStore(), TZ, fetch, NOW, { llm: llmFromRun((m: string, b: any) => ai.run(m, b)) });
   assert.match(out, /due tomorrow night/);
 });
 
@@ -169,18 +140,18 @@ test("never crashes: a broken store or AI still gets a reply, and every failure 
   const bad: any = { get: async (k: string) => { if (k === "done") throw new Error("KV down"); return null; }, put: async () => {} };
   const alerts: string[] = [];
   const opts = { onFailure: async (m: string) => { alerts.push(m); } };
-  const out = await answer("assignments due in the next 2 weeks", ITEMS, {}, bad, TZ, fetch, NOW, opts);
+  const out = await answer("assignments due in the next 2 weeks", ITEMS, { chat_engine: "v1" }, bad, TZ, fetch, NOW, opts);
   assert.match(out, /^I hit a snag answering that 😕 Here's my best guess:\n\*2 assignments due/);
   // every failure is passed on (the Worker's reporter deduplicates)
   const kv = new Map<string, any>();
   const flaky: any = { get: async (k: string) => { if (k === "done") throw new Error("KV down"); return kv.get(k) ?? null; }, put: async (k: string, v: any) => { kv.set(k, v); } };
-  for (let i = 0; i < 4; i++) await answer("hello there friend", ITEMS, {}, flaky, TZ, fetch, NOW + i * 1000, opts);
+  for (let i = 0; i < 4; i++) await answer("hello there friend", ITEMS, { chat_engine: "v1" }, flaky, TZ, fetch, NOW + i * 1000, opts);
   assert.equal(alerts.length, 5);
   assert.match(alerts[4], /\(4 today\): “hello there friend”\. Error: KV down/);
 });
 
 test("nothing found -> a wider reading, saying what changed", async () => {
-  const out = await answer("tests this week", ITEMS, {}, memStore(), TZ, fetch, NOW);
+  const out = await answer("tests this week", ITEMS, { chat_engine: "v1" }, memStore(), TZ, fetch, NOW);
   assert.match(out, /^No tests this week\. The next ones after that:/);
   assert.match(out, /Test 1/);
 });
@@ -195,7 +166,7 @@ test("the AI picks which real items answer the question; code prints exactly tho
     const ids = [...p.matchAll(/\[(\d+)\][^\n]*\| Lecture \|/g)].map((m) => Number(m[1]));
     return { response: { ids: [...ids, 99], phrase: "lectures **tomorrow**" }, usage: { neurons: 1 } };
   } };
-  const out = await answer("what lectures do i have tomorrow", ITEMS, {}, memStore(), TZ, fetch, NOW, { llm: llmFromRun((m: string, b: any) => ai.run(m, b)) });
+  const out = await answer("what lectures do i have tomorrow", ITEMS, { chat_engine: "v1" }, memStore(), TZ, fetch, NOW, { llm: llmFromRun((m: string, b: any) => ai.run(m, b)) });
   assert.match(pool, /kind: class[^]*kind: quiz \(due\)/, "the AI sees every kind in the window, classes and work");
   assert.match(out, /^\*\d+ lectures tomorrow\*/, "its phrase, cleaned of formatting");
   assert.match(out, /STAT 2507: Lecture/);
@@ -203,11 +174,11 @@ test("the AI picks which real items answer the question; code prints exactly tho
 
   const none = { run: async (_m: string, input: any) => /Pick exactly/.test(input.messages[0].content)
     ? { response: { ids: [], phrase: "labs tomorrow" }, usage: { neurons: 1 } } : { response: listFilter, usage: { neurons: 1 } } };
-  assert.equal(await answer("any labs tomorrow", ITEMS, {}, memStore(), TZ, fetch, NOW, { llm: llmFromRun((m: string, b: any) => none.run(m, b)) }), "No labs tomorrow. 🎉");
+  assert.equal(await answer("any labs tomorrow", ITEMS, { chat_engine: "v1" }, memStore(), TZ, fetch, NOW, { llm: llmFromRun((m: string, b: any) => none.run(m, b)) }), "No labs tomorrow. 🎉");
 
   const junk = { run: async (_m: string, input: any) => /Pick exactly/.test(input.messages[0].content)
     ? { response: { ids: [500, 600], phrase: "x" }, usage: { neurons: 1 } } : { response: listFilter, usage: { neurons: 1 } } };
-  assert.match(await answer("what's on tomorrow", ITEMS, {}, memStore(), TZ, fetch, NOW, { llm: llmFromRun((m: string, b: any) => junk.run(m, b)) }), /Sports Module/,
+  assert.match(await answer("what's on tomorrow", ITEMS, { chat_engine: "v1" }, memStore(), TZ, fetch, NOW, { llm: llmFromRun((m: string, b: any) => junk.run(m, b)) }), /Sports Module/,
     "only impossible numbers: ignored, the filter's list stands");
 });
 
@@ -218,9 +189,9 @@ test("picking: a named kind the AI overlooked is added back; plain-text JSON is 
     if (!/Pick exactly the items/.test(p)) return { response: filter, usage: { neurons: 1 } };
     return { response: '```json\n{"ids": [], "phrase": "no tutorials this week"}\n```', usage: { neurons: 1 } };   // overlooked both
   } };
-  const out = await answer("any tutorials this week", ITEMS, {}, memStore(), TZ, fetch, NOW, { llm: llmFromRun((m: string, b: any) => ai.run(m, b)) });
+  const out = await answer("any tutorials this week", ITEMS, { chat_engine: "v1" }, memStore(), TZ, fetch, NOW, { llm: llmFromRun((m: string, b: any) => ai.run(m, b)) });
   assert.match(out, /^\*2 tutorials this week\*/, "both added back by the safety net; 'no' not doubled");
   assert.match(out, /Tutorial 3[^]*Tutorial 4/);
-  const quiz = await answer("any quizzes this week", ITEMS, {}, memStore(), TZ, fetch, NOW, { llm: llmFromRun((m: string, b: any) => ai.run(m, b)) });
+  const quiz = await answer("any quizzes this week", ITEMS, { chat_engine: "v1" }, memStore(), TZ, fetch, NOW, { llm: llmFromRun((m: string, b: any) => ai.run(m, b)) });
   assert.match(quiz, /Sports Module/, "no class words: the filter answers, no pick step");
 });

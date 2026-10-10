@@ -3,6 +3,7 @@
 // and finish inside the Worker's ~30 s background limit (virtual clock for the hangs).
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { llmFromRun } from "./helpers.ts";
 import { answer } from "../src/core/ask.ts";
 import { memStore } from "../src/core/util.ts";
 import { ITEMS } from "./fixture.ts";
@@ -36,7 +37,8 @@ function fakes(b: Behaviour) {
     if (String(url).includes("api.mistral.ai")) return b.mistral ? b.mistral() : new Response("no", { status: 500 });
     return new Response("not found", { status: 404 });                 // announcement feeds
   }) as typeof fetch;
-  return { f, ai: { mistralKey: "k", workersAI: { run: () => (b.workers ? b.workers() : hang()) } } };
+  // one provider (Duely Public): the misbehaving model, behind the real OpenAI-compatible adapter
+  return { f, ai: { llm: llmFromRun(() => (b.workers ? b.workers() : hang())) } };
 }
 
 for (const engine of ["v1", "agent"]) for (const b of BEHAVIOURS) {
@@ -48,7 +50,7 @@ for (const engine of ["v1", "agent"]) for (const b of BEHAVIOURS) {
       let rows: { uid: string }[] = [];
       let settled = false, out = "", err: unknown = null;
       const t0 = Date.now();
-      const conf = { announcement_feeds: ["https://bs.example/rss/1"], ...(engine === "agent" ? { chat_engine: "agent" } : {}) };
+      const conf = { announcement_feeds: ["https://bs.example/rss/1"], chat_engine: engine };
       answer(q, ITEMS, conf, store, TZ, f, NOW, { ...ai, onList: (r) => { rows = r; }, onFailure: async () => {} })
         .then((r) => { out = r; }, (e) => { err = e; }).finally(() => { settled = true; });
       for (let i = 0; i < 400 && !settled; i++) {

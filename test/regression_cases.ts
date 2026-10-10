@@ -1,6 +1,6 @@
 // Every chat message that went wrong live (runbook issue log), as oracle-graded cases on any
 // calendar. They stay here forever. Add one (failing first) for every new report.
-import { type OracleCase, nextWeekdayAt, oneCase, preds } from "./oracle.ts";
+import { type OracleCase, nextWeekdayAt, oneCase, preds } from "../src/core/oracle.ts";
 
 const { due, cat, classTitled, and, isStudy } = preds;
 const STAT_TUTORIAL = (it: any) => it.course === "STAT 2507" && /\btutorial\b/i.test(String(it.title)) && !isStudy(it);
