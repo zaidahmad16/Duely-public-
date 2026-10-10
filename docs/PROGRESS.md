@@ -56,3 +56,10 @@ Plan: see the approved plan (milestones P0–P7). Updated 2026-10-09.
     Settings → About. The owner wanted explicit no-responsibility for API key leaks and billing (Terms §3).
     Governing law / jurisdiction intentionally left out (owner's call).
   - Not yet: Slack (P6), screenshot import (P5), chat history persistence, the live Google test.
+
+## Plan change: P6 is Discord alerts (was Slack)
+Owner's call: alerts only, no chat, in Discord instead of Slack. Use a **Discord webhook** the student creates in a
+server they own (Server Settings → Integrations → Webhooks), pasted into Settings; stored as the `discord_webhook`
+secret (the link is a credential). No shared bot: a bot token can't ship inside the app, and a hosted bot means a
+server holding students' data (against "no Duely server" in the Privacy Policy). Send the same alerts as desktop
+notifications (plain text; digests may need Discord's 2000-character limit handled), with a "Send test alert" button.

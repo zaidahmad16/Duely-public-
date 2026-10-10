@@ -58,4 +58,4 @@ Google OAuth (loopback redirect + PKCE, student's own client JSON) in `src/googl
 sleep/wake (`powerMonitor`); tray (Sync now / Open / Quit, start at login optional); desktop notifications;
 `safeStorage` secrets. Done when a test account's calendar fills from the sample feed (needs the user's
 Google OAuth client + a throwaway test calendar — ask for those).
-Then P3 UI, P4 chat, P5 announcements + screenshots, P6 Slack, P7 packaging.
+Then P3 UI, P4 chat, P5 announcements + screenshots, P6 Discord alerts (webhook), P7 packaging.

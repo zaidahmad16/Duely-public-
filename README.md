@@ -15,7 +15,7 @@ Runs on **Windows, macOS and Linux**. Everything stays on your computer: your da
 - AI reads course announcements for dates and important news
 - Chat: ask what's due, what's next, when your test is
 - Suggested study blocks (you approve each one), morning digest, test-eve briefing
-- Desktop notifications, optional Slack
+- Desktop notifications, optional Discord alerts
 
 ## Development
 ```sh

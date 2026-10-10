@@ -15,7 +15,7 @@ To use Duely you connect accounts that belong to you:
 - your school's **Brightspace** (through its calendar and announcement links);
 - **Google**, through a Google Cloud client you create yourself;
 - an **AI provider** (OpenAI-compatible, Anthropic or Google Gemini), with your own API key;
-- optionally, later, **Slack**.
+- optionally, later, **Discord** (a webhook link in a server you own, for alerts).
 
 You are responsible for these accounts, for keeping your links and keys private, and for following each service's own terms.
 
@@ -35,11 +35,11 @@ Duely tries to read your schedule correctly, but it can be wrong. Brightspace fe
 
 ## 5. Use it fairly
 
-Use Duely for your own studies. Don't use it to access anyone else's accounts or information, to get around your school's systems, or in a way that breaks your school's rules, including its academic integrity policy, or the terms of Brightspace, Google, your AI provider or Slack.
+Use Duely for your own studies. Don't use it to access anyone else's accounts or information, to get around your school's systems, or in a way that breaks your school's rules, including its academic integrity policy, or the terms of Brightspace, Google, your AI provider or Discord.
 
 ## 6. Not affiliated
 
-Duely is an independent project. It isn't made, endorsed or supported by D2L (Brightspace), Google, OpenAI, Anthropic, Slack or any school. Their names and trademarks belong to their owners and are used only to describe what Duely works with.
+Duely is an independent project. It isn't made, endorsed or supported by D2L (Brightspace), Google, OpenAI, Anthropic, Discord or any school. Their names and trademarks belong to their owners and are used only to describe what Duely works with.
 
 ## 7. No warranty
 

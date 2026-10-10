@@ -27,7 +27,7 @@ That folder holds:
 - for chat, your last few messages and Duely's replies, so follow-up questions make sense;
 - a cache of announcements it has already read, a count of today's AI requests, and a short log of recent errors.
 
-**Keys and sign-ins** (your AI API key, your Google sign-in, and later any Slack tokens) are encrypted with your operating system's keychain: Keychain on macOS, Data Protection (DPAPI) on Windows, and the Secret Service keyring on Linux. If a Linux computer has no keyring, Duely falls back to Electron's basic storage, which only lightly protects them, and tells you so in the app.
+**Keys and sign-ins** (your AI API key, your Google sign-in, and later your Discord webhook link) are encrypted with your operating system's keychain: Keychain on macOS, Data Protection (DPAPI) on Windows, and the Secret Service keyring on Linux. If a Linux computer has no keyring, Duely falls back to Electron's basic storage, which only lightly protects them, and tells you so in the app.
 
 ## Security
 
@@ -42,7 +42,7 @@ Duely connects only to the services you set up, directly from your computer:
 | **Your school's Brightspace** | Downloads your calendar feed and the announcement feeds you added, using the links you pasted. | To find your deadlines, tests, classes and news. |
 | **Google Calendar** (your Google account, through the Google Cloud client you created) | Creates one calendar for Duely and adds, updates and removes events in it. | To put your schedule in your calendar. |
 | **Your AI provider** (OpenAI-compatible, Anthropic or Google Gemini, with your own API key) | Course codes, titles, dates and descriptions of your Brightspace items; the text of course announcements; your chat messages with the items they're about; and any screenshot you choose to import. | To sort the feed, read announcements for dates, answer your questions and read screenshots. |
-| **Slack** (optional, coming later; only if you connect it) | Notifications and your conversation with Duely. | So Duely can message you in Slack. |
+| **Discord** (optional, coming later; only if you add a webhook link) | The text of your alerts (for example a moved test, an important announcement, or your morning digest), posted to the Discord channel you chose. | So your alerts reach you on your phone too. |
 
 Each of these services handles the information it receives under its own terms and privacy policy, which you agreed to when you set up your account with it. In particular, check what your AI provider does with API requests (for example, whether it keeps or trains on them); many providers let you change this. A local model (such as Ollama or LM Studio) keeps everything on your computer.
 

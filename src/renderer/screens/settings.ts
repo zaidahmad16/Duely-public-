@@ -169,7 +169,7 @@ export function settingsScreen(app: AppCtx): Screen {
     return section("Notifications",
       settingRow("Desktop notifications", "Sync problems, changes and digests.", toggle(st.notifications, (v) => save({ notifications: v }), { label: "Desktop notifications" })),
       settingRow("Important announcements", "When a prof posts something with a date.", toggle(st.importantAnnouncements, (v) => save({ importantAnnouncements: v }), { label: "Important announcements" })),
-      settingRow("Slack", "Messages and chat in Slack.", h("span", { class: "soon" }, "Coming later"), { muted: true }));
+      settingRow("Discord", "Alerts in a Discord channel, so they reach your phone.", h("span", { class: "soon" }, "Coming later"), { muted: true }));
   }
 
   // ---- Study & digests
