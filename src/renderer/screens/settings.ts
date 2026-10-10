@@ -14,7 +14,7 @@ import type { AppCtx, Screen } from "./types.ts";
 export const PROVIDERS: { id: Provider; name: string; hint: string; model: string; base: string }[] = [
   { id: "openai", name: "OpenAI-compatible", hint: "OpenAI, Mistral, Groq, Ollama…", model: "gpt-4o-mini", base: "https://api.openai.com/v1" },
   { id: "anthropic", name: "Anthropic", hint: "Claude models", model: "claude-haiku-4-5", base: "" },
-  { id: "gemini", name: "Gemini", hint: "Google AI Studio key", model: "gemini-2.5-flash", base: "" },
+  { id: "gemini", name: "Gemini", hint: "Google AI Studio key", model: "gemini-flash-latest", base: "" },
 ];
 
 export function settingRow(name: string, desc: string | null, control: Node | null, o: { muted?: boolean; stack?: boolean } = {}): HTMLElement {

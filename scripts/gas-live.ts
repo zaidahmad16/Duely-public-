@@ -99,6 +99,26 @@ async function main() {
     console.log(JSON.stringify(brief, null, 2).slice(0, 2500));
     return;
   }
+  if (cmd === "ai") {
+    // the test Gemini key from a private file; the model is picked from what this key can actually use
+    const key = readFileSync(join(DIR, "gemini.key"), "utf8").trim();
+    const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", { headers: { "x-goog-api-key": key } });
+    if (!r.ok) throw new Error(`Gemini didn't accept the key (${r.status})`);
+    const models: any[] = (await r.json()).models ?? [];
+    const usable = models.filter((m) => (m.supportedGenerationMethods ?? []).includes("generateContent")).map((m) => String(m.name).replace(/^models\//, ""));
+    const pick = arg("model") ?? usable.filter((n) => /^gemini-[\d.]+-flash$/.test(n)).sort().pop() ?? usable.find((n) => /flash/.test(n));
+    console.log("flash models:", usable.filter((n) => /flash/.test(n)).join(", "));
+    if (!pick) throw new Error("no flash model available");
+    const post = async (body: unknown) => {
+      const res = await fetch(s.webApp!, { method: "POST", headers: { "content-type": "application/json" }, redirect: "follow", body: JSON.stringify({ ...(body as object), key: s.key }) });
+      return res.json();
+    };
+    console.log("secret:", JSON.stringify(await post({ op: "secret", name: "llm_key", value: key })));
+    console.log("config:", JSON.stringify(await post({ op: "config", config: { use_ai: true, ai: { provider: "gemini", model: pick },
+      announcement_feeds: ["https://raw.githubusercontent.com/zaidahmad16/Duely-public-/p3-ui/test/fixture-announcements.xml"] } })));
+    console.log("using", pick);
+    return;
+  }
   if (cmd === "runs") {
     const r = await call("GET", `${API}/processes:listScriptProcesses?scriptId=${s.scriptId}&pageSize=20`);
     for (const p of r.processes ?? []) console.log(`${p.startTime}  ${p.functionName.padEnd(14)} ${p.processType.padEnd(12)} ${p.processStatus.padEnd(10)} ${p.duration ?? ""}`);

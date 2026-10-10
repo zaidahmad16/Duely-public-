@@ -120,5 +120,11 @@ Phase 0, live half, in the throwaway test account (zaidahmad181818@gmail.com, Cl
 - Setup-guide findings: the Audience "Add users" Save needed a second click; "Publish app" stays disabled until
   the Branding page is complete (check what it needs before telling students to publish).
 - 10-min timer ✓: duelyTick ran by itself (TIME_DRIVEN) at 12:56:55 UTC, 1.3 s.
-- Still open: AI + announcements live (needs a key in the
+- AI live ✓ (free Gemini key from AI Studio, test account): inside Apps Script the AI read a test announcement
+  ("midterm moved to Mon Oct 21 2030, 6-8 PM, SA 302") into "[COMP 2401] Midterm exam (from announcement), 6-8pm,
+  Southam Hall SA 302" in the calendar; a no-date post gave nothing. The feed-sorting call got Gemini 503 (model
+  overloaded): rules took over, the sync finished (26.6 s), and the "AI reading isn't working" alert was queued.
+  Follow-up for Phase 1: retry 503s once with a short backoff (Utilities.sleep) and/or fall back to
+  gemini-flash-latest. Default Gemini model suggestion is now `gemini-flash-latest` (always current).
+- Still open: email alerts live (needs a key in the
   test script); laptop-off test over hours.
