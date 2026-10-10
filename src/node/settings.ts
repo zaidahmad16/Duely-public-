@@ -1,5 +1,6 @@
 // Settings as the UI sees them <-> config.json, with validation; and "Test connection" in plain words.
 // Secrets aren't here: the AI key goes to the keychain (src/node/secrets.ts) and never comes back.
+import { createHash } from "node:crypto";
 import type { Capabilities } from "../llm/probe.ts";
 import { DEFAULTS } from "../core/sync.ts";
 import type { CapResult, Settings, SettingsPatch } from "../shared/types.ts";
@@ -110,4 +111,15 @@ export function capResult(c: Capabilities): CapResult {
       { label: "Screenshots", ok: c.vision, note: c.vision ? "" : "Type your timetable in instead" },
     ],
   };
+}
+
+/** Duely needs its AI: it counts as set up once "Test connection" worked for exactly this provider,
+ *  model, URL and key. The fingerprint of that test is kept (config "ai_verified"); any change to
+ *  them no longer matches, so the student tests again. (A hash: the key itself isn't stored here.) */
+export function aiFingerprint(ai: any, key: string): string {
+  return createHash("sha256").update([ai?.provider ?? "", ai?.model ?? "", ai?.baseUrl ?? "", key].join("\u0000")).digest("hex").slice(0, 24);
+}
+
+export function aiReady(cfg: any, key: string): boolean {
+  return !!(cfg?.ai?.provider && cfg?.ai?.model && cfg?.ai_verified && cfg.ai_verified === aiFingerprint(cfg.ai, key));
 }

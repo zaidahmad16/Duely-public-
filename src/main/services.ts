@@ -29,6 +29,7 @@ export function services(showWindow: () => void): Services {
   const secrets = secretStore(store, cipher);
   // Linux without a keyring: Electron falls back to a fixed key ("basic_text"); the UI warns about it
   const weakKeychain = process.platform === "linux" && safeStorage.getSelectedStorageBackend?.() === "basic_text";
+  if (weakKeychain && !safeStorage.isEncryptionAvailable()) safeStorage.setUsePlainTextEncryption?.(true);
 
   let tokens: { key: string; get: () => Promise<string> } | null = null;
   const deps: Deps = {

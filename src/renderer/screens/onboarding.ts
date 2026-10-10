@@ -1,13 +1,14 @@
 // First run: five focused steps in a compact window. Each step: a clear title, one line of
 // explanation, the one thing to do, Continue (and a quiet secondary action). Steps slide 8px
 // (out to the left, in from the right); the progress bar fills to the next segment.
-import type { Provider } from "../../shared/types.ts";
 import { toggle } from "../components/toggle.ts";
 import { api } from "../ui/api.ts";
-import { clear, h } from "../ui/h.ts";
+import { h } from "../ui/h.ts";
 import { icon, mark } from "../ui/icons.ts";
 import { enter, leave, reduced, wait } from "../ui/motion.ts";
-import { PROVIDERS, capList, spinnerButton } from "./settings.ts";
+import { aiSetup } from "../components/aiSetup.ts";
+import { TERMS_VERSION, legalLine } from "../components/doc.ts";
+import { spinnerButton } from "./settings.ts";
 
 const STEPS = 5;
 
@@ -60,7 +61,7 @@ export function onboarding(done: () => void): HTMLElement {
         e.textContent = "";
         if (!inp.value.trim()) { e.textContent = "Paste your calendar link to continue."; return; }
         spinnerButton(next, true);
-        try { await api.saveSettings({ feedUrl: inp.value }); await go(1); } catch (x) { e.textContent = (x as Error).message; inp.classList.add("is-invalid"); }
+        try { await api.saveSettings({ feedUrl: inp.value }); await api.acceptTerms(TERMS_VERSION); await go(1); } catch (x) { e.textContent = (x as Error).message; inp.classList.add("is-invalid"); }
         spinnerButton(next, false);
       };
       next.addEventListener("click", () => void submit());
@@ -69,7 +70,7 @@ export function onboarding(done: () => void): HTMLElement {
       return view("Connect Brightspace", "Duely reads your course calendar to find deadlines, tests and classes.",
         [h("label", { class: "field-label" }, "Brightspace calendar link"), inp, e,
           h("p", { class: "help" }, "In Brightspace, open Calendar → Subscribe, and copy the link it shows.")],
-        [next]);
+        [legalLine(), next]);
     },
     // 2. Google
     () => {
@@ -112,53 +113,20 @@ export function onboarding(done: () => void): HTMLElement {
           state, e],
         [back(), h("button", { class: "btn btn-ghost", on: { click: () => void go(2) } }, "Skip for now"), connect, next]);
     },
-    // 3. AI
+    // 3. AI (required: Continue only after the connection test passes)
     () => {
-      let provider: Provider | "" = "";
-      const opts = h("div", { class: "provider-grid", attrs: { role: "radiogroup", "aria-label": "AI provider" } });
-      const key = h("input", { class: "input", type: "password", placeholder: "Paste your API key", attrs: { "aria-label": "API key", autocomplete: "off" } });
-      const model = h("input", { class: "input", placeholder: "Model", attrs: { "aria-label": "Model" } });
-      const base = h("input", { class: "input", placeholder: "https://api.openai.com/v1", attrs: { "aria-label": "Base URL" } });
-      const baseWrap = h("div", { class: "field", hidden: true }, h("label", { class: "field-label" }, "Base URL ", h("span", { class: "faint" }, "(only if not OpenAI)")), base);
-      const details = h("div", { class: "ai-details", hidden: true },
-        h("div", { class: "field" }, h("label", { class: "field-label" }, "API key"), key),
-        h("div", { class: "field" }, h("label", { class: "field-label" }, "Model"), model), baseWrap);
-      const results = h("div", { class: "test-results" });
-      const e = err();
-      const test = h("button", { class: "btn btn-secondary", disabled: true }, icon("sparkles", 14, "btn-icon"), h("i", { class: "spinner" }), h("span", { class: "btn-label" }, "Test connection"));
-      for (const p of PROVIDERS) {
-        const b = h("button", { class: "provider", attrs: { role: "radio", "aria-checked": "false" } },
-          h("span", { class: "provider-name" }, p.name), h("span", { class: "provider-hint" }, p.hint));
-        b.addEventListener("click", () => {
-          provider = p.id;
-          for (const x of opts.children) { x.classList.toggle("is-active", x === b); x.setAttribute("aria-checked", String(x === b)); }
-          model.placeholder = p.model; if (!model.value) model.value = p.model;
-          baseWrap.hidden = p.id !== "openai";
-          if (details.hidden) { details.hidden = false; enter(details, { y: 6, dur: 200 }); }
-          test.disabled = false;
-        });
-        opts.append(b);
-      }
-      const persist = async () => {
-        await api.saveSettings({ ai: { provider: provider as Provider, model: model.value, baseUrl: base.value }, ...(key.value.trim() ? { aiKey: key.value } : {}) });
-      };
-      test.addEventListener("click", async () => {
-        e.textContent = ""; clear(results);
-        spinnerButton(test, true, "Testing…");
-        try {
-          await persist();
-          results.append(capList(await api.testAI()));
-        } catch (x) { e.textContent = (x as Error).message; }
-        spinnerButton(test, false, "Test connection");
-      });
-      const next = h("button", { class: "btn btn-primary" }, "Continue");
-      next.addEventListener("click", async () => {
-        if (provider) { try { await persist(); } catch (x) { e.textContent = (x as Error).message; return; } }
-        await go(3);
-      });
+      const next = h("button", { class: "btn btn-primary", disabled: true }, "Continue");
+      const setup = aiSetup((ok) => { next.disabled = !ok; });
+      next.addEventListener("click", () => { if (setup.ready()) void go(3); });
+      // coming back to this step: start from what's saved (and already tested)
+      void Promise.all([api.settings(), api.status()]).then(([s, st]) => {
+        if (!s.ai.provider || setup.el.querySelector(".provider.is-active")) return;
+        const fresh = aiSetup((ok) => { next.disabled = !ok; }, s, st.aiReady);
+        setup.el.replaceWith(fresh.el); Object.assign(setup, fresh);
+        next.disabled = !st.aiReady;
+      }).catch(() => {});
       return view("Choose your AI", "Duely uses one AI of your choice to answer questions and read announcements. Your key stays on this computer.",
-        [opts, details, h("div", { class: "test-line" }, test), results, e],
-        [back(), h("button", { class: "btn btn-ghost", on: { click: () => void go(3) } }, "Skip for now"), next]);
+        [setup.el], [back(), next]);
     },
     // 4. More context (optional)
     () => {

@@ -72,3 +72,15 @@ test("Test connection results in plain words", () => {
   assert.deepEqual(r.caps!.map((c) => [c.label, c.ok]), [["Chat", true], ["Reading", true], ["Screenshots", false]]);
   assert.equal(capResult({ chat: false, tools: false, json: false, vision: false, error: "429 rate limit" }).ok, false);
 });
+
+test("the AI counts as set up only after a test passed for exactly these settings and key", async () => {
+  const { aiFingerprint, aiReady } = await import("../src/node/settings.ts");
+  const ai = { provider: "openai", model: "gpt-4o-mini", baseUrl: "" };
+  const cfg = { ai, ai_verified: aiFingerprint(ai, "sk-1") };
+  assert.equal(aiReady(cfg, "sk-1"), true);
+  assert.equal(aiReady(cfg, "sk-2"), false, "a new key needs a new test");
+  assert.equal(aiReady({ ...cfg, ai: { ...ai, model: "other" } }, "sk-1"), false, "a new model too");
+  assert.equal(aiReady({ ai }, "sk-1"), false, "never tested");
+  assert.equal(aiReady({}, ""), false);
+  assert.ok(!aiFingerprint(ai, "sk-secret-key").includes("secret"));
+});

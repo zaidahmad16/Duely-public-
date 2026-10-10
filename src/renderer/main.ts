@@ -8,6 +8,7 @@ import "./styles/screens.css";
 import type { Status } from "../shared/types.ts";
 import { type BannerSpec, setBanners } from "./components/banner.ts";
 import { toast } from "./components/toast.ts";
+import { aiGate } from "./screens/aiGate.ts";
 import { chatScreen } from "./screens/chat.ts";
 import { onboarding } from "./screens/onboarding.ts";
 import { settingsScreen } from "./screens/settings.ts";
@@ -74,23 +75,35 @@ const screens = new Map<Route, Screen>();
 let current: Screen | null = null;
 let route: Route | null = null;
 
-function show(r: Route) {
-  if (r === route) return;
+/** Upcoming and Chat need the AI set up; until then they show the AI setup instead. */
+const gated = (r: Route) => r !== "settings" && !ctx.status?.aiReady;
+let shownGated = false;
+
+function show(r: Route, force = false) {
+  if (r === route && !force) return;
   const prev = route ? NAV.findIndex((n) => n.id === route) : -1;
   const next = NAV.findIndex((n) => n.id === r);
+  const moved = r !== route;
   route = r;
   for (const [id, b] of navButtons) {
     const on = id === r;
     b.classList.toggle("is-active", on);
     if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
   }
-  // the highlight slides a few px into place from the side it came from
-  const bg = navButtons.get(r)!.querySelector(".nav-bg")!;
-  const dy = reduced() || prev < 0 ? 0 : prev < next ? -6 : 6;
-  bg.animate([{ opacity: 0, transform: `translateY(${dy}px)` }, { opacity: 1, transform: "none" }], { duration: 160, easing: "cubic-bezier(0.23, 1, 0.32, 1)" });
+  if (moved) {
+    // the highlight slides a few px into place from the side it came from
+    const bg = navButtons.get(r)!.querySelector(".nav-bg")!;
+    const dy = reduced() || prev < 0 ? 0 : prev < next ? -6 : 6;
+    bg.animate([{ opacity: 0, transform: `translateY(${dy}px)` }, { opacity: 1, transform: "none" }], { duration: 160, easing: "cubic-bezier(0.23, 1, 0.32, 1)" });
+  }
 
-  let s = screens.get(r);
-  if (!s) { s = r === "upcoming" ? upcomingScreen(ctx) : r === "chat" ? chatScreen(ctx) : settingsScreen(ctx); screens.set(r, s); }
+  shownGated = gated(r);
+  let s: Screen | undefined;
+  if (shownGated) s = aiGate(ctx);
+  else {
+    s = screens.get(r);
+    if (!s) { s = r === "upcoming" ? upcomingScreen(ctx) : r === "chat" ? chatScreen(ctx) : settingsScreen(ctx); screens.set(r, s); }
+  }
   current = s;
   clear(content);
   content.append(s.el);
@@ -108,6 +121,8 @@ function paintStatus() {
   syncText.textContent = ctx.syncing ? "Syncing…" : !s?.sync.time ? "Not synced yet"
     : s.sync.needsGoogle ? "Calendar not connected" : problem ? "Sync needs attention" : `Synced ${ago(s.sync.time * 1000)}`;
   setBanners(banners, bannerSpecs(s));
+  // the AI was just set up (or stopped being): swap the gate and the real screen
+  if (route && gated(route) !== shownGated) show(route, true);
   current?.status();
 }
 
@@ -121,6 +136,9 @@ function bannerSpecs(s: Status | null): BannerSpec[] {
     out.push({ id: "google", tone: "warn", title: "Google needs to be reconnected", text: "Duely can't update your calendar until access is restored.", action: { label: "Reconnect", run: settings } });
   } else if (s.sync.error) {
     out.push({ id: "sync", tone: "warn", title: "Sync isn't working", text: s.sync.error, action: { label: "Try again", run: () => void ctx.sync() } });
+  }
+  if (!s.aiReady && route === "settings") {
+    out.push({ id: "ai", tone: "warn", title: "Your AI isn't set up", text: "Duely needs a working AI. Test the connection under AI to finish." });
   }
   if (s.weakKeychain) {
     out.push({ id: "keyring", tone: "info", title: "Saved keys are only lightly protected", text: "This computer has no keyring, so the system can't encrypt them." });

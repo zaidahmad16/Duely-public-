@@ -2,6 +2,7 @@
 // is on the left, the control on the right). Toggles save at once, quietly; typed values save on
 // Enter / leaving the field with a small "Saved" toast. Keys are masked and never shown again.
 import type { CapResult, Provider, Settings, SettingsPatch } from "../../shared/types.ts";
+import { openDoc } from "../components/doc.ts";
 import { toast } from "../components/toast.ts";
 import { toggle } from "../components/toggle.ts";
 import { api } from "../ui/api.ts";
@@ -158,7 +159,7 @@ export function settingsScreen(app: AppCtx): Screen {
       settingRow("Provider", null, seg),
       settingRow("Model", null, model),
       baseRow,
-      settingRow("API key", "Kept in your computer's keychain.", key),
+      settingRow("API key", "Kept in your computer's keychain. You're responsible for this key and any charges on it.", key),
       testRow,
       settingRow("Daily cap", "Most requests Duely makes a day. It stops cleanly at the cap.", cap));
   }
@@ -233,10 +234,20 @@ export function settingsScreen(app: AppCtx): Screen {
       connected && discRow);
   }
 
+  // ---- About
+  function about() {
+    const link = (label: string, run: () => void) => h("button", { class: "btn btn-ghost btn-sm", on: { click: run } }, label);
+    return section("About",
+      settingRow("Duely", `Version ${app.status?.version ?? ""}`, null),
+      settingRow("Terms of Service", null, link("Read", () => openDoc("terms"))),
+      settingRow("Privacy Policy", "Your data stays on this computer, except what goes to the services you connect.", link("Read", () => openDoc("privacy"))),
+      settingRow("Source code", "Open source under the MIT License.", link("GitHub", () => void api.openLink("https://github.com/zaidahmad16/Duely-public-"))));
+  }
+
   function paint() {
     if (!s) return;
     clear(body);
-    body.append(sources(s), ai(s), notifications(s), study(s), google(s));
+    body.append(sources(s), ai(s), notifications(s), study(s), google(s), about());
   }
 
   return {

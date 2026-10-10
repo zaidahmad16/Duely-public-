@@ -48,9 +48,12 @@ export type Upcoming = {
 export type Status = {
   /** the computer's locale (Chromium's own UI locale can differ, e.g. en-GB for en-CA) */
   locale: string;
+  version: string;
   onboarded: boolean;
   feedSet: boolean;
   google: boolean;
+  /** the AI is set up and its connection test passed (required to use the app) */
+  aiReady: boolean;
   weakKeychain: boolean;
   startAtLogin: { can: boolean; on: boolean };
   sync: { time: number; error: string; needsGoogle: boolean; items: number; running: boolean };

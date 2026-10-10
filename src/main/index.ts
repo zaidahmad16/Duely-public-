@@ -8,6 +8,13 @@ import { type Jobs, startJobs } from "./jobs.ts";
 import { type Services, openSafe, services } from "./services.ts";
 import { makeTray } from "./tray.ts";
 
+import { noKeyring } from "./keyring.ts";
+
+// Linux without a keyring service: Electron can't encrypt at all, so a student could never save their
+// AI key (and Duely needs one). Fall back to Electron's basic store; the UI warns that keys are then
+// only lightly protected (services.ts weakKeychain). Must be decided before the app is ready.
+if (noKeyring()) app.commandLine.appendSwitch("password-store", "basic");
+
 const SMOKE = process.argv.includes("--smoke");   // CI: open the window, then quit with exit code 0
 const HIDDEN = process.argv.includes("--hidden"); // started at login: tray only
 const RES = app.isPackaged ? process.resourcesPath : join(import.meta.dirname, "../../resources");

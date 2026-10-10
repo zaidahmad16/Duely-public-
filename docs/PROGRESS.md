@@ -46,4 +46,13 @@ Plan: see the approved plan (milestones P0–P7). Updated 2026-10-09.
     midterm became an exam (the title decides first now).
   - Dev: `scripts/demo-data.ts` makes a demo data folder dated around today; `DUELY_SHOT` / `DUELY_SHOT_JS` /
     `DUELY_SHOT_SIZE` / `DUELY_THEME` env vars capture screenshots (xvfb only).
+  - AI is required: onboarding step 3 can't be skipped (Continue after a passing Test connection); later, if the
+    provider/model/URL/key change without a new passing test, Upcoming and Chat show "Finish setting up your AI".
+    A passing test stores a fingerprint (`ai_verified`, a hash, not the key); `aiReady` in status.
+  - Linux without a working keyring: start with `--password-store=basic` (+ plain-text encryption allowed) so keys
+    can be saved at all; the weak-keyring banner warns. Checked by calling the Secret Service (`main/keyring.ts`).
+  - Terms of Service + Privacy Policy (`docs/TERMS.md`, `docs/PRIVACY.md`), bundled in the app (sheet viewer),
+    agreed at onboarding step 1 (`terms_accepted` {version, at}; `TERMS_VERSION` in components/doc.ts), linked in
+    Settings → About. The owner wanted explicit no-responsibility for API key leaks and billing (Terms §3).
+    Governing law / jurisdiction intentionally left out (owner's call).
   - Not yet: Slack (P6), screenshot import (P5), chat history persistence, the live Google test.

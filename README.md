@@ -26,5 +26,11 @@ npm run typecheck
 npm run dist       # build installers for this OS
 ```
 
+## Terms and privacy
+- [Terms of Service](docs/TERMS.md)
+- [Privacy Policy](docs/PRIVACY.md)
+
+You bring your own AI provider and key: the provider bills you, and you are responsible for the key and its charges (see the Terms).
+
 ## License
 MIT

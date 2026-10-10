@@ -9,7 +9,7 @@ import { connect, parseClient } from "../google/oauth.ts";
 import { makeLLM } from "../llm/adapters.ts";
 import { probe } from "../llm/probe.ts";
 import { loadCtx } from "../node/runner.ts";
-import { applyPatch, capResult, friendlyAIError, toSettings } from "../node/settings.ts";
+import { aiFingerprint, aiReady, applyPatch, capResult, friendlyAIError, toSettings } from "../node/settings.ts";
 import { chatText, question, rowsFor, upcoming } from "../node/view.ts";
 import type { Button, ChatReply, Question, Result, SettingsPatch, Status, Upcoming } from "../shared/types.ts";
 import type { Jobs } from "./jobs.ts";
@@ -43,9 +43,11 @@ export function registerApi(c: Ctx): void {
     const st = (await store.get<any>("state")) ?? {};
     return {
       locale: app.getSystemLocale() || app.getLocale(),
+      version: app.getVersion(),
       onboarded: !!cfg.onboarded,
       feedSet: !!cfg.feed_url,
       google: await svc.secrets.has("google_refresh"),
+      aiReady: aiReady(cfg, (await svc.secrets.get("llm_key").catch(() => null)) ?? ""),
       weakKeychain: svc.weakKeychain,
       startAtLogin: { can: canStartAtLogin(), on: startsAtLogin() },
       sync: { time: st.time ?? 0, error: st.error ?? "", needsGoogle: !!st.needs_google, running: !!c.jobs()?.isRunning(),
@@ -106,20 +108,27 @@ export function registerApi(c: Ctx): void {
       if (k) await svc.secrets.set("llm_key", k); else await svc.secrets.delete("llm_key");
     }
     await store.put("config", next);
+    if (p?.ai || p?.aiKey !== undefined) c.changed();                   // AI changed: it needs testing again (aiReady)
     if (next.feed_url !== before.feed_url || JSON.stringify(next.announcement_feeds) !== JSON.stringify(before.announcement_feeds)) syncSoon();
     return toSettings(next, await svc.secrets.has("llm_key"));
   });
 
-  handle("testAI", async (draft?: { provider: string; model: string; baseUrl?: string; key?: string }) => {
+  // tests the saved AI settings; a pass is recorded, which is what unlocks the app (aiReady)
+  handle("testAI", async () => {
     const cfg = await config();
-    const provider = (draft?.provider ?? cfg.ai?.provider) as any, model = String(draft?.model ?? cfg.ai?.model ?? "").trim();
-    if (!provider || !model) return { ok: false, message: "Pick a provider and enter a model name first." };
-    const apiKey = draft?.key?.trim() || (await svc.secrets.get("llm_key").catch(() => null)) || "";
+    const ai = cfg.ai ?? {};
+    if (!ai.provider || !ai.model) return { ok: false, message: "Pick a provider and enter a model name first." };
+    const apiKey = (await svc.secrets.get("llm_key").catch(() => null)) ?? "";
+    let r;
     try {
-      return capResult(await probe(makeLLM({ provider, model, apiKey, baseUrl: (draft?.baseUrl ?? cfg.ai?.baseUrl) || undefined })));
+      r = capResult(await probe(makeLLM({ provider: ai.provider, model: ai.model, apiKey, baseUrl: ai.baseUrl || undefined })));
     } catch (e) {
-      return { ok: false, message: friendlyAIError(errText(e)) };
+      r = { ok: false, message: friendlyAIError(errText(e)) };
     }
+    const now = (await config());                                  // re-read: don't undo a change made meanwhile
+    const verified = r.ok && JSON.stringify(now.ai ?? {}) === JSON.stringify(ai) ? aiFingerprint(ai, apiKey) : undefined;
+    if (verified !== now.ai_verified) { await store.put("config", { ...now, ai_verified: verified }); c.changed(); }
+    return r;
   });
 
   handle("connectGoogle", async (clientJson?: string) => {
@@ -142,6 +151,11 @@ export function registerApi(c: Ctx): void {
   handle("syncNow", async () => { await c.jobs()?.syncNow(); c.changed(); });
 
   handle("setStartAtLogin", async (on: boolean) => { setStartAtLogin(!!on); return startsAtLogin(); });
+
+  // agreeing to the Terms of Service and Privacy Policy (onboarding step 1): which version, and when
+  handle("acceptTerms", async (version: string) => {
+    await store.put("config", { ...(await config()), terms_accepted: { version: String(version).slice(0, 20), at: Date.now() } });
+  });
 
   handle("finishOnboarding", async () => {
     await store.put("config", { ...(await config()), onboarded: true });

@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld("duely", {
   syncNow: call("syncNow"),
   setStartAtLogin: call("setStartAtLogin"),
   finishOnboarding: call("finishOnboarding"),
+  acceptTerms: call("acceptTerms"),
   openLink: call("openLink"),
   onChanged: (fn: () => void) => { ipcRenderer.on("duely:changed", () => fn()); },
 });
