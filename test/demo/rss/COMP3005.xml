@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+<channel>
+<title>Announcements - COMP 3005A Database Management Systems (Fall 2026)</title>
+<link>https://brightspace.example.ca/d2l/home/7104</link>
+<description>Made-up announcements for Duely's tests (no real course).</description>
+<item>
+<title>Welcome to COMP 3005</title>
+<link>https://brightspace.example.ca/d2l/le/news/7104/9001/view</link>
+<guid>7104-9001</guid>
+<pubDate>Tue, 08 Sep 2026 18:00:00 GMT</pubDate>
+<description>&lt;p&gt;Install PostgreSQL before Tutorial 1. Instructions are under Content.&lt;/p&gt;</description>
+</item>
+<item>
+<title>Midterm details</title>
+<link>https://brightspace.example.ca/d2l/le/news/7104/9002/view</link>
+<guid>7104-9002</guid>
+<pubDate>Mon, 05 Oct 2026 18:00:00 GMT</pubDate>
+<description>&lt;p&gt;The midterm on October 20 covers lectures 1-10. It&amp;#x27;s in AT 102 during class time, 1:00-2:20 PM. One handwritten cheat sheet allowed.&lt;/p&gt;</description>
+</item>
+<item>
+<title>Assignment 2 marked</title>
+<link>https://brightspace.example.ca/d2l/le/news/7104/9003/view</link>
+<guid>7104-9003</guid>
+<pubDate>Fri, 09 Oct 2026 18:00:00 GMT</pubDate>
+<description>&lt;p&gt;Grades for Assignment 1 are released. Regrade requests within one week.&lt;/p&gt;</description>
+</item>
+</channel>
+</rss>

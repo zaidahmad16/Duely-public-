@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+<channel>
+<title>Announcements - STAT 2607D Introduction to Probability (Winter 2027)</title>
+<link>https://brightspace.example.ca/d2l/home/7201</link>
+<description>Made-up announcements for Duely's tests (no real course).</description>
+<item>
+<title>Welcome (early)</title>
+<link>https://brightspace.example.ca/d2l/le/news/7201/9001/view</link>
+<guid>7201-9001</guid>
+<pubDate>Thu, 01 Oct 2026 18:00:00 GMT</pubDate>
+<description>&lt;p&gt;Welcome to STAT 2607 for Winter 2027. The outline is now available. Our first class is Monday, January 11, 2027.&lt;/p&gt;</description>
+</item>
+</channel>
+</rss>

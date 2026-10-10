@@ -1,0 +1,736 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Desire2Learn Inc//D2L Calendar//EN
+X-WR-CALNAME:Brightspace
+X-WR-TIMEZONE:America/Toronto
+BEGIN:VEVENT
+UID:6606_7101_1@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20260907T000000
+DTEND;TZID=America/Toronto:20260907T000000
+SUMMARY:Course Outline - Availability Starts
+LOCATION:PSYC 2101A Research Methods in Psychology (Fall 2026)
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7102_2@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20260907T000000
+DTEND;TZID=America/Toronto:20260907T000000
+SUMMARY:Course Outline - Availability Starts
+LOCATION:MATH 2007B Elementary Calculus II (Fall 2026)
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7103_3@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20260907T000000
+DTEND;TZID=America/Toronto:20260907T000000
+SUMMARY:Course Outline - Availability Starts
+LOCATION:ECON 2502A Intermediate Macroeconomics (Fall 2026)
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7104_4@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20260907T000000
+DTEND;TZID=America/Toronto:20260907T000000
+SUMMARY:Course Outline - Availability Starts
+LOCATION:COMP 3005A Database Management Systems (Fall 2026)
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7105_5@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20260907T000000
+DTEND;TZID=America/Toronto:20260907T000000
+SUMMARY:Course Outline - Availability Starts
+LOCATION:BIOL 2200C Cell Biology (Fall 2026)
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7106_6@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20260907T000000
+DTEND;TZID=America/Toronto:20260907T000000
+SUMMARY:Course Outline - Availability Starts
+LOCATION:PHIL 1901A Ethics and Technology (Fall 2026)
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7107_7@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20260907T000000
+DTEND;TZID=America/Toronto:20260907T000000
+SUMMARY:Course Outline - Availability Starts
+LOCATION:ARTH 2100B Renaissance Art (Fall 2026)
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7101_8@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20260925T235900
+DTEND;TZID=America/Toronto:20260925T235900
+SUMMARY:Lab Report 1 - Due
+LOCATION:PSYC 2101A Research Methods in Psychology (Fall 2026)
+DESCRIPTION:Upload as PDF. APA format\, max 1500 words.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7101&db=8
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7101_9@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261013T090000
+DTEND;TZID=America/Toronto:20261013T095000
+SUMMARY:Tutorial 5: Survey Design
+LOCATION:PSYC 2101A Research Methods in Psychology (Fall 2026)
+DESCRIPTION:Tutorial in LA C164 after lecture. Bring your draft questionnai
+ re.
+URL:https://brightspace.example.ca/d2l/le/calendar/7101/event/9/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7101_10@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261016T235900
+DTEND;TZID=America/Toronto:20261016T235900
+SUMMARY:Lab Report 2 - Due
+LOCATION:PSYC 2101A Research Methods in Psychology (Fall 2026)
+DESCRIPTION:Experimental design report. Turnitin enabled.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7101&db=10
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7101_11@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261019T090000
+DTEND;TZID=America/Toronto:20261019T090000
+SUMMARY:Quiz 3 - Availability Starts
+LOCATION:PSYC 2101A Research Methods in Psychology (Fall 2026)
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7101_12@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261021T235900
+DTEND;TZID=America/Toronto:20261021T235900
+SUMMARY:Quiz 3 - Availability Ends
+LOCATION:PSYC 2101A Research Methods in Psychology (Fall 2026)
+DESCRIPTION:Chapters 5-6. 30 minutes\, one attempt.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7101&db=12
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7101_13@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261104T090000
+DTEND;TZID=America/Toronto:20261104T095000
+SUMMARY:Midterm Exam
+LOCATION:PSYC 2101A Research Methods in Psychology (Fall 2026)
+DESCRIPTION:In class\, LA C164. Closed book.
+URL:https://brightspace.example.ca/d2l/le/calendar/7101/event/13/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7101_14@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261120T235900
+DTEND;TZID=America/Toronto:20261120T235900
+SUMMARY:Research Proposal - Due
+LOCATION:PSYC 2101A Research Methods in Psychology (Fall 2026)
+DESCRIPTION:Group submission\; one per group.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7101&db=14
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7101_15@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261204T235900
+DTEND;TZID=America/Toronto:20261204T235900
+SUMMARY:Participation Credits - Due
+LOCATION:PSYC 2101A Research Methods in Psychology (Fall 2026)
+DESCRIPTION:Last day to complete SONA studies.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7101&db=15
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7102_16@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20260918T235900
+DTEND;TZID=America/Toronto:20260918T235900
+SUMMARY:Assignment 1 - Due
+LOCATION:MATH 2007B Elementary Calculus II (Fall 2026)
+DESCRIPTION:Crowdmark submission. Show all work.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7102&db=16
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7102_17@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261002T235900
+DTEND;TZID=America/Toronto:20261002T235900
+SUMMARY:Assignment 2 - Due
+LOCATION:MATH 2007B Elementary Calculus II (Fall 2026)
+DESCRIPTION:Crowdmark submission. Show all work.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7102&db=17
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7102_18@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261016T235900
+DTEND;TZID=America/Toronto:20261016T235900
+SUMMARY:Assignment 3 - Due
+LOCATION:MATH 2007B Elementary Calculus II (Fall 2026)
+DESCRIPTION:Crowdmark submission. Show all work.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7102&db=18
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7102_19@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261106T235900
+DTEND;TZID=America/Toronto:20261106T235900
+SUMMARY:Assignment 4 - Due
+LOCATION:MATH 2007B Elementary Calculus II (Fall 2026)
+DESCRIPTION:Crowdmark submission. Show all work.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7102&db=19
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7102_20@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261120T235900
+DTEND;TZID=America/Toronto:20261120T235900
+SUMMARY:Assignment 5 - Due
+LOCATION:MATH 2007B Elementary Calculus II (Fall 2026)
+DESCRIPTION:Crowdmark submission. Show all work.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7102&db=20
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7102_21@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261204T235900
+DTEND;TZID=America/Toronto:20261204T235900
+SUMMARY:Assignment 6 - Due
+LOCATION:MATH 2007B Elementary Calculus II (Fall 2026)
+DESCRIPTION:Crowdmark submission. Show all work.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7102&db=21
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7102_22@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20260922T083000
+DTEND;TZID=America/Toronto:20260922T095000
+SUMMARY:Tutorial 1 - Problem Set
+LOCATION:MATH 2007B Elementary Calculus II (Fall 2026)
+DESCRIPTION:Tutorial attendance counts for 5%.
+URL:https://brightspace.example.ca/d2l/le/calendar/7102/event/22/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7102_23@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261006T083000
+DTEND;TZID=America/Toronto:20261006T095000
+SUMMARY:Tutorial 2 - Problem Set
+LOCATION:MATH 2007B Elementary Calculus II (Fall 2026)
+DESCRIPTION:Tutorial attendance counts for 5%.
+URL:https://brightspace.example.ca/d2l/le/calendar/7102/event/23/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7102_24@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261020T083000
+DTEND;TZID=America/Toronto:20261020T095000
+SUMMARY:Tutorial 3 - Problem Set
+LOCATION:MATH 2007B Elementary Calculus II (Fall 2026)
+DESCRIPTION:Tutorial attendance counts for 5%.
+URL:https://brightspace.example.ca/d2l/le/calendar/7102/event/24/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7102_25@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261110T083000
+DTEND;TZID=America/Toronto:20261110T095000
+SUMMARY:Tutorial 4 - Problem Set
+LOCATION:MATH 2007B Elementary Calculus II (Fall 2026)
+DESCRIPTION:Tutorial attendance counts for 5%.
+URL:https://brightspace.example.ca/d2l/le/calendar/7102/event/25/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7102_26@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261124T083000
+DTEND;TZID=America/Toronto:20261124T095000
+SUMMARY:Tutorial 5 - Problem Set
+LOCATION:MATH 2007B Elementary Calculus II (Fall 2026)
+DESCRIPTION:Tutorial attendance counts for 5%.
+URL:https://brightspace.example.ca/d2l/le/calendar/7102/event/26/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7102_27@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261022T180000
+DTEND;TZID=America/Toronto:20261022T193000
+SUMMARY:Midterm Test
+LOCATION:MATH 2007B Elementary Calculus II (Fall 2026)
+DESCRIPTION:Room: Southam Hall SA 302. 6:00-7:30 PM. Non-programmable calcu
+ lator only.
+URL:https://brightspace.example.ca/d2l/le/calendar/7102/event/27/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7102_28@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261215T090000
+DTEND;TZID=America/Toronto:20261215T120000
+SUMMARY:Final Exam
+LOCATION:MATH 2007B Elementary Calculus II (Fall 2026)
+DESCRIPTION:Room: Fieldhouse. 3 hours. Cumulative.
+URL:https://brightspace.example.ca/d2l/le/calendar/7102/event/28/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7103_29@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261002T235900
+DTEND;TZID=America/Toronto:20261002T235900
+SUMMARY:Problem Set 1 - Due
+LOCATION:ECON 2502A Intermediate Macroeconomics (Fall 2026)
+DESCRIPTION:
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7103&db=29
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7103_30@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261014T110000
+DTEND;TZID=America/Toronto:20261014T113000
+SUMMARY:In-class Quiz 2
+LOCATION:ECON 2502A Intermediate Macroeconomics (Fall 2026)
+DESCRIPTION:Covers IS-LM.
+URL:https://brightspace.example.ca/d2l/le/calendar/7103/event/30/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7103_31@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261023T235900
+DTEND;TZID=America/Toronto:20261023T235900
+SUMMARY:Problem Set 2 - Due
+LOCATION:ECON 2502A Intermediate Macroeconomics (Fall 2026)
+DESCRIPTION:Submit as a single PDF.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7103&db=31
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7103_32@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261113T235900
+DTEND;TZID=America/Toronto:20261113T235900
+SUMMARY:Policy Brief - Due
+LOCATION:ECON 2502A Intermediate Macroeconomics (Fall 2026)
+DESCRIPTION:1000 words on the Bank of Canada's 2026 rate path.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7103&db=32
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7103_33@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261118T110000
+DTEND;TZID=America/Toronto:20261118T122000
+SUMMARY:Midterm Exam
+LOCATION:ECON 2502A Intermediate Macroeconomics (Fall 2026)
+DESCRIPTION:DT 1208\, in class.
+URL:https://brightspace.example.ca/d2l/le/calendar/7103/event/33/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7103_34@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261202T235900
+DTEND;TZID=America/Toronto:20261202T235900
+SUMMARY:Problem Set 3 - Due
+LOCATION:ECON 2502A Intermediate Macroeconomics (Fall 2026)
+DESCRIPTION:
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7103&db=34
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7103_35@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261212T140000
+DTEND;TZID=America/Toronto:20261212T170000
+SUMMARY:Final Exam
+LOCATION:ECON 2502A Intermediate Macroeconomics (Fall 2026)
+DESCRIPTION:Location TBA by the exam office.
+URL:https://brightspace.example.ca/d2l/le/calendar/7103/event/35/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7104_36@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20260928T235900
+DTEND;TZID=America/Toronto:20260928T235900
+SUMMARY:Assignment 1 - Due
+LOCATION:COMP 3005A Database Management Systems (Fall 2026)
+DESCRIPTION:ER diagrams. Submit a single PDF.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7104&db=36
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7104_37@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261012T235900
+DTEND;TZID=America/Toronto:20261012T235900
+SUMMARY:Assignment 2 - Due
+LOCATION:COMP 3005A Database Management Systems (Fall 2026)
+DESCRIPTION:Relational algebra and SQL. Thanksgiving: the deadline still ap
+ plies.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7104&db=37
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7104_38@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261015T130000
+DTEND;TZID=America/Toronto:20261015T140000
+SUMMARY:Tutorial 4 - PostgreSQL setup
+LOCATION:COMP 3005A Database Management Systems (Fall 2026)
+DESCRIPTION:Online\, link on Brightspace.
+URL:https://brightspace.example.ca/d2l/le/calendar/7104/event/38/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7104_39@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261020T130000
+DTEND;TZID=America/Toronto:20261020T142000
+SUMMARY:Midterm
+LOCATION:COMP 3005A Database Management Systems (Fall 2026)
+DESCRIPTION:In class\, AT 102. Covers lectures 1-10.
+URL:https://brightspace.example.ca/d2l/le/calendar/7104/event/39/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7104_40@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261109T235900
+DTEND;TZID=America/Toronto:20261109T235900
+SUMMARY:Assignment 3 - Due
+LOCATION:COMP 3005A Database Management Systems (Fall 2026)
+DESCRIPTION:Normalization.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7104&db=40
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7104_41@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261123T235900
+DTEND;TZID=America/Toronto:20261123T235900
+SUMMARY:Project Milestone 1 - Due
+LOCATION:COMP 3005A Database Management Systems (Fall 2026)
+DESCRIPTION:Schema + sample data.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7104&db=41
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7104_42@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261207T235900
+DTEND;TZID=America/Toronto:20261207T235900
+SUMMARY:Final Project - Due
+LOCATION:COMP 3005A Database Management Systems (Fall 2026)
+DESCRIPTION:Demo video + repository link.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7104&db=42
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7104_43@brightspace.example.ca
+DTSTART:20261013T040000Z
+DTEND:20261013T040000Z
+SUMMARY:Week 6 Content - Availability Starts
+LOCATION:COMP 3005A Database Management Systems (Fall 2026)
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7105_44@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20260921T153000
+DTEND;TZID=America/Toronto:20260921T172000
+SUMMARY:Lab 1
+LOCATION:BIOL 2200C Cell Biology (Fall 2026)
+DESCRIPTION:SC 3105. Lab coat and goggles required.
+URL:https://brightspace.example.ca/d2l/le/calendar/7105/event/44/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7105_45@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261005T153000
+DTEND;TZID=America/Toronto:20261005T172000
+SUMMARY:Lab 2
+LOCATION:BIOL 2200C Cell Biology (Fall 2026)
+DESCRIPTION:SC 3105. Lab coat and goggles required.
+URL:https://brightspace.example.ca/d2l/le/calendar/7105/event/45/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7105_46@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261019T153000
+DTEND;TZID=America/Toronto:20261019T172000
+SUMMARY:Lab 3
+LOCATION:BIOL 2200C Cell Biology (Fall 2026)
+DESCRIPTION:SC 3105. Lab coat and goggles required.
+URL:https://brightspace.example.ca/d2l/le/calendar/7105/event/46/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7105_47@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261102T153000
+DTEND;TZID=America/Toronto:20261102T172000
+SUMMARY:Lab 4
+LOCATION:BIOL 2200C Cell Biology (Fall 2026)
+DESCRIPTION:SC 3105. Lab coat and goggles required.
+URL:https://brightspace.example.ca/d2l/le/calendar/7105/event/47/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7105_48@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261116T153000
+DTEND;TZID=America/Toronto:20261116T172000
+SUMMARY:Lab 5
+LOCATION:BIOL 2200C Cell Biology (Fall 2026)
+DESCRIPTION:SC 3105. Lab coat and goggles required.
+URL:https://brightspace.example.ca/d2l/le/calendar/7105/event/48/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7105_49@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261009T235900
+DTEND;TZID=America/Toronto:20261009T235900
+SUMMARY:Lab Report 2 - Due
+LOCATION:BIOL 2200C Cell Biology (Fall 2026)
+DESCRIPTION:
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7105&db=49
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7105_50@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261023T235900
+DTEND;TZID=America/Toronto:20261023T235900
+SUMMARY:Lab Report 3 - Due
+LOCATION:BIOL 2200C Cell Biology (Fall 2026)
+DESCRIPTION:
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7105&db=50
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7105_51@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261017T100000
+DTEND;TZID=America/Toronto:20261017T100000
+SUMMARY:Quiz 2 - Availability Starts
+LOCATION:BIOL 2200C Cell Biology (Fall 2026)
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7105_52@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261018T235900
+DTEND;TZID=America/Toronto:20261018T235900
+SUMMARY:Quiz 2 - Availability Ends
+LOCATION:BIOL 2200C Cell Biology (Fall 2026)
+DESCRIPTION:Membranes and transport.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7105&db=52
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7105_53@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261111T190000
+DTEND;TZID=America/Toronto:20261111T210000
+SUMMARY:Midterm Exam
+LOCATION:BIOL 2200C Cell Biology (Fall 2026)
+DESCRIPTION:Room: Richcraft Hall RB 2200. 7:00-9:00 PM.
+URL:https://brightspace.example.ca/d2l/le/calendar/7105/event/53/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7105_54@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261214T140000
+DTEND;TZID=America/Toronto:20261214T170000
+SUMMARY:Final Exam
+LOCATION:BIOL 2200C Cell Biology (Fall 2026)
+DESCRIPTION:Room: Fieldhouse.
+URL:https://brightspace.example.ca/d2l/le/calendar/7105/event/54/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7106_55@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261011T235900
+DTEND;TZID=America/Toronto:20261011T235900
+SUMMARY:Discussion Post 4 - Due
+LOCATION:PHIL 1901A Ethics and Technology (Fall 2026)
+DESCRIPTION:300 words + reply to two classmates.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7106&db=55
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7106_56@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261018T235900
+DTEND;TZID=America/Toronto:20261018T235900
+SUMMARY:Discussion Post 5 - Due
+LOCATION:PHIL 1901A Ethics and Technology (Fall 2026)
+DESCRIPTION:
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7106&db=56
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7106_57@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261025T235900
+DTEND;TZID=America/Toronto:20261025T235900
+SUMMARY:Reflection Essay 1 - Due
+LOCATION:PHIL 1901A Ethics and Technology (Fall 2026)
+DESCRIPTION:1200 words.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7106&db=57
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7106_58@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261122T235900
+DTEND;TZID=America/Toronto:20261122T235900
+SUMMARY:Reflection Essay 2 - Due
+LOCATION:PHIL 1901A Ethics and Technology (Fall 2026)
+DESCRIPTION:
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7106&db=58
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7106_59@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261209T090000
+DTEND;TZID=America/Toronto:20261209T090000
+SUMMARY:Take-home Final - Availability Starts
+LOCATION:PHIL 1901A Ethics and Technology (Fall 2026)
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7106_60@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261211T235900
+DTEND;TZID=America/Toronto:20261211T235900
+SUMMARY:Take-home Final - Availability Ends
+LOCATION:PHIL 1901A Ethics and Technology (Fall 2026)
+DESCRIPTION:Open book. 72 hours.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7106&db=60
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7107_61@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261016T235900
+DTEND;TZID=America/Toronto:20261016T235900
+SUMMARY:Visual Analysis 1 - Due
+LOCATION:ARTH 2100B Renaissance Art (Fall 2026)
+DESCRIPTION:Choose one work from the list.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7107&db=61
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7107_62@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261106T235900
+DTEND;TZID=America/Toronto:20261106T235900
+SUMMARY:Museum Visit Response - Due
+LOCATION:ARTH 2100B Renaissance Art (Fall 2026)
+DESCRIPTION:Visit the National Gallery and respond to one Renaissance work.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7107&db=62
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7107_63@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261127T235900
+DTEND;TZID=America/Toronto:20261127T235900
+SUMMARY:Research Paper - Due
+LOCATION:ARTH 2100B Renaissance Art (Fall 2026)
+DESCRIPTION:2500 words\, Chicago style.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7107&db=63
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7107_64@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20261210T100000
+DTEND;TZID=America/Toronto:20261210T113000
+SUMMARY:Final Slide Test
+LOCATION:ARTH 2100B Renaissance Art (Fall 2026)
+DESCRIPTION:Online. 90 minutes.
+URL:https://brightspace.example.ca/d2l/le/calendar/7107/event/64/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7102_65@brightspace.example.ca
+DTSTART;VALUE=DATE:20261026
+DTEND;VALUE=DATE:20261031
+SUMMARY:Fall Reading Week - No Classes
+LOCATION:MATH 2007B Elementary Calculus II (Fall 2026)
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7201_66@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20270111T000000
+DTEND;TZID=America/Toronto:20270111T000000
+SUMMARY:Course Outline - Availability Starts
+LOCATION:STAT 2607D Introduction to Probability (Winter 2027)
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7202_67@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20270111T000000
+DTEND;TZID=America/Toronto:20270111T000000
+SUMMARY:Course Outline - Availability Starts
+LOCATION:PHYS 1305A Introductory Physics II (Winter 2027)
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7203_68@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20270111T000000
+DTEND;TZID=America/Toronto:20270111T000000
+SUMMARY:Course Outline - Availability Starts
+LOCATION:ENGL 2106C Modern Poetry (Winter 2027)
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7204_69@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20270111T000000
+DTEND;TZID=America/Toronto:20270111T000000
+SUMMARY:Course Outline - Availability Starts
+LOCATION:HIST 2401A Canada since 1867 (Winter 2027)
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7205_70@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20270111T000000
+DTEND;TZID=America/Toronto:20270111T000000
+SUMMARY:Course Outline - Availability Starts
+LOCATION:COMP 2166B Programming with Python (Winter 2027)
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7206_71@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20270111T000000
+DTEND;TZID=America/Toronto:20270111T000000
+SUMMARY:Course Outline - Availability Starts
+LOCATION:SOCI 2010A Classical Social Theory (Winter 2027)
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7207_72@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20270111T000000
+DTEND;TZID=America/Toronto:20270111T000000
+SUMMARY:Course Outline - Availability Starts
+LOCATION:CHEM 1002B General Chemistry II (Winter 2027)
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7201_73@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20270122T235900
+DTEND;TZID=America/Toronto:20270122T235900
+SUMMARY:Assignment 1 - Due
+LOCATION:STAT 2607D Introduction to Probability (Winter 2027)
+DESCRIPTION:
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7201&db=73
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7201_74@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20270203T090000
+DTEND;TZID=America/Toronto:20270203T095000
+SUMMARY:Midterm 1
+LOCATION:STAT 2607D Introduction to Probability (Winter 2027)
+DESCRIPTION:LA B101\, in class.
+URL:https://brightspace.example.ca/d2l/le/calendar/7201/event/74/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7202_75@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20270119T100000
+DTEND;TZID=America/Toronto:20270119T112000
+SUMMARY:Lab 1 - Kinematics
+LOCATION:PHYS 1305A Introductory Physics II (Winter 2027)
+DESCRIPTION:Physics labs\, HP 3rd floor.
+URL:https://brightspace.example.ca/d2l/le/calendar/7202/event/75/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7202_76@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20270129T235900
+DTEND;TZID=America/Toronto:20270129T235900
+SUMMARY:Problem Set 1 - Due
+LOCATION:PHYS 1305A Introductory Physics II (Winter 2027)
+DESCRIPTION:MasteringPhysics.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7202&db=76
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7203_77@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20270127T235900
+DTEND;TZID=America/Toronto:20270127T235900
+SUMMARY:Close Reading 1 - Due
+LOCATION:ENGL 2106C Modern Poetry (Winter 2027)
+DESCRIPTION:
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7203&db=77
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7204_78@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20270205T235900
+DTEND;TZID=America/Toronto:20270205T235900
+SUMMARY:Primary Source Analysis - Due
+LOCATION:HIST 2401A Canada since 1867 (Winter 2027)
+DESCRIPTION:
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7204&db=78
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7205_79@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20270125T235900
+DTEND;TZID=America/Toronto:20270125T235900
+SUMMARY:Assignment 1 - Due
+LOCATION:COMP 2166B Programming with Python (Winter 2027)
+DESCRIPTION:Python basics. Submit .py files.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7205&db=79
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7205_80@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20270120T163000
+DTEND;TZID=America/Toronto:20270120T182000
+SUMMARY:Tutorial 1 - Environment setup
+LOCATION:COMP 2166B Programming with Python (Winter 2027)
+DESCRIPTION:MC 2201.
+URL:https://brightspace.example.ca/d2l/le/calendar/7205/event/80/detailsview
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7206_81@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20270201T235900
+DTEND;TZID=America/Toronto:20270201T235900
+SUMMARY:Response Paper 1 - Due
+LOCATION:SOCI 2010A Classical Social Theory (Winter 2027)
+DESCRIPTION:
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7206&db=81
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7207_82@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20270126T235900
+DTEND;TZID=America/Toronto:20270126T235900
+SUMMARY:Pre-lab Quiz 1 - Due
+LOCATION:CHEM 1002B General Chemistry II (Winter 2027)
+DESCRIPTION:
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=7207&db=82
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7201_83@brightspace.example.ca
+DTSTART;VALUE=DATE:20270215
+DTEND;VALUE=DATE:20270220
+SUMMARY:Winter Break - No Classes
+LOCATION:STAT 2607D Introduction to Probability (Winter 2027)
+DESCRIPTION:
+END:VEVENT
+END:VCALENDAR
