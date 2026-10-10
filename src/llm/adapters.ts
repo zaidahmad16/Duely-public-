@@ -25,7 +25,7 @@ const parseArgs = (a: unknown) => {
 export function openai(cfg: LLMConfig, f: typeof fetch = fetch): LLM {
   const base = (cfg.baseUrl || "https://api.openai.com/v1").replace(/\/+$/, "");
   return {
-    label: `${base.includes("openai.com") ? "OpenAI" : new URL(base).host} · ${cfg.model}`,
+    label: `${base.includes("openai.com") ? "OpenAI" : (/^[a-z]+:\/\/([^/]+)/i.exec(base)?.[1] ?? base)} · ${cfg.model}`,
     async chat(messages: Msg[], opts: ChatOpts = {}): Promise<ChatResult> {
       const msgs = messages.map((m) => {
         if (m.role === "tool") return { role: "tool", tool_call_id: m.toolCallId, content: m.content };

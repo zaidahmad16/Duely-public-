@@ -86,3 +86,22 @@ that server's members). A bot token can't ship inside the app, so this needs a r
   "verified email" + explicit content filter. Not enforceable without collecting keys: proof that a working API
   key exists (the app is open source and local); deliberately not done, since keys must never reach the relay.
   The Privacy Policy rewrite must mention the daily check-in and the 30-day removal.
+
+## P3.5 cloud engine (plan approved; `~/.claude/plans/rippling-greeting-kitten.md`, `docs/PLAN-cloud-engine.md`)
+Phase 0, offline half, done:
+- Host features made swappable in the engine, no desktop behaviour change: UTC offsets (`setOffsetSource`, the one
+  source for all zone math; `ask.ts` dstShift now uses it), SHA-1 (`setSha1Source`), query strings (`qs`), host time
+  zone (`Deps.defaultTz`).
+- `src/gas/main.ts`: UrlFetchApp fetch, Utilities offsets/SHA-1, chunked script-properties store (9 KB values,
+  old chunks removed), `duelyTick` (10-min trigger; schedule kept in properties), `duelySetup`, `duelyStop`;
+  alerts go to an `outbox` (desktop shows them) and email when `email_alerts`.
+- `scripts/build-gas.ts` (`npm run build:gas`): one `out/gas/Code.js` (~130 KB) + `appsscript.json` (scopes:
+  calendar.app.created, external_request, scriptapp, send_mail, userinfo.email).
+- `test/gas.test.ts`: the bundle in a sandbox WITHOUT Intl/fetch/URL/crypto/timers and with Apps Script's property
+  limits syncs the sample feed to exactly the same events/hashes as the desktop engine; trigger setup/stop;
+  chunking; AI requests for all three provider types well-formed through UrlFetchApp. Mutation-checked.
+Phase 0, live half (needs the owner: a test Google account + approving Google's screens): install via the Apps
+Script API, the one-time approval, the shared channel (web app first), Sync now, real run times vs the 6-min limit,
+and confirming Apps Script's V8 settles the engine's promises (UrlFetchApp is synchronous) as the sandbox does.
+Note: with calendar.app.created the script can only manage calendars IT made, so the script owns the calendar
+(single writer); the desktop's own calendar is only for the no-script fallback.

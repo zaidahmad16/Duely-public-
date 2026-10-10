@@ -22,8 +22,17 @@ function fmt(tz: string): Intl.DateTimeFormat {
 
 export type Parts = { y: number; mo: number; d: number; h: number; mi: number; s: number; wd: number };
 
-/** Slow path: ask Intl (used only to build the per-year transition tables). */
+/** Where UTC offsets come from (minutes east of UTC at instant t). Intl by default; a host without
+ *  Intl time zones (Apps Script) supplies its own (src/gas). Used only to build the transition tables. */
+let offsetSource: ((t: number, tz: string) => number) | null = null;
+export function setOffsetSource(f: ((t: number, tz: string) => number) | null): void {
+  offsetSource = f;
+  tables.clear(); fmts.clear();
+}
+
+/** Slow path (used only to build the per-year transition tables). */
 function intlOffset(t: number, tz: string): number {
+  if (offsetSource) return offsetSource(t, tz);
   const p: Record<string, string> = {};
   for (const x of fmt(tz).formatToParts(new Date(t))) p[x.type] = x.value;
   return Math.round((Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second) - Math.floor(t / 1000) * 1000) / 60000);
@@ -56,7 +65,8 @@ function table(tz: string, year: number) {
   return tb;
 }
 
-function offsetMin(t: number, tz: string): number {
+/** Minutes east of UTC in `tz` at instant `t`. */
+export function offsetMin(t: number, tz: string): number {
   if (tz === "Z" || tz === "UTC") return 0;
   const tb = table(tz, new Date(t).getUTCFullYear());
   let o = tb.off[0];
@@ -72,7 +82,7 @@ export function parts(t: number, tz: string): Parts {
 
 export function validZone(tz: string): boolean {
   if (tz === "UTC" || tz === "Z" || knownZones.has(tz)) return true;
-  try { fmt(tz); return true; } catch { return false; }
+  try { if (offsetSource) { offsetSource(Date.now(), tz); return true; } fmt(tz); return true; } catch { return false; }
 }
 
 /** Transition tables are saved in KV between runs so a run never pays for Intl setup. */

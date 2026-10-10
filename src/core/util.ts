@@ -17,9 +17,20 @@ function pyStr(s: string): string {
     c === "\u007f" ? c : "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0"));
 }
 
+/** SHA-1 of the UTF-8 text, as hex. Web Crypto by default; a host without it (Apps Script) supplies
+ *  its own (src/gas), which must give the same bytes: event hashes are compared across hosts. */
+let sha1Source: ((s: string) => string) | null = null;
+export function setSha1Source(f: ((s: string) => string) | null): void { sha1Source = f; }
+
 export async function sha1hex(s: string): Promise<string> {
+  if (sha1Source) return sha1Source(s);
   const buf = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(s));
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/** A query string (URLSearchParams isn't in every host). */
+export function qs(params: Record<string, string>): string {
+  return Object.entries(params).map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join("&");
 }
 
 const NAMED: Record<string, string> = {

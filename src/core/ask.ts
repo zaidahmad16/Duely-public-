@@ -8,7 +8,7 @@
 // reasoning get a second AI call that sees only the selected items, and its answer is checked by
 // code (guard.ts) before it's sent.
 import { nextOccurrence } from "./ical.ts";
-import { type DT, addDays, localDate, strftime, strftimeDate, weekday } from "./time.ts";
+import { type DT, addDays, localDate, offsetMin, strftime, strftimeDate, weekday } from "./time.ts";
 import type { Store } from "./util.ts";
 import { CATEGORIES, category, isWork } from "./kinds.ts";
 import { fetchRss, parseRss } from "./announcements.ts";
@@ -62,13 +62,7 @@ export type Occ = { t: number; allDay: boolean; day: string; it: any };
 
 /** Milliseconds to add so a time moved by whole days keeps its wall-clock time across a DST change. */
 function dstShift(from: number, to: number, tz: string): number {
-  const off = (t: number) => {
-    const p = new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "longOffset" }).formatToParts(new Date(t))
-      .find((x) => x.type === "timeZoneName")?.value ?? "GMT";
-    const m = /GMT([+-])(\d{2}):?(\d{2})?/.exec(p);
-    return m ? (m[1] === "-" ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3] ?? 0)) * 60e3 : 0;
-  };
-  return off(from) - off(to);
+  return (offsetMin(from, tz) - offsetMin(to, tz)) * 60e3;
 }
 
 const parseWhen = (s: string | null | undefined, tz: string): DT | null =>

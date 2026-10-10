@@ -29,7 +29,11 @@ export type Deps = {
   /** a desktop notification; `click` = a link to open when it's clicked */
   notify: (title: string, body: string, click?: string) => Promise<void>;
   fetch: typeof fetch;
+  /** the computer's (or script's) time zone, used when the settings don't name one */
+  defaultTz?: () => string;
 };
+
+const hostTz = (deps: Deps) => deps.defaultTz?.() ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 export const FULL_EVERY_MS = 10 * 60e3;
 export const QUICK_EVERY_MS = 3 * 60e3;          // announcement feeds between full syncs (polite to the school)
@@ -42,7 +46,7 @@ export async function loadCtx(deps: Deps): Promise<Ctx> {
   const saved = (await deps.store.get<any>("config")) ?? {};
   const cfg = { ...DEFAULTS, ...saved };
   cfg.sync_types = { ...DEFAULTS.sync_types, ...(saved.sync_types ?? {}) };
-  const tz = cfg.tz || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const tz = cfg.tz || hostTz(deps);
   return { store: deps.store, cfg, tz, fetch: deps.fetch, llm: await deps.llm() };
 }
 
@@ -184,7 +188,7 @@ export async function runSync(deps: Deps, force = false): Promise<any> {
   }
   // AI reading failing: once a day per reason
   let ai_day = health.ai_day ?? "", ai_reason = health.ai_reason ?? "";
-  const day = today(cfg.tz || Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const day = today(cfg.tz || hostTz(deps));
   const failed = !result.checked_only && /AI failed \(([^)]*)\)/.exec(result.ai ?? "");
   if (failed && (ai_day !== day || ai_reason !== failed[1])) {
     if (await say("Duely's AI reading isn't working right now",
