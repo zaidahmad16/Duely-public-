@@ -206,8 +206,9 @@ export function registerApi(c: Ctx): void {
     const key = await svc.secrets.get("llm_key").catch(() => null);
     if (key) await svc.cloud.setAiKey(key);
     await store.put("config", { ...(await config()), cloud_approved: true, cloud_needs_approval: false });
-    await svc.cloud.sync({ timeoutMs: 150e3 }).catch(() => {});
     c.changed();
+    // approved: answer now (the setup screen shows ✓); the first sync carries on by itself
+    void svc.cloud.sync({ timeoutMs: 150e3 }).catch(() => {}).then(c.changed);
   });
 
   handle("cloudTimer", async (on: boolean) => { if (on) await svc.cloud.start(); else await svc.cloud.stop(); await svc.cloud.refresh(); c.changed(); });
