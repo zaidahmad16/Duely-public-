@@ -119,5 +119,6 @@ Phase 0, live half, in the throwaway test account (zaidahmad181818@gmail.com, Cl
 - Found live and fixed (tests added): a Node-only `process` reference crashed the error path in Apps Script.
 - Setup-guide findings: the Audience "Add users" Save needed a second click; "Publish app" stays disabled until
   the Branding page is complete (check what it needs before telling students to publish).
-- Still open: the automatic 10-min timer's first run (being watched); AI + announcements live (needs a key in the
+- 10-min timer ✓: duelyTick ran by itself (TIME_DRIVEN) at 12:56:55 UTC, 1.3 s.
+- Still open: AI + announcements live (needs a key in the
   test script); laptop-off test over hours.
