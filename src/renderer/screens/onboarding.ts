@@ -7,6 +7,7 @@ import { h } from "../ui/h.ts";
 import { icon, mark } from "../ui/icons.ts";
 import { enter, leave, reduced, wait } from "../ui/motion.ts";
 import { aiSetup } from "../components/aiSetup.ts";
+import { cloudSetup } from "../components/cloudSetup.ts";
 import { TERMS_VERSION, helpLink, legalLine } from "../components/doc.ts";
 import { spinnerButton } from "./settings.ts";
 
@@ -90,28 +91,38 @@ export function onboarding(done: () => void): HTMLElement {
       const connect = h("button", { class: "btn btn-primary", disabled: true }, h("i", { class: "spinner" }), h("span", { class: "btn-label" }, "Connect Google"));
       const next = h("button", { class: "btn btn-primary", hidden: true }, h("span", { class: "btn-label" }, "Continue"));
       next.addEventListener("click", () => void go(2));
+      // after Google is connected: put Duely's engine in the student's Google account (P3.5)
+      const cloud = h("div", { class: "ob-cloud" });
+      const localOnly = h("button", { class: "btn btn-ghost", hidden: true }, "Sync from this computer only");
+      localOnly.addEventListener("click", () => void go(2));
+      const showCloud = () => {
+        if (cloud.firstChild) return;
+        cloud.append(cloudSetup(() => { next.hidden = false; localOnly.hidden = true; next.focus(); }));
+        enter(cloud, { y: 6, dur: 200 });
+        localOnly.hidden = false; next.hidden = true;
+      };
       connect.addEventListener("click", async () => {
         e.textContent = "";
         spinnerButton(connect, true, "Finish in your browser…");
         try {
           await api.connectGoogle(text);
-          connect.hidden = true; next.hidden = false;
+          connect.hidden = true;
           state.replaceChildren(h("span", { class: "connected" }, h("span", { class: "connected-icon" }, icon("check", 14)), "Google Calendar connected"));
           state.firstElementChild!.animate([{ opacity: 0, transform: reduced() ? "none" : "scale(0.96)" }, { opacity: 1, transform: "none" }], { duration: 150, easing: "ease-out" });
-          next.focus();
+          showCloud();
         } catch (x) {
           e.textContent = (x as Error).message;
           spinnerButton(connect, false, "Connect Google");
         }
       });
-      void api.status().then((s) => { if (s.google) { connect.hidden = true; next.hidden = false; state.replaceChildren(h("span", { class: "connected" }, h("span", { class: "connected-icon" }, icon("check", 14)), "Google Calendar connected")); } }).catch(() => {});
+      void api.status().then((s) => { if (s.google) { connect.hidden = true; state.replaceChildren(h("span", { class: "connected" }, h("span", { class: "connected-icon" }, icon("check", 14)), "Google Calendar connected")); showCloud(); } }).catch(() => {});
       return view("Connect Google Calendar", "Duely puts everything in a calendar of its own. It can't see or change your other calendars.",
         [h("ol", { class: "checklist" },
           h("li", null, h("span", null, "Create a ", h("strong", null, "Desktop app"), " OAuth client in Google Cloud.")),
           h("li", null, h("span", null, "Download its JSON file.")),
           h("li", null, h("span", { class: "check-file" }, pick, chosen, file))),
-          state, e],
-        [back(), h("button", { class: "btn btn-ghost", on: { click: () => void go(2) } }, "Skip for now"), connect, next], "2. Google");
+          state, cloud, e],
+        [back(), h("button", { class: "btn btn-ghost", on: { click: () => void go(2) } }, "Skip for now"), localOnly, connect, next], "2. Google");
     },
     // 3. AI (required: Continue only after the connection test passes)
     () => {

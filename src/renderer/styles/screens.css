@@ -212,3 +212,20 @@
 .gate-head { display: grid; gap: 10px; justify-items: start; margin-bottom: 28px; }
 .ai-setup { display: grid; gap: 10px; }
 .ai-setup > .help { margin-top: 2px; }
+
+/* ------------------------------------------------------------------ cloud setup (P3.5) */
+.cloud-setup { display: grid; gap: 10px; margin-top: 8px; }
+.cloud-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.cloud-step { display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: start; }
+.cloud-step-n { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border-strong);
+  font-size: 12px; font-weight: 600; color: var(--text-2); transition: background-color 180ms var(--ease-in-out), color 180ms ease, border-color 180ms ease; }
+.cloud-step.is-now .cloud-step-n { border-color: var(--accent); color: var(--accent-text); }
+.cloud-step.is-done .cloud-step-n { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.cloud-step.is-todo { opacity: 0.55; }
+.cloud-step-title { font-weight: 500; font-size: 14px; padding-top: 1px; }
+.cloud-step-body .help { margin: 4px 0 8px; }
+.row-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.waiting { display: flex; align-items: center; gap: 8px; }
+.spinner.is-on { display: inline-block; }
+.ob-cloud:empty { display: none; }
+.ob-cloud { margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--border); }

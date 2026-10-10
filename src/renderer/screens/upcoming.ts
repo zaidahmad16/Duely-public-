@@ -42,7 +42,7 @@ export function upcomingScreen(app: AppCtx): Screen {
     statusLine.className = ["status-text", problem ? "is-warn" : ""].join(" ");
     statusLine.textContent = problem
       ? `Last sync didn't finish · ${ago(s.sync.time * 1000)}`
-      : `${s.sync.needsGoogle ? "Read from Brightspace" : "Synced"} ${ago(s.sync.time * 1000)} · ${s.sync.items} item${s.sync.items === 1 ? "" : "s"}`;
+      : `${s.engine === "cloud" ? "Updated by Duely in the cloud" : s.sync.needsGoogle ? "Read from Brightspace" : "Synced"} ${ago(s.sync.time * 1000)} · ${s.sync.items} item${s.sync.items === 1 ? "" : "s"}`;
   }
 
   syncBtn.addEventListener("click", async () => {

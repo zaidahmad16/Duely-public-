@@ -183,7 +183,8 @@ export function registerApi(c: Ctx): void {
   });
 
   // ---- cloud setup (P3.5): Apps Script API on? → install → the student approves once → cloud mode
-  handle("cloudCheck", async () => ({ apiEnabled: await svc.scriptApi().apiEnabled(), installed: await cloudOn(), bundle: !!svc.bundle() }));
+  handle("cloudCheck", async () => ({ apiEnabled: await svc.scriptApi().apiEnabled(), installed: await cloudOn(),
+    approved: !!(await config()).cloud_approved, bundle: !!svc.bundle() }));
 
   handle("cloudInstall", async () => {
     const bundle = svc.bundle();

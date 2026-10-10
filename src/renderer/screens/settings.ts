@@ -2,10 +2,12 @@
 // is on the left, the control on the right). Toggles save at once, quietly; typed values save on
 // Enter / leaving the field with a small "Saved" toast. Keys are masked and never shown again.
 import type { CapResult, Provider, Settings, SettingsPatch } from "../../shared/types.ts";
+import { cloudSetup } from "../components/cloudSetup.ts";
 import { openDoc } from "../components/doc.ts";
 import { toast } from "../components/toast.ts";
 import { toggle } from "../components/toggle.ts";
 import { api } from "../ui/api.ts";
+import { ago } from "../ui/format.ts";
 import { clear, h } from "../ui/h.ts";
 import { icon } from "../ui/icons.ts";
 import { enter, expandIn, stagger } from "../ui/motion.ts";
@@ -230,8 +232,27 @@ export function settingsScreen(app: AppCtx): Screen {
         try { await api.disconnectGoogle(); await app.refreshStatus(); toast("Google disconnected"); paint(); } catch (e) { toast((e as Error).message); }
       });
     });
+    // Duely's engine in the student's Google account (P3.5)
+    const c = app.status?.cloud;
+    let cloudRows: Node[] = [];
+    if (connected && c) {
+      const checked = c.readAt ? `checked ${ago(c.readAt)}` : "not checked yet";
+      cloudRows = [
+        settingRow("Duely in your Google account", c.running ? `Running, every 10 minutes · ${checked}` : `Paused · ${checked}`,
+          toggle(c.running, async (v) => { await api.cloudTimer(v); await app.refreshStatus(); }, { label: "Duely in your Google account" })),
+        settingRow("Email me alerts", "When this computer is off, alerts go to your Gmail instead.",
+          toggle(c.emailAlerts, async (v) => { await api.cloudEmail(v); await app.refreshStatus(); }, { label: "Email me alerts" })),
+      ];
+    } else if (connected) {
+      const wrap = h("div", { class: "setting-wide" });
+      const start = h("button", { class: "btn btn-secondary btn-sm" }, "Set up");
+      start.addEventListener("click", () => { start.remove(); wrap.append(cloudSetup(() => void app.refreshStatus().then(paint))); expandIn(wrap); });
+      const row = settingRow("Keep syncing when this computer is off", "Duely can run in your own Google account, for free.", start, { stack: false });
+      cloudRows = [row, wrap];
+    }
     return section("Google",
       settingRow("Google account", "Duely only sees the one calendar it creates.", acct),
+      ...cloudRows,
       settingRow("Calendar name", null, h("span", { class: "value-text" }, st.calendarName)),
       settingRow("Start at login", login?.can ? "Duely keeps syncing in the background." : "Available in the installed app.",
         toggle(!!login?.on, async (v) => { await api.setStartAtLogin(v); }, { label: "Start at login", disabled: !login?.can })),

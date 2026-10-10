@@ -140,6 +140,13 @@ function bannerSpecs(s: Status | null): BannerSpec[] {
   if (!s.aiReady && route === "settings") {
     out.push({ id: "ai", tone: "warn", title: "Your AI isn't set up", text: "Duely needs a working AI. Test the connection under AI to finish." });
   }
+  if (s.cloud?.needsApproval) {
+    out.push({ id: "cloud-approve", tone: "warn", title: "Approve Duely's update", text: "The new version needs your OK in Google. Click Run, then allow.",
+      action: { label: "Open it", run: () => void api.openLink(s.cloud!.editor) } });
+  } else if (s.cloud && s.cloud.readAt && Date.now() - s.cloud.readAt > 30 * 60e3 && navigator.onLine) {
+    out.push({ id: "cloud-quiet", tone: "warn", title: "Can't reach Duely in your Google account", text: "Showing the last update. Duely keeps trying.",
+      action: { label: "Try again", run: () => void ctx.sync() } });
+  }
   if (s.weakKeychain) {
     out.push({ id: "keyring", tone: "info", title: "Saved keys are only lightly protected", text: "This computer has no keyring, so the system can't encrypt them." });
   }
