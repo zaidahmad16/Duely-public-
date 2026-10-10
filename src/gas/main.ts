@@ -9,7 +9,7 @@ import { makeLLM } from "../llm/adapters.ts";
 import type { Provider } from "../llm/types.ts";
 import { type Deps, FULL_EVERY_MS, newSched, tick } from "../node/runner.ts";
 
-declare const UrlFetchApp: any, Utilities: any, PropertiesService: any, ScriptApp: any, Session: any, MailApp: any;
+declare const UrlFetchApp: any, Utilities: any, PropertiesService: any, ScriptApp: any, Session: any, MailApp: any, ContentService: any;
 
 // ---------------------------------------------------------------- host services
 
@@ -50,34 +50,38 @@ export function gasSha1(s: string): string {
 const CHUNK = 8000;   // properties: 9 KB per value
 
 /** The engine's key-value store over script properties. Long values are split into numbered chunks;
- *  a value is written whole or not at all (chunks first, then the index that points at them). */
-export function propsStore(props = PropertiesService.getScriptProperties()): Store & { bytes(): number } {
+ *  a value is written whole or not at all (chunks first, then the index that points at them). Properties
+ *  are synchronous, so there are sync versions too (the web app channel must answer synchronously). */
+export function propsStore(props = PropertiesService.getScriptProperties()): Store & { getSync<T = any>(key: string): T | null; putSync(key: string, value: unknown): void; bytes(): number } {
+  const getSync = <T = any>(key: string): T | null => {
+    const head = props.getProperty(`v:${key}`);
+    if (head === null) return null;
+    const m = /^chunks:(\d+):(\w+)$/.exec(head);
+    if (!m) return JSON.parse(head) as T;
+    let text = "";
+    for (let i = 0; i < Number(m[1]); i++) text += props.getProperty(`c:${key}:${m[2]}:${i}`) ?? "";
+    return JSON.parse(text) as T;
+  };
+  const putSync = (key: string, value: unknown): void => {
+    const text = JSON.stringify(value);
+    if (text === undefined) throw new Error(`refusing to store undefined under ${key}`);
+    const old = props.getProperty(`v:${key}`);
+    if (text.length <= CHUNK) props.setProperty(`v:${key}`, text);
+    else {
+      const gen = Date.now().toString(36);
+      const n = Math.ceil(text.length / CHUNK);
+      const batch: Record<string, string> = {};
+      for (let i = 0; i < n; i++) batch[`c:${key}:${gen}:${i}`] = text.slice(i * CHUNK, (i + 1) * CHUNK);
+      props.setProperties(batch);
+      props.setProperty(`v:${key}`, `chunks:${n}:${gen}`);
+    }
+    const m = old && /^chunks:(\d+):(\w+)$/.exec(old);       // the previous chunks are now unused
+    if (m) for (let i = 0; i < Number(m[1]); i++) props.deleteProperty(`c:${key}:${m[2]}:${i}`);
+  };
   return {
-    async get<T = any>(key: string): Promise<T | null> {
-      const head = props.getProperty(`v:${key}`);
-      if (head === null) return null;
-      const m = /^chunks:(\d+):(\w+)$/.exec(head);
-      if (!m) return JSON.parse(head) as T;
-      let text = "";
-      for (let i = 0; i < Number(m[1]); i++) text += props.getProperty(`c:${key}:${m[2]}:${i}`) ?? "";
-      return JSON.parse(text) as T;
-    },
-    async put(key: string, value: unknown): Promise<void> {
-      const text = JSON.stringify(value);
-      if (text === undefined) throw new Error(`refusing to store undefined under ${key}`);
-      const old = props.getProperty(`v:${key}`);
-      if (text.length <= CHUNK) props.setProperty(`v:${key}`, text);
-      else {
-        const gen = Date.now().toString(36);
-        const n = Math.ceil(text.length / CHUNK);
-        const batch: Record<string, string> = {};
-        for (let i = 0; i < n; i++) batch[`c:${key}:${gen}:${i}`] = text.slice(i * CHUNK, (i + 1) * CHUNK);
-        props.setProperties(batch);
-        props.setProperty(`v:${key}`, `chunks:${n}:${gen}`);
-      }
-      const m = old && /^chunks:(\d+):(\w+)$/.exec(old);       // the previous chunks are now unused
-      if (m) for (let i = 0; i < Number(m[1]); i++) props.deleteProperty(`c:${key}:${m[2]}:${i}`);
-    },
+    getSync, putSync,
+    async get<T = any>(key: string) { return getSync<T>(key); },
+    async put(key: string, value: unknown) { putSync(key, value); },
     bytes() {
       const all = props.getProperties();
       return Object.entries(all).reduce((n, [k, v]) => n + k.length + String(v).length, 0);
@@ -119,12 +123,13 @@ function deps(store: Store): Deps {
   };
 }
 
-/** The 10-minute trigger. */
-export async function duelyTick(now = Date.now()): Promise<{ synced: boolean }> {
+/** The 10-minute trigger (and Sync now, with force). */
+export async function duelyTick(now = Date.now(), force = false): Promise<{ synced: boolean }> {
   install();
   const store = propsStore();
   const saved = (await store.get<any>("sched")) ?? {};
   const sched = newSched();
+  if (force) saved.lastFull = 0;
   // a trigger "every 10 minutes" can fire a little early: count a full sync as due a bit before 10 min
   sched.lastFull = (saved.lastFull ?? 0) - 90e3;
   sched.lastQuick = saved.lastQuick ?? 0;
@@ -133,8 +138,12 @@ export async function duelyTick(now = Date.now()): Promise<{ synced: boolean }> 
   return r;
 }
 
-/** Run once by the student (approves the script's permissions), then by itself never again. */
+/** Run once by the student (approves the script's permissions), then by itself never again. A first
+ *  config can come with the project (global DUELY_CONFIG, written by the installer). */
 export function duelySetup(): string {
+  const props = PropertiesService.getScriptProperties();
+  const first = (globalThis as any).DUELY_CONFIG;
+  if (first && props.getProperty("v:config") === null) props.setProperty("v:config", JSON.stringify(first));
   for (const t of ScriptApp.getProjectTriggers()) if (t.getHandlerFunction() === "duelyTick") ScriptApp.deleteTrigger(t);
   ScriptApp.newTrigger("duelyTick").timeBased().everyMinutes(10).create();
   return "Duely is set up: it checks Brightspace every 10 minutes.";
@@ -146,4 +155,46 @@ export function duelyStop(): string {
   return "Duely's timer is off.";
 }
 
-export { FULL_EVERY_MS };
+// ---------------------------------------------------------------- the desktop app's channel
+// A private web app ("execute as me", "only myself"): only the student, signed in, can call it.
+
+const json = (data: unknown) => ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+
+/** GET: what the desktop shows (last sync, health, open alerts, storage use). Synchronous on purpose:
+ *  a web app's answer is read as soon as doGet returns. */
+export function readState(): any {
+  const store = propsStore();
+  return { ok: true, state: store.getSync("state"), health: store.getSync("health"), sched: store.getSync("sched"),
+    outbox: store.getSync("outbox") ?? [], bytes: store.bytes(), syncQueued: !!store.getSync("sync-queued"),
+    triggers: ScriptApp.getProjectTriggers().map((t: any) => t.getHandlerFunction()) };
+}
+
+/** POST {op}: "sync" (queue a run within about a minute), "config" (merge settings), "secret"
+ *  ({name, value}), "outbox-clear". Synchronous, like readState. */
+export function command(body: any): any {
+  const store = propsStore();
+  const props = PropertiesService.getScriptProperties();
+  if (body?.op === "sync") {
+    if (!store.getSync("sync-queued")) {
+      ScriptApp.newTrigger("duelySyncNow").timeBased().after(1000).create();
+      store.putSync("sync-queued", Date.now());
+    }
+    return { ok: true, queued: true };
+  }
+  if (body?.op === "config") { store.putSync("config", { ...(store.getSync<any>("config") ?? {}), ...(body.config ?? {}) }); return { ok: true }; }
+  if (body?.op === "secret" && ["llm_key"].includes(body.name)) {
+    if (body.value) props.setProperty(`secret:${body.name}`, String(body.value)); else props.deleteProperty(`secret:${body.name}`);
+    return { ok: true };
+  }
+  if (body?.op === "outbox-clear") { store.putSync("outbox", []); return { ok: true }; }
+  return { ok: false, error: `unknown op ${body?.op}` };
+}
+
+/** The one-off run Sync now queued: sync, then remove its trigger. */
+export async function duelySyncNow(): Promise<{ synced: boolean }> {
+  for (const t of ScriptApp.getProjectTriggers()) if (t.getHandlerFunction() === "duelySyncNow") ScriptApp.deleteTrigger(t);
+  PropertiesService.getScriptProperties().deleteProperty("v:sync-queued");
+  return duelyTick(Date.now(), true);
+}
+
+export { FULL_EVERY_MS, json };

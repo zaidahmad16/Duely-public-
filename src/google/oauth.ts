@@ -32,9 +32,9 @@ export function pkce(): { verifier: string; challenge: string } {
   return { verifier, challenge: b64url(createHash("sha256").update(verifier).digest()) };
 }
 
-export function authUrl(client: Client, redirect: string, challenge: string, state: string): string {
+export function authUrl(client: Client, redirect: string, challenge: string, state: string, scopes: string[] = [SCOPE]): string {
   return `${AUTH_URL}?${new URLSearchParams({
-    client_id: client.client_id, redirect_uri: redirect, response_type: "code", scope: SCOPE,
+    client_id: client.client_id, redirect_uri: redirect, response_type: "code", scope: scopes.join(" "),
     code_challenge: challenge, code_challenge_method: "S256", state,
     access_type: "offline", prompt: "consent",                 // always hand back a refresh token
   })}`;
@@ -44,7 +44,9 @@ const PAGE = (msg: string) => `<!doctype html><meta charset="utf-8"><title>Duely
   + `<body style="font:16px system-ui;max-width:32em;margin:15vh auto;text-align:center">${msg}</body>`;
 
 /** Opens Google's consent page and waits for the redirect. Resolves with the refresh token. */
-export async function connect(client: Client, opts: { open: (url: string) => Promise<void> | void; fetch?: typeof fetch; timeoutMs?: number }): Promise<string> {
+export async function connect(client: Client, opts: { open: (url: string) => Promise<void> | void; fetch?: typeof fetch; timeoutMs?: number;
+  /** permissions to ask for (default: Duely's own calendar only) */ scopes?: string[] }): Promise<string> {
+  const scopes = opts.scopes ?? [SCOPE];
   const f = opts.fetch ?? fetch;
   const { verifier, challenge } = pkce();
   const state = b64url(randomBytes(16));
@@ -63,7 +65,7 @@ export async function connect(client: Client, opts: { open: (url: string) => Pro
   const redirect = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   const timer = setTimeout(() => done({ error: "timeout" }), opts.timeoutMs ?? 5 * 60e3);
   try {
-    await opts.open(authUrl(client, redirect, challenge, state));
+    await opts.open(authUrl(client, redirect, challenge, state, scopes));
     const r = await got;
     if (r.error === "timeout") throw new Error("Google sign-in timed out. Try connecting again.");
     if (r.error === "access_denied") throw new Error("Google sign-in was cancelled.");
@@ -76,7 +78,7 @@ export async function connect(client: Client, opts: { open: (url: string) => Pro
     let tok: any = {};
     try { tok = JSON.parse(text); } catch { /* reported below */ }
     if (res.status !== 200 || !tok.refresh_token) throw new Error(`Google didn't finish the sign-in: ${tok.error_description ?? tok.error ?? text.slice(0, 200)}`);
-    if (typeof tok.scope === "string" && !tok.scope.split(" ").includes(SCOPE)) {
+    if (typeof tok.scope === "string" && !scopes.every((s) => tok.scope.split(" ").includes(s))) {
       throw new Error("Google sign-in finished without calendar access. Connect again and tick the calendar permission.");
     }
     return tok.refresh_token;

@@ -102,9 +102,13 @@ async function sandbox(feed = () => FEED, ai?: (url: string, o: any) => [number,
       getOAuthToken: () => "token",
       getProjectTriggers: () => triggers,
       deleteTrigger: (t: any) => triggers.splice(triggers.indexOf(t), 1),
-      newTrigger: (fn: string) => ({ timeBased: () => ({ everyMinutes: (n: number) => ({ create: () => { triggers.push({ fn, n, getHandlerFunction: () => fn }); } }) }) }),
+      newTrigger: (fn: string) => ({ timeBased: () => ({
+        everyMinutes: (n: number) => ({ create: () => { triggers.push({ fn, n, getHandlerFunction: () => fn }); } }),
+        after: (ms: number) => ({ create: () => { triggers.push({ fn, after: ms, getHandlerFunction: () => fn }); } }),
+      }) }),
     },
     MailApp: { sendEmail() {} },
+    ContentService: { MimeType: { JSON: "json" }, createTextOutput: (text: string) => ({ text, setMimeType() { return this; } }) },
   };
   const ctx = vm.createContext(g);
   // what Apps Script doesn't give a script (or doesn't reliably): the bundle must not need any of it
@@ -196,4 +200,28 @@ test("AI from inside Apps Script: each provider type gets a well-formed request 
     assert.ok(keySent, `${provider}: key sent (${auth})`);
     assert.ok(s.api.events().length >= 4, `${provider}: the AI failing falls back to the rules, and the calendar still fills`);
   }
+});
+
+test("the desktop's channel (web app): doGet/doPost answer synchronously; Sync now queues one run", async () => {
+  const s = await sandbox();
+  const call = (src: string) => JSON.parse(vm.runInContext(src, s.ctx).text);
+  const empty = call("doGet()");
+  assert.equal(empty.ok, true);
+  assert.equal(empty.state, null, "nothing synced yet");
+  assert.deepEqual(call(`doPost({ postData: { contents: JSON.stringify({ op: "config", config: { digest_time: "08:15" } }) } })`), { ok: true });
+  assert.equal(JSON.parse(s.props.m.get("v:config")!).digest_time, "08:15", "merged into the settings");
+  assert.equal(JSON.parse(s.props.m.get("v:config")!).feed_url, FEED_URL, "the rest kept");
+  call(`doPost({ postData: { contents: JSON.stringify({ op: "secret", name: "llm_key", value: "k-9" }) } })`);
+  assert.equal(s.props.m.get("secret:llm_key"), "k-9");
+  assert.equal(call(`doPost({ postData: { contents: '{"op":"sync"}' } })`).queued, true);
+  call(`doPost({ postData: { contents: '{"op":"sync"}' } })`);
+  assert.equal(s.triggers.filter((t) => t.fn === "duelySyncNow").length, 1, "two taps: one queued run");
+  assert.equal(call("doGet()").syncQueued, true);
+  const r = await s.run("duelySyncNow");
+  assert.equal(r.synced, true);
+  assert.equal(s.triggers.filter((t) => t.fn === "duelySyncNow").length, 0, "the one-off trigger removed itself");
+  const after = call("doGet()");
+  assert.equal(after.syncQueued, false);
+  assert.ok(after.state.items.length >= 4, "the desktop can read the result");
+  assert.equal(call(`doPost({ postData: { contents: "not json" } })`).ok, false);
 });

@@ -29,8 +29,18 @@ export async function buildGas(timeZone = "America/Toronto"): Promise<{ code: st
 function duelyTick() { return Duely.duelyTick(); }
 function duelySetup() { return Duely.duelySetup(); }
 function duelyStop() { return Duely.duelyStop(); }
+function duelySyncNow() { return Duely.duelySyncNow(); }
+// The desktop app's channel, deployed as a private web app. Both answer synchronously: a web app's reply
+// is read as soon as the function returns (Sync now queues a run instead of waiting for it).
+function doGet() { return Duely.json(Duely.readState()); }
+function doPost(e) {
+  var body;
+  try { body = JSON.parse((e && e.postData && e.postData.contents) || "{}"); } catch (x) { return Duely.json({ ok: false, error: "bad JSON" }); }
+  return Duely.json(Duely.command(body));
+}
 `;
-  const manifest = JSON.stringify({ timeZone, runtimeVersion: "V8", exceptionLogging: "STACKDRIVER", oauthScopes: SCOPES }, null, 2);
+  const manifest = JSON.stringify({ timeZone, runtimeVersion: "V8", exceptionLogging: "STACKDRIVER", oauthScopes: SCOPES,
+    webapp: { executeAs: "USER_DEPLOYING", access: "MYSELF" } }, null, 2);
   return { code, manifest };
 }
 
