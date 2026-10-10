@@ -29,10 +29,12 @@ is separate and must stay untouched; code is copied from it, never personal data
   `DUELY_API_KEY=$(python3 -c "import json;print(json.load(open('/home/zaid/.config/syllabus/config.json'))['mistral_key'])") DUELY_PROVIDER=openai DUELY_BASE_URL=https://api.mistral.ai/v1 DUELY_MODEL=ministral-14b-latest`
 
 ## State (2026-10-09, evening)
-- `main`: P0 + P1 (461d80c), CI green.
-- Branch `p2-google-sync`: P2 code done, see `docs/PROGRESS.md`. Left: the live test (connect a Google
-  account with the student flow, sync the sample feed into the new "Brightspace" calendar). Needs the user
-  to click through Google's consent page in their browser; never drive it for them.
+- `main`: P0 + P1 + P2 code (CI green on 3 OSes). See `docs/PROGRESS.md`.
+- PENDING (user said "not now"): P2's live test, connecting a Google account with the student flow and syncing
+  the sample feed into a new "Brightspace (Duely test)" calendar. The user has to click through Google's
+  consent page. Offer to reuse their Desktop client (~/.config/syllabus/client_secret.json) with a temp
+  DUELY_HOME, or have them make a fresh one. Don't drive the consent page for them.
+- Next: P3 UI (wizard, Upcoming, Settings; also show the stored proposals).
 - Running the GUI headless: `env -u DBUS_SESSION_BUS_ADDRESS DUELY_HOME=<tmp> dbus-run-session -- xvfb-run -a npx electron . --no-sandbox`
   (own D-Bus session so nothing reaches the real desktop; `DUELY_DEBUG=1` logs ticks and notifications).
 

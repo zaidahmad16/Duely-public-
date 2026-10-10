@@ -11,7 +11,7 @@ Plan: see the approved plan (milestones P0–P7). Updated 2026-10-09.
   - `src/node/store.ts`: atomic, validated JSON key-value store with `.bak` fallback.
   - `src/cli.ts`: headless `sync` / `test-ai` (verified live with Mistral via the OpenAI-compatible adapter).
   - Tests: 114 pass (ported engine suites, chaos with a fake LLM, oracle, adapters, store).
-- **P2 code done** (branch `p2-google-sync`); waiting on the live Google test (the done-criterion).
+- **P2 code done** (on main, CI green). The live Google test (the done-criterion) is postponed by the user.
   - `src/google/oauth.ts`: the student's "Desktop app" client JSON, loopback redirect on 127.0.0.1 + PKCE,
     scope `calendar.app.created` (Duely only sees the calendar it creates), cached access tokens.
   - `src/node/secrets.ts`: secrets encrypted through an injected cipher (Electron `safeStorage`); refuses
