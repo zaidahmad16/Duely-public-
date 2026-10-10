@@ -47,6 +47,7 @@ export function registerApi(c: Ctx): void {
       onboarded: !!cfg.onboarded,
       feedSet: !!cfg.feed_url,
       google: await svc.secrets.has("google_refresh"),
+      googleClient: await svc.secrets.has("google_client"),
       aiReady: aiReady(cfg, (await svc.secrets.get("llm_key").catch(() => null)) ?? ""),
       weakKeychain: svc.weakKeychain,
       startAtLogin: { can: canStartAtLogin(), on: startsAtLogin() },

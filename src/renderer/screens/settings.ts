@@ -202,15 +202,19 @@ export function settingsScreen(app: AppCtx): Screen {
     const file = h("input", { type: "file", accept: ".json,application/json", class: "sr-only", attrs: { "aria-label": "Google client file" } });
     if (connected) acct.append(h("span", { class: "state-ok" }, icon("check", 14), "Connected"));
     else {
-      const pick = h("button", { class: "btn btn-primary btn-sm" }, h("span", { class: "btn-label" }, "Connect Google"));
-      pick.addEventListener("click", () => file.click());
-      file.addEventListener("change", async () => {
-        const f = file.files?.[0]; if (!f) return;
+      // with a client saved before, connecting again doesn't need the file
+      const saved = !!app.status?.googleClient;
+      const pick = h("button", { class: "btn btn-primary btn-sm" }, h("i", { class: "spinner" }), h("span", { class: "btn-label" }, "Connect Google"));
+      const other = h("button", { class: "btn btn-ghost btn-sm", hidden: !saved }, "Use a different client file");
+      const connect = async (json?: string) => {
         spinnerButton(pick, true, "Finish in your browser…");
-        try { await api.connectGoogle(await f.text()); await app.refreshStatus(); toast("Google connected"); paint(); }
+        try { await api.connectGoogle(json); await app.refreshStatus(); toast("Google connected"); paint(); }
         catch (e) { toast((e as Error).message); spinnerButton(pick, false, "Connect Google"); }
-      });
-      acct.append(h("span", { class: "faint" }, "Not connected"), pick, file);
+      };
+      pick.addEventListener("click", () => (saved ? void connect() : file.click()));
+      other.addEventListener("click", () => file.click());
+      file.addEventListener("change", async () => { const f = file.files?.[0]; if (f) await connect(await f.text()); });
+      acct.append(h("span", { class: "faint" }, "Not connected"), other, pick, file);
     }
     const login = app.status?.startAtLogin;
     const disc = h("button", { class: "btn btn-quiet-danger btn-sm" }, "Disconnect");
@@ -241,6 +245,7 @@ export function settingsScreen(app: AppCtx): Screen {
       settingRow("Duely", `Version ${app.status?.version ?? ""}`, null),
       settingRow("Terms of Service", null, link("Read", () => openDoc("terms"))),
       settingRow("Privacy Policy", "Your data stays on this computer, except what goes to the services you connect.", link("Read", () => openDoc("privacy"))),
+      settingRow("Setup guide", "Step by step: Brightspace, Google, your AI, announcements.", link("Read", () => openDoc("setup"))),
       settingRow("Source code", "Open source under the MIT License.", link("GitHub", () => void api.openLink("https://github.com/zaidahmad16/Duely-public-"))));
   }
 

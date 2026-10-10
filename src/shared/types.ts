@@ -52,6 +52,8 @@ export type Status = {
   onboarded: boolean;
   feedSet: boolean;
   google: boolean;
+  /** a Google client file was given before (reconnecting doesn't need it again) */
+  googleClient: boolean;
   /** the AI is set up and its connection test passed (required to use the app) */
   aiReady: boolean;
   weakKeychain: boolean;

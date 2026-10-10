@@ -10,15 +10,24 @@ export function markdown(md: string, openLink: (url: string) => void): DocumentF
     if (!l.trim()) { i++; continue; }
     const head = /^(#{1,3})\s+(.*)$/.exec(l);
     if (head) { frag.append(h(`h${head[1].length}` as "h1", null, inline(head[2], openLink))); i++; continue; }
-    if (/^\s*[-*]\s/.test(l)) {
-      const ul = h("ul");
-      while (i < lines.length && /^\s*[-*]\s/.test(lines[i])) ul.append(h("li", null, inline(lines[i++].replace(/^\s*[-*]\s/, ""), openLink)));
-      frag.append(ul); continue;
-    }
-    if (/^\s*\d+\.\s/.test(l)) {
-      const ol = h("ol");
-      while (i < lines.length && /^\s*\d+\.\s/.test(lines[i])) ol.append(h("li", null, inline(lines[i++].replace(/^\s*\d+\.\s/, ""), openLink)));
-      frag.append(ol); continue;
+    const list = /^([-*]|\d+\.)\s/.exec(l);
+    if (list) {
+      const ordered = /\d/.test(list[1]);
+      const el = h(ordered ? "ol" : "ul");
+      const item = ordered ? /^\d+\.\s/ : /^[-*]\s/;
+      while (i < lines.length && (item.test(lines[i]) || /^\s{2,}\S/.test(lines[i]) || (!lines[i].trim() && /^\s{2,}\S/.test(lines[i + 1] ?? "")))) {
+        const line = lines[i++];
+        if (item.test(line)) { el.append(h("li", null, inline(line.replace(item, ""), openLink))); continue; }
+        if (!line.trim()) continue;
+        // indented under the last item: a nested bullet, or more text for it
+        const li = el.lastElementChild ?? el.appendChild(h("li"));
+        const sub = /^\s+[-*]\s/.exec(line);
+        if (sub) {
+          const ul = li.lastElementChild?.tagName === "UL" ? li.lastElementChild : li.appendChild(h("ul"));
+          ul.append(h("li", null, inline(line.replace(/^\s+[-*]\s/, ""), openLink)));
+        } else li.append(h("p", null, inline(line.trim(), openLink)));
+      }
+      frag.append(el); continue;
     }
     if (l.trim().startsWith("|")) {
       const rows: string[][] = [];
@@ -33,7 +42,7 @@ export function markdown(md: string, openLink: (url: string) => void): DocumentF
       continue;
     }
     const para: string[] = [];
-    while (i < lines.length && lines[i].trim() && !/^(#|\s*[-*]\s|\s*\d+\.\s|\s*\|)/.test(lines[i])) para.push(lines[i++]);
+    while (i < lines.length && lines[i].trim() && !/^(#|[-*]\s|\d+\.\s|\s*\|)/.test(lines[i])) para.push(lines[i++]);
     frag.append(h("p", null, inline(para.join(" "), openLink)));
   }
   return frag;

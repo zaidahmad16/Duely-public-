@@ -7,7 +7,7 @@ import { h } from "../ui/h.ts";
 import { icon, mark } from "../ui/icons.ts";
 import { enter, leave, reduced, wait } from "../ui/motion.ts";
 import { aiSetup } from "../components/aiSetup.ts";
-import { TERMS_VERSION, legalLine } from "../components/doc.ts";
+import { TERMS_VERSION, helpLink, legalLine } from "../components/doc.ts";
 import { spinnerButton } from "./settings.ts";
 
 const STEPS = 5;
@@ -42,9 +42,9 @@ export function onboarding(done: () => void): HTMLElement {
     (el.querySelector("input:not([type=file]), button.btn-primary") as HTMLElement | null)?.focus();
   }
 
-  function view(title: string, text: string, body: Node[], actions: Node[]): HTMLElement {
+  function view(title: string, text: string, body: Node[], actions: Node[], help?: string): HTMLElement {
     return h("section", { class: "ob-step" },
-      h("h1", { class: "ob-title" }, title), h("p", { class: "ob-text" }, text),
+      h("h1", { class: "ob-title" }, title), h("p", { class: "ob-text" }, text, help ? [" ", helpLink(help)] : null),
       h("div", { class: "ob-body" }, body), h("div", { class: "ob-actions" }, actions));
   }
 
@@ -70,7 +70,7 @@ export function onboarding(done: () => void): HTMLElement {
       return view("Connect Brightspace", "Duely reads your course calendar to find deadlines, tests and classes.",
         [h("label", { class: "field-label" }, "Brightspace calendar link"), inp, e,
           h("p", { class: "help" }, "In Brightspace, open Calendar → Subscribe, and copy the link it shows.")],
-        [legalLine(), next]);
+        [legalLine(), next], "1. Your Brightspace");
     },
     // 2. Google
     () => {
@@ -111,7 +111,7 @@ export function onboarding(done: () => void): HTMLElement {
           h("li", null, h("span", null, "Download its JSON file.")),
           h("li", null, h("span", { class: "check-file" }, pick, chosen, file))),
           state, e],
-        [back(), h("button", { class: "btn btn-ghost", on: { click: () => void go(2) } }, "Skip for now"), connect, next]);
+        [back(), h("button", { class: "btn btn-ghost", on: { click: () => void go(2) } }, "Skip for now"), connect, next], "2. Google");
     },
     // 3. AI (required: Continue only after the connection test passes)
     () => {
@@ -126,7 +126,7 @@ export function onboarding(done: () => void): HTMLElement {
         next.disabled = !st.aiReady;
       }).catch(() => {});
       return view("Choose your AI", "Duely uses one AI of your choice to answer questions and read announcements. Your key stays on this computer.",
-        [setup.el], [back(), next]);
+        [setup.el], [back(), next], "3. Your AI");
     },
     // 4. More context (optional)
     () => {
@@ -147,7 +147,7 @@ export function onboarding(done: () => void): HTMLElement {
           e,
           h("div", { class: "field is-muted" }, h("label", { class: "field-label" }, "Timetable screenshot ", h("span", { class: "optional" }, "Optional")),
             h("div", { class: "dropzone" }, icon("upload", 16, "faint"), h("span", null, "Screenshot import is coming soon")))],
-        [back(), h("button", { class: "btn btn-ghost", on: { click: () => void go(4) } }, "Skip for now"), next]);
+        [back(), h("button", { class: "btn btn-ghost", on: { click: () => void go(4) } }, "Skip for now"), next], "4. Course announcements");
     },
     // 5. Notifications
     () => {

@@ -26,6 +26,9 @@ npm run typecheck
 npm run dist       # build installers for this OS
 ```
 
+## Setting up
+See the **[setup guide](docs/SETUP.md)**: your Brightspace calendar link, a Google client, your AI key, and course announcements. It's also inside the app (Settings → About → Setup guide, and "Step-by-step help" on each setup step).
+
 ## Terms and privacy
 - [Terms of Service](docs/TERMS.md)
 - [Privacy Policy](docs/PRIVACY.md)

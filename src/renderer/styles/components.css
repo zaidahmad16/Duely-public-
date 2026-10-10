@@ -201,3 +201,8 @@ input[type="time"].input, input[type="date"].input { font-variant-numeric: tabul
 .doc-body table { border-collapse: collapse; font-size: 13px; width: 100%; }
 .doc-body th, .doc-body td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--text-2); }
 .doc-body th { color: var(--text); font-weight: 600; }
+.help-link { font-size: inherit; color: var(--accent-text); white-space: nowrap; }
+.help-link:hover { text-decoration: underline; }
+.doc-body li > ul { margin: 4px 0 2px; }
+.doc-body li > p { margin: 6px 0 2px; }
+.doc-body h2, .doc-body h3 { scroll-margin-top: 14px; }
