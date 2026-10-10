@@ -32,15 +32,20 @@ function duelyStop() { return Duely.duelyStop(); }
 function duelySyncNow() { return Duely.duelySyncNow(); }
 // The desktop app's channel, deployed as a private web app. Both answer synchronously: a web app's reply
 // is read as soon as the function returns (Sync now queues a run instead of waiting for it).
-function doGet() { return Duely.json(Duely.readState()); }
+// Every call must carry the channel key (doGet: ?key=…, doPost: {"key": …}).
+function doGet(e) {
+  if (!Duely.keyOk(e && e.parameter && e.parameter.key)) return Duely.json({ ok: false, error: "not allowed" });
+  return Duely.json(Duely.readState());
+}
 function doPost(e) {
   var body;
   try { body = JSON.parse((e && e.postData && e.postData.contents) || "{}"); } catch (x) { return Duely.json({ ok: false, error: "bad JSON" }); }
+  if (!Duely.keyOk(body.key)) return Duely.json({ ok: false, error: "not allowed" });
   return Duely.json(Duely.command(body));
 }
 `;
   const manifest = JSON.stringify({ timeZone, runtimeVersion: "V8", exceptionLogging: "STACKDRIVER", oauthScopes: SCOPES,
-    webapp: { executeAs: "USER_DEPLOYING", access: "MYSELF" },
+    webapp: { executeAs: "USER_DEPLOYING", access: "ANYONE_ANONYMOUS" },   // guarded by the channel key
     // the Calendar advanced service: switched on for the script by this line alone
     dependencies: { enabledAdvancedServices: [{ userSymbol: "Calendar", serviceId: "calendar", version: "v3" }] } }, null, 2);
   return { code, manifest };

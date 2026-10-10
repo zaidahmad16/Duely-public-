@@ -105,3 +105,19 @@ Script API, the one-time approval, the shared channel (web app first), Sync now,
 and confirming Apps Script's V8 settles the engine's promises (UrlFetchApp is synchronous) as the sandbox does.
 Note: with calendar.app.created the script can only manage calendars IT made, so the script owns the calendar
 (single writer); the desktop's own calendar is only for the no-script fallback.
+
+Phase 0, live half, in the throwaway test account (zaidahmad181818@gmail.com, Cloud project duely-511212):
+- 1 install via the Apps Script API from the student-style sign-in ✓ (script.projects/deployments/processes scopes)
+- 2 one-time approval: the student clicks Run on duelySetup and approves Google's screens ✓
+- 5 engine inside Apps Script ✓: promises settle (the trigger awaits them), no Intl needed (offsets from
+  Utilities.formatDate), first full sync 5.8 s, unchanged syncs ~2 s. Calendar MUST go through the Calendar
+  advanced service (manifest dependency); the REST API from the script failed 403 (hidden default Cloud project).
+- 3 channel ✓: a web app with "Execute as me" + "Only myself" returns 401 to an OAuth call unless the token has a
+  Drive scope (too much to ask students), so: access ANYONE_ANONYMOUS + a 256-bit channel key (script property,
+  set by duelySetup from the uploaded Config file; constant-time check). No key / wrong key -> "not allowed".
+- 4 Sync now ✓: doPost op "sync" queues a one-off trigger, ran ~1.5 min later, removed itself; desktop sees it.
+- Found live and fixed (tests added): a Node-only `process` reference crashed the error path in Apps Script.
+- Setup-guide findings: the Audience "Add users" Save needed a second click; "Publish app" stays disabled until
+  the Branding page is complete (check what it needs before telling students to publish).
+- Still open: the automatic 10-min timer's first run (being watched); AI + announcements live (needs a key in the
+  test script); laptop-off test over hours.

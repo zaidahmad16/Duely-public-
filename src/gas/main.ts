@@ -172,6 +172,8 @@ export function duelySetup(): string {
   const props = PropertiesService.getScriptProperties();
   const first = (globalThis as any).DUELY_CONFIG;
   if (first && props.getProperty("v:config") === null) props.setProperty("v:config", JSON.stringify(first));
+  const key = (globalThis as any).DUELY_CHANNEL_KEY;
+  if (typeof key === "string" && key.length >= 32) props.setProperty("secret:channel_key", key);
   for (const t of ScriptApp.getProjectTriggers()) if (t.getHandlerFunction() === "duelyTick") ScriptApp.deleteTrigger(t);
   ScriptApp.newTrigger("duelyTick").timeBased().everyMinutes(10).create();
   return "Duely is set up: it checks Brightspace every 10 minutes.";
@@ -184,7 +186,19 @@ export function duelyStop(): string {
 }
 
 // ---------------------------------------------------------------- the desktop app's channel
-// A private web app ("execute as me", "only myself"): only the student, signed in, can call it.
+// A web app reachable by its link, guarded by a long random key only the student's Duely app and this
+// script know (script property "secret:channel_key", set at setup). Google's own "only myself" access
+// would need every student to grant Duely a Drive permission just to call it.
+
+/** Constant-time comparison of the channel key. */
+export function keyOk(given: unknown): boolean {
+  const want = PropertiesService.getScriptProperties().getProperty("secret:channel_key") ?? "";
+  const got = typeof given === "string" ? given : "";
+  if (want.length < 32 || got.length !== want.length) return false;
+  let diff = 0;
+  for (let i = 0; i < want.length; i++) diff |= want.charCodeAt(i) ^ got.charCodeAt(i);
+  return diff === 0;
+}
 
 const json = (data: unknown) => ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
 

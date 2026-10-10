@@ -221,7 +221,17 @@ test("AI from inside Apps Script: each provider type gets a well-formed request 
 
 test("the desktop's channel (web app): doGet/doPost answer synchronously; Sync now queues one run", async () => {
   const s = await sandbox();
-  const call = (src: string) => JSON.parse(vm.runInContext(src, s.ctx).text);
+  const KEY = "k".repeat(43);
+  s.props.setProperty("secret:channel_key", KEY);
+  const call = (src: string) => JSON.parse(vm.runInContext(src
+    .replace("doGet()", `doGet({ parameter: { key: "${KEY}" } })`)
+    .replace(/JSON\.stringify\(\{ op/g, `JSON.stringify({ key: "${KEY}", op`)
+    .replace(/'\{"op"/g, `'{"key":"${KEY}","op"`), s.ctx).text);
+  // without the key (or with a wrong one) nothing is shown or changed
+  assert.equal(JSON.parse(vm.runInContext("doGet({ parameter: {} })", s.ctx).text).error, "not allowed");
+  assert.equal(JSON.parse(vm.runInContext(`doGet({ parameter: { key: "${"x".repeat(43)}" } })`, s.ctx).text).error, "not allowed");
+  assert.equal(JSON.parse(vm.runInContext(`doPost({ postData: { contents: '{"op":"sync"}' } })`, s.ctx).text).error, "not allowed");
+  assert.equal(s.triggers.length, 0);
   const empty = call("doGet()");
   assert.equal(empty.ok, true);
   assert.equal(empty.state, null, "nothing synced yet");
@@ -250,7 +260,8 @@ test("a failing sync is recorded, not crashed, inside Apps Script (the error pat
   const state = JSON.parse(s.props.m.get("v:state")!);
   assert.match(state.error, /didn't return a calendar/);
   assert.equal(s.props.m.get("v:errors"), undefined, "nothing crashed");
-  const call = JSON.parse(vm.runInContext("doGet()", s.ctx).text);
+  s.props.setProperty("secret:channel_key", "k".repeat(43));
+  const call = JSON.parse(vm.runInContext(`doGet({ parameter: { key: "${"k".repeat(43)}" } })`, s.ctx).text);
   assert.match(call.state.error, /didn't return a calendar/, "the desktop sees the reason");
 });
 

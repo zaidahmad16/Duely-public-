@@ -9,6 +9,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { spawn } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import { connect, parseClient, tokenSource } from "../src/google/oauth.ts";
 import { buildGas } from "./build-gas.ts";
 
@@ -25,7 +26,7 @@ const SCOPES = [
 ];
 const TEST_FEED = "https://raw.githubusercontent.com/zaidahmad16/Duely-public-/p3-ui/test/fixture.ics";
 
-type Saved = { client: string; refresh: string; scriptId?: string; webApp?: string; scopes: string[] };
+type Saved = { client: string; refresh: string; scriptId?: string; webApp?: string; key?: string; scopes: string[] };
 const load = (): Saved => JSON.parse(readFileSync(SAVED, "utf8"));
 const save = (s: Saved) => writeFileSync(SAVED, JSON.stringify(s, null, 2), { mode: 0o600 });
 
@@ -66,10 +67,11 @@ async function main() {
       console.log("created project", s.scriptId);
     }
     const config = { feed_url: TEST_FEED, use_ai: false, digest_daily: false, digest_weekly: false };
+    if (!s.key) { s.key = randomBytes(32).toString("base64url"); save(s); }       // the channel key
     await call("PUT", `${API}/projects/${s.scriptId}/content`, { files: [
       { name: "appsscript", type: "JSON", source: manifest },
       { name: "Code", type: "SERVER_JS", source: code },
-      { name: "Config", type: "SERVER_JS", source: `// written by the Duely app\nvar DUELY_CONFIG = ${JSON.stringify(config)};\n` },
+      { name: "Config", type: "SERVER_JS", source: `// written by the Duely app\nvar DUELY_CONFIG = ${JSON.stringify(config)};\nvar DUELY_CHANNEL_KEY = ${JSON.stringify(s.key)};\n` },
     ] });
     console.log(`uploaded (${(code.length / 1024).toFixed(0)} KB). Open it and run duelySetup once:\nhttps://script.google.com/home/projects/${s.scriptId}/edit`);
     return;
@@ -85,7 +87,14 @@ async function main() {
   }
   if (cmd === "state" || cmd === "post") {
     if (!s.webApp) throw new Error("run deploy first");
-    const out = cmd === "state" ? await call("GET", s.webApp) : await call("POST", s.webApp, JSON.parse(process.argv[3] ?? "{}"));
+    // the web app is reached by link + channel key (no Google sign-in on these calls)
+    const r = cmd === "state"
+      ? await fetch(`${s.webApp}?key=${encodeURIComponent(s.key ?? "")}`, { redirect: "follow" })
+      : await fetch(s.webApp, { method: "POST", headers: { "content-type": "application/json" }, redirect: "follow",
+        body: JSON.stringify({ ...JSON.parse(process.argv[3] ?? "{}"), key: s.key }) });
+    const text = await r.text();
+    let out: any = text;
+    try { out = JSON.parse(text); } catch { out = `${r.status}: ${text.slice(0, 300)}`; }
     const brief = typeof out === "object" ? { ...out, state: out.state ? { time: out.state.time, error: out.state.error, items: out.state.items?.length, added: out.state.added, updated: out.state.updated } : null } : out;
     console.log(JSON.stringify(brief, null, 2).slice(0, 2500));
     return;
