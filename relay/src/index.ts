@@ -231,6 +231,8 @@ export async function sweep(env: Env, now = Date.now()): Promise<{ stale: number
   } while (cursor);
   let removed = 0, after = "0";
   const keep = admins(env);
+  const guild = await bot(env, "GET", `/guilds/${env.GUILD_ID}`);           // never the server's owner
+  if (guild.ok) keep.add(String((await guild.json() as any).owner_id ?? ""));
   for (;;) {
     const r = await bot(env, "GET", `/guilds/${env.GUILD_ID}/members?limit=1000&after=${after}`);
     if (!r.ok) break;

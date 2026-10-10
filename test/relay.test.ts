@@ -39,6 +39,7 @@ function fakeDiscord(o: { members?: { id: string; bot?: boolean }[]; dmClosed?: 
       if (method === "PUT") { assert.equal(JSON.parse(init.body).access_token, "user-access"); assert.match(init.headers.authorization, /^Bot /); members.set(id, { id }); return new Response(null, { status: 201 }); }
       if (method === "DELETE") { members.delete(id); return new Response(null, { status: 204 }); }
     }
+    if (/^\/guilds\/\d+$/.test(path)) return ok({ id: "g", owner_id: "8" });
     if (path.startsWith("/guilds/") && path.includes("/members?")) return ok([...members.values()].map((m) => ({ user: { id: m.id, bot: !!m.bot } })));
     if (path === "/users/@me/channels") { const id = JSON.parse(init.body).recipient_id; return ok({ id: `dm-${id}` }); }
     if (/^\/channels\/dm-\d+\/messages$/.test(path)) {
@@ -164,8 +165,8 @@ test("disconnect deletes the link and removes the member; the token stops workin
   } finally { d.restore(); }
 });
 
-test("hourly sweep: links unseen for 30 days go (with their member); members without a link go; admins and bots stay", async () => {
-  const d = fakeDiscord({ members: [{ id: "1" }, { id: "2" }, { id: "3" }, { id: "9" }, { id: "99", bot: true }] });
+test("hourly sweep: links unseen for 30 days go (with their member); members without a link go; the owner, admins and bots stay", async () => {
+  const d = fakeDiscord({ members: [{ id: "1" }, { id: "2" }, { id: "3" }, { id: "8" }, { id: "9" }, { id: "99", bot: true }] });
   try {
     const e = env(memKV(), { ADMIN_IDS: "9" });
     const now = Date.now();
@@ -173,7 +174,7 @@ test("hourly sweep: links unseen for 30 days go (with their member); members wit
     e.LINKS.m.set("link:b", JSON.stringify({ uid: "2", name: "b", created: now, seen: now - 31 * 86400e3 }));
     const r = await sweep(e, now);
     assert.deepEqual(r, { stale: 1, removed: 1 });
-    assert.deepEqual([...d.members.keys()].sort(), ["1", "9", "99"]);
+    assert.deepEqual([...d.members.keys()].sort(), ["1", "8", "9", "99"], "the server owner (8) stays too");
     assert.ok(!e.LINKS.m.has("link:b"));
   } finally { d.restore(); }
 });
