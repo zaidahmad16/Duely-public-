@@ -12,13 +12,13 @@ export function extractJSON(text: string): unknown {
   throw new Error("not JSON");
 }
 
-export async function askJSON(llm: LLM, prompt: string, schema: object, opts: { images?: Image[]; maxTokens?: number } = {}): Promise<any> {
-  const first = await llm.chat([{ role: "user", content: prompt, images: opts.images }], { schema, maxTokens: opts.maxTokens ?? 1500 });
+export async function askJSON(llm: LLM, prompt: string, schema: object, opts: { images?: Image[]; maxTokens?: number; signal?: AbortSignal } = {}): Promise<any> {
+  const first = await llm.chat([{ role: "user", content: prompt, images: opts.images }], { schema, maxTokens: opts.maxTokens ?? 1500, signal: opts.signal });
   try { return extractJSON(first.content); } catch { /* one repair round */ }
   const again = await llm.chat([
     { role: "user", content: prompt, images: opts.images },
     { role: "assistant", content: first.content.slice(0, 2000) },
     { role: "user", content: "That wasn't valid JSON. Reply with only the JSON object." },
-  ], { schema, maxTokens: opts.maxTokens ?? 1500 });
+  ], { schema, maxTokens: opts.maxTokens ?? 1500, signal: opts.signal });
   return extractJSON(again.content);
 }

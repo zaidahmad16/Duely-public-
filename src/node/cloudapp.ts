@@ -91,7 +91,7 @@ export function cloudApp(d: CloudAppDeps) {
       pending.set(id, decision);
     },
 
-    /** Sync now: the script runs within about a minute; resolves when its state shows the new run. */
+    /** Sync now: the script runs within a few minutes (Google decides when); resolves when its state shows the new run. */
     async sync(o: { timeoutMs?: number; everyMs?: number; sleep?: (ms: number) => Promise<void> } = {}): Promise<CloudState> {
       const c = await ch();
       const before = (await cached(d.store))?.state?.time ?? 0;
@@ -102,7 +102,7 @@ export function cloudApp(d: CloudAppDeps) {
         await sleep(o.everyMs ?? 5000);
         const s = await refresh();
         if ((s.state?.time ?? 0) > before && !s.syncQueued) return s;
-        if (Date.now() > until) throw new Error("Duely's script hasn't run yet. It will on its own within 10 minutes.");
+        if (Date.now() > until) throw new Error("Google hasn't started Duely's run yet. It will within a few minutes, and on its own every 10 minutes.");
       }
     },
 
