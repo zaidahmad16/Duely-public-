@@ -5,7 +5,7 @@ import { loadActions } from "../core/actions.ts";
 import { answer } from "../core/ask.ts";
 import { loadDone } from "../core/done.ts";
 import { SCOPE, connect, parseClient } from "../google/oauth.ts";
-import { SCRIPT_API_SCOPES } from "../google/script.ts";
+import { SCRIPT_API_SCOPES, accountEmail } from "../google/script.ts";
 import { makeLLM } from "../llm/adapters.ts";
 import { probe } from "../llm/probe.ts";
 import { cached, channel, editorUrl, install, waitForApproval } from "../node/cloud.ts";
@@ -184,13 +184,13 @@ export function registerApi(c: Ctx): void {
 
   // ---- cloud setup (P3.5): Apps Script API on? → install → the student approves once → cloud mode
   handle("cloudCheck", async () => ({ apiEnabled: await svc.scriptApi().apiEnabled(), installed: await cloudOn(),
-    approved: !!(await config()).cloud_approved, bundle: !!svc.bundle() }));
+    approved: !!(await config()).cloud_approved, bundle: !!svc.bundle(), account: await accountEmail(svc.googleToken) }));
 
   handle("cloudInstall", async () => {
     const bundle = svc.bundle();
     if (!bundle) throw new Error("This copy of Duely doesn't include its cloud engine. Reinstall Duely.");
     const { cfg, tz } = await loadCtx({ ...svc.deps, llm: async () => undefined });
-    const link = await install(svc.scriptApi(), bundle, tz, engineConfig(cfg, tz));
+    const link = await install(svc.scriptApi(), bundle, tz, engineConfig(cfg, tz), await accountEmail(svc.googleToken));
     await svc.saveCloudLink(link);
     await store.put("config", { ...(await config()), cloud_approved: false });
     openSafe(editorUrl(link));

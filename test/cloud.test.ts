@@ -75,6 +75,12 @@ test("install → the student approves once → the desktop reads and steers the
   await assert.rejects(wrong.post({ op: "forget" }), /not allowed/);
 });
 
+test("editor links open in the account the script is in", async () => {
+  const { editorUrl } = await import("../src/node/cloud.ts");
+  assert.equal(editorUrl({ scriptId: "abc" }), "https://script.google.com/home/projects/abc/edit");
+  assert.equal(editorUrl({ scriptId: "abc", account: "me+x@gmail.com" }), "https://script.google.com/home/projects/abc/edit?authuser=me%2Bx%40gmail.com");
+});
+
 test("update: nothing when current; a newer engine is uploaded and the web-app address stays", async () => {
   const { api, calls } = fakeApi();
   const link: CloudLink = { scriptId: "script-1", deploymentId: "dep-1", url: URL1, key: "k".repeat(43), version: "old", scopes: "" };

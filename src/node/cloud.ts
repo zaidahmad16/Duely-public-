@@ -7,7 +7,8 @@ import { type ScriptApi, type ScriptFile } from "../google/script.ts";
 import { SCRIPT_SCOPES, START_FILE, configFile, manifest } from "../gas/manifest.ts";
 
 /** Where the installed engine is, and the key to talk to it. Kept as a secret (it's a credential). */
-export type CloudLink = { scriptId: string; deploymentId: string; url: string; key: string; version: string; scopes: string };
+export type CloudLink = { scriptId: string; deploymentId: string; url: string; key: string; version: string; scopes: string;
+  /** the Google account it's in (links open in that account) */ account?: string };
 
 export type Bundle = { code: string; version: string };
 
@@ -30,13 +31,13 @@ function files(bundle: Bundle, tz: string, config: object, key: string): ScriptF
 
 /** Makes the project, uploads the engine and publishes its web app. The student then approves it once
  *  (runs duelySetup); `waitForApproval` notices. */
-export async function install(api: ScriptApi, bundle: Bundle, tz: string, firstConfig: object): Promise<CloudLink> {
+export async function install(api: ScriptApi, bundle: Bundle, tz: string, firstConfig: object, account = ""): Promise<CloudLink> {
   const key = randomBytes(32).toString("base64url");
   const scriptId = await api.create("Duely");
   await api.upload(scriptId, files(bundle, tz, firstConfig, key));
   const v = await api.version(scriptId, `Duely ${bundle.version}`);
   const { deploymentId, url } = await api.deploy(scriptId, v);
-  return { scriptId, deploymentId, url, key, version: bundle.version, scopes: scopesSig() };
+  return { scriptId, deploymentId, url, key, version: bundle.version, scopes: scopesSig(), ...(account ? { account } : {}) };
 }
 
 /** Updates an installed engine when the app carries a newer one. The web-app URL stays the same.
@@ -50,7 +51,10 @@ export async function update(api: ScriptApi, link: CloudLink, bundle: Bundle, tz
   return { link: { ...link, url, version: bundle.version, scopes: scopesSig() }, changed: true, needsApproval };
 }
 
-export const editorUrl = (link: Pick<CloudLink, "scriptId">) => `https://script.google.com/home/projects/${link.scriptId}/edit`;
+/** The script in Google's editor, in the right account (a browser signed in to several Google accounts
+ *  would otherwise open it in the default one, which can't see it). */
+export const editorUrl = (link: Pick<CloudLink, "scriptId" | "account">) =>
+  `https://script.google.com/home/projects/${link.scriptId}/edit${link.account ? `?authuser=${encodeURIComponent(link.account)}` : ""}`;
 
 /** Talking to the installed engine. Every call carries the channel key. */
 export function channel(link: CloudLink, f: typeof fetch = fetch) {

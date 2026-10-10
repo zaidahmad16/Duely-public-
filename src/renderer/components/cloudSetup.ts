@@ -8,6 +8,8 @@ import { enter } from "../ui/motion.ts";
 const SETTINGS = "https://script.google.com/home/usersettings";
 
 export function cloudSetup(onDone: () => void): HTMLElement {
+  let account = "";   // the signed-in Google account: links must open in it, not the browser's default one
+  const inAccount = (url: string) => (account ? `${url}?authuser=${encodeURIComponent(account)}` : url);
   const steps = h("ol", { class: "cloud-steps" });
   const err = h("p", { class: "field-error", attrs: { role: "alert" } });
   const root = h("div", { class: "cloud-setup" },
@@ -31,7 +33,7 @@ export function cloudSetup(onDone: () => void): HTMLElement {
     if (at === "api") {
       const open = btn("Open Apps Script settings", "btn btn-secondary btn-sm");
       const check = btn("I turned it on");
-      open.addEventListener("click", () => void api.openLink(SETTINGS));
+      open.addEventListener("click", () => void api.openLink(inAccount(SETTINGS)));
       check.addEventListener("click", async () => {
         busy(check, "Checking…");
         try { (await api.cloudCheck()).apiEnabled ? void paint("install") : void paint("api").then(() => { err.textContent = "It's still off. Switch on \"Google Apps Script API\", then try again."; }); }
@@ -72,6 +74,6 @@ export function cloudSetup(onDone: () => void): HTMLElement {
     }
   }
 
-  void api.cloudCheck().then((c) => paint(c.installed ? (c.approved ? "done" : "approve") : c.apiEnabled ? "install" : "api"), (e) => { err.textContent = (e as Error).message; void paint("api"); });
+  void api.cloudCheck().then((c) => { account = c.account; return paint(c.installed ? (c.approved ? "done" : "approve") : c.apiEnabled ? "install" : "api"); }, (e) => { err.textContent = (e as Error).message; void paint("api"); });
   return root;
 }

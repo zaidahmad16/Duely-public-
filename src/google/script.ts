@@ -7,7 +7,17 @@ const API = "https://script.googleapis.com/v1";
 export const SCRIPT_API_SCOPES = [
   "https://www.googleapis.com/auth/script.projects",     // create and update Duely's script
   "https://www.googleapis.com/auth/script.deployments",  // its web app (the desktop's channel)
+  "https://www.googleapis.com/auth/userinfo.email",      // which account: links to the script open in it
 ];
+
+/** The signed-in account's email (so links open in that account when the browser has several). */
+export async function accountEmail(token: () => Promise<string>, f: typeof fetch = fetch): Promise<string> {
+  try {
+    const r = await f("https://www.googleapis.com/oauth2/v3/userinfo", { headers: { authorization: `Bearer ${await token()}` } });
+    const d: any = r.ok ? await r.json() : {};
+    return typeof d.email === "string" ? d.email : "";
+  } catch { return ""; }
+}
 
 export const USER_SETTINGS_URL = "https://script.google.com/home/usersettings";
 
