@@ -135,3 +135,11 @@ Phase 0, live half, in the throwaway test account (zaidahmad181818@gmail.com, Cl
 - Screenshot import of timetables (several terms at once) and final exams, reviewed before anything is added,
   like the personal Duely. Breaks from the Brightspace feed are skipped by the engine. Live-read with Gemini
   `gemini-flash-lite-latest`: every class, room and TBA course right on both test screenshots (about 5 s).
+
+## 2026-10-10: P6 Discord alerts built and live
+- Relay (Cloudflare Worker) deployed on the owner's account; Discord app made private with the Server Members intent;
+  bot added to the Duely server; server locked down by the owner.
+- Live: Connect Discord in the test app (cloud mode) → DM "Duely is connected ✓" arrived. The script holds the token
+  and sends alerts itself; laptop-off test with a new PSYC 2101 "Quiz 3 moved" post running.
+- Privacy Policy "Discord alerts" section (what the relay keeps, 30-day removal, Disconnect), Terms paragraph,
+  setup guide section; TERMS_VERSION 2026-10-10b.

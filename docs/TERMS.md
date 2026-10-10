@@ -15,7 +15,7 @@ To use Duely you connect accounts that belong to you:
 - your school's **Brightspace** (through its calendar and announcement links);
 - **Google**, through a Google Cloud client you create yourself (and, if you turn it on, a "Duely" Apps Script project in your Google account, which runs under your account and Google's terms and limits);
 - an **AI provider** (OpenAI-compatible, Anthropic or Google Gemini), with your own API key;
-- optionally, later, **Discord** (to get your alerts as direct messages).
+- optionally, **Discord** (to get your alerts as direct messages from the Duely bot; connecting adds you to the Duely Discord server).
 
 You are responsible for these accounts, for keeping your links and keys private, and for following each service's own terms.
 
@@ -36,6 +36,8 @@ Duely tries to read your schedule correctly, but it can be wrong. Brightspace fe
 ## 5. Use it fairly
 
 Use Duely for your own studies. Don't use it to access anyone else's accounts or information, to get around your school's systems, or in a way that breaks your school's rules, including its academic integrity policy, or the terms of Brightspace, Google, your AI provider or Discord.
+
+**Discord alerts.** The Duely bot, its Discord server and the relay that sends your alerts are offered as they are, for alerts only, and may change, pause or stop at any time. Alerts can arrive late or not at all (for example if Discord is down, or you turned off messages from server members), so don't rely on them alone. Duely may remove you from the server, and delete your link, if your copy of Duely hasn't checked in for 30 days or if the server is misused. Discord's own terms apply to your Discord account.
 
 ## 6. Not affiliated
 

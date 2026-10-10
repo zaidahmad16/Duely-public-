@@ -6,7 +6,7 @@ Duely is a desktop app that puts your Brightspace deadlines, tests and classes i
 
 ## What Duely does not do
 
-- It doesn't have accounts, servers or a cloud backend run by its developers. ("Duely in your Google account", below, runs in *your* Google account, not ours.)
+- It doesn't have accounts or a cloud backend run by its developers. ("Duely in your Google account", below, runs in *your* Google account, not ours.) The one exception is the small **Discord relay**, used only if you connect Discord (see "Discord alerts" below).
 - It doesn't collect analytics, usage statistics, telemetry or crash reports.
 - It doesn't sell, rent or share your information with anyone.
 - It doesn't show ads.
@@ -27,7 +27,7 @@ That folder holds:
 - for chat, your last few messages and Duely's replies, so follow-up questions make sense;
 - a cache of announcements it has already read, a count of today's AI requests, and a short log of recent errors.
 
-**Keys and sign-ins** (your AI API key, your Google sign-in, and later your Discord link) are encrypted with your operating system's keychain: Keychain on macOS, Data Protection (DPAPI) on Windows, and the Secret Service keyring on Linux. If a Linux computer has no keyring, Duely falls back to Electron's basic storage, which only lightly protects them, and tells you so in the app.
+**Keys and sign-ins** (your AI API key, your Google sign-in, and your Discord link if you connect it) are encrypted with your operating system's keychain: Keychain on macOS, Data Protection (DPAPI) on Windows, and the Secret Service keyring on Linux. If a Linux computer has no keyring, Duely falls back to Electron's basic storage, which only lightly protects them, and tells you so in the app.
 
 ## What Duely keeps in your Google account (if you turn it on)
 
@@ -58,7 +58,7 @@ Duely connects only to the services you set up, directly from your computer or, 
 | **Google Apps Script** (only if you turn on "Duely in your Google account") | The app creates and updates the "Duely" script project in your account, and sends it your settings, your AI key, and the items you mark done or answers you give. | So Duely keeps working while your computer is off. |
 | **Gmail** (only if you turn on email alerts) | The script emails your alerts from your own Google account to your own address. | So alerts reach you anywhere. |
 | **Your AI provider** (OpenAI-compatible, Anthropic or Google Gemini, with your own API key) | Course codes, titles, dates and descriptions of your Brightspace items; the text of course announcements; your chat messages with the items they're about; and any screenshot you choose to import (it's read once and not kept). | To sort the feed, read announcements for dates, answer your questions and read screenshots. |
-| **Discord** (optional, coming later; only if you connect it) | The text of your alerts (for example a moved test, an important announcement, or your morning digest), sent to you as a direct message. This section will explain exactly how before the feature ships. | So your alerts reach you on your phone too. |
+| **Discord** (optional; only if you connect it) | The text of your alerts (for example a moved test, an important announcement, or your morning digest), sent through Duely's Discord relay to the Duely bot, which sends it to you as a direct message. See "Discord alerts" below. | So your alerts reach you on your phone too. |
 
 Each of these services handles the information it receives under its own terms and privacy policy, which you agreed to when you set up your account with it. In particular, check what your AI provider does with API requests (for example, whether it keeps or trains on them); many providers let you change this. A local model (such as Ollama or LM Studio) keeps everything on your computer.
 
@@ -79,13 +79,26 @@ Data from Google is used only to run Duely for you. It stays on your computer an
 
 Duely's use and transfer of information received from Google APIs follows the [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy), including the Limited Use requirements.
 
+## Discord alerts (optional)
+
+If you click **Connect Discord**, you sign in with Discord and allow Duely to see your username and to add you to the **Duely** Discord server (Discord only lets a bot message people who share a server with it). The server is only for alerts: members can't post, and nobody can join it except through Duely.
+
+Sending the alerts needs Duely's bot, and a bot's password can't be put inside an app, so this one feature goes through a small service run by Duely's developers: the **Discord relay** (a Cloudflare Worker; its code is in Duely's repository). It works like this:
+
+- **What the relay keeps:** your Discord user ID and display name, a fingerprint (SHA-256 hash) of a random device token, and when it last heard from your copy of Duely. Nothing else: not your Discord sign-in, not your email, not your schedule.
+- **What passes through it:** the text of each alert, on its way to Discord. It isn't stored or logged; Cloudflare keeps only basic request records (time, path, result) for a few days. Discord keeps the message in your DMs, under Discord's own privacy policy.
+- **The device token** is kept on your computer (encrypted like your other keys) and, if Duely runs in your Google account, in the script's storage there, so alerts reach you while your computer is off. Your app and script check in with the relay once a day.
+- **Automatic removal:** if the relay hasn't heard from your Duely for **30 days**, it deletes your link and removes you from the Duely server. Anyone in the server without a link is removed every hour.
+- **Disconnect** (Settings → Notifications → Discord) deletes your link at the relay at once, removes you from the server, and deletes the token from your computer and your Google account. Leaving the Duely server in Discord has the same effect on alerts.
+
 ## Your choices
 
 - **Disconnect Google** in Settings → Google. If Duely is running in your Google account, the script first stops its timer and deletes your AI key and Brightspace links from its storage; then Duely revokes its access with Google. The "Duely" script project (with the schedule it read and your done marks) and the calendar it created stay in your Google account until you delete them.
 - **Turn off email alerts** in Settings → Google.
 - **Change or remove your AI key** in Settings → AI, or revoke it on your provider's website.
-- **Turn off notifications** in Settings → Notifications.
-- **Delete everything:** in Settings → Google, choose Disconnect. Then quit Duely, uninstall it, and delete the data folder listed above. In your Google account, delete the "Duely" project at [script.google.com](https://script.google.com) (this removes everything it stored), delete Duely's calendar in Google Calendar, and check its access is gone at [myaccount.google.com/permissions](https://myaccount.google.com/permissions).
+- **Turn off notifications** in Settings → Notifications. Discord alerts follow the same switches.
+- **Disconnect Discord** in Settings → Notifications → Discord.
+- **Delete everything:** in Settings → Notifications, disconnect Discord if you connected it. In Settings → Google, choose Disconnect. Then quit Duely, uninstall it, and delete the data folder listed above. In your Google account, delete the "Duely" project at [script.google.com](https://script.google.com) (this removes everything it stored), delete Duely's calendar in Google Calendar, and check its access is gone at [myaccount.google.com/permissions](https://myaccount.google.com/permissions).
 
 ## Children
 

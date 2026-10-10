@@ -161,6 +161,18 @@ Click **Add to calendar** for each term. Each class repeats weekly from the firs
 
 Screenshots go to your AI provider to be read, and aren't kept by Duely. This needs a model that can read images (Test connection shows ✓ for Screenshots).
 
+## Alerts on your phone (Discord, optional)
+
+Duely can send your alerts (changes, important announcements, digests, test briefings) as Discord direct messages from the **Duely** bot, so they reach your phone. If Duely runs in your Google account, they arrive even when your computer is off.
+
+1. Go to **Settings → Notifications → Discord** (or the last step of setup) and click **Connect Discord**.
+2. Your browser opens Discord. Sign in if asked, and click **Authorize**. Discord asks to see your username and to "join servers for you": that adds you to the Duely server, which Discord requires before a bot can message you.
+3. The page says **Discord is connected**. Back in Duely, click **Send test alert**: a message from the Duely bot arrives within seconds.
+
+The Duely server is only for alerts: you can't post there, and you can mute it. Discord alerts follow the same switches as desktop notifications. To stop them, click **Disconnect** (you leave the server too).
+
+**"Discord won't let Duely message you"**: in Discord, right-click the Duely server → **Privacy Settings** → turn on **Direct Messages**, then click **Send test alert** again.
+
 ## Using Duely
 
 - **Upcoming** shows today, the rest of this week and next week. Tick the box when you've handed something in; it gets a ✓ in your calendar. Click a row to open it in Brightspace.

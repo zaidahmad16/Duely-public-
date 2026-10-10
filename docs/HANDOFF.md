@@ -38,7 +38,7 @@ untouched. Copy code from it, never personal data.
 | **P3.5** | **Cloud engine**: Duely's engine as an Apps Script in each student's own Google account, so sync and AI announcement reading run 24/7 for $0 with no server of ours | **Phase 0 done live; Phase 1 steps 1–6 built; live end-to-end run in progress** |
 | P4 | Chat polish (history across sessions, proposal flows) | not started |
 | P5 | Screenshot import (timetable/exams); announcement warning moves into the script | **import built 2026-10-10** (owner live test pending); announcement warning not started |
-| P6 | Discord alerts as DMs from a hosted Duely bot (alerts only, no chat) | planned only (see PROGRESS.md) |
+| P6 | Discord alerts as DMs from a hosted Duely bot (alerts only, no chat) | **built and live 2026-10-10** (relay deployed; owner connected and got the test DM) |
 | P7 | Installers, Releases, auto-update, final docs | not started |
 
 Plans:
@@ -151,6 +151,19 @@ relaunch with `home-live` from the new location.
   "No Classes" days (`timetableItems(cfg, tz, feedItems)`), locally and in the script. Live Gemini read of both test
   screenshots was exact (recorded in `test/timetable-read.json`). Owner still has to try it in the test app.
 - "Tutorials classed as assignments" was **not a bug**: `src/core/kinds.ts` categorizes by title on purpose.
+
+## P6 Discord (done 2026-10-10)
+- **Relay:** `relay/` (Cloudflare Worker `duely-relay`, https://duely-relay.zaidahmad8060-32f.workers.dev, KV `LINKS`
+  b614a6a5…, hourly sweep at :17). Secrets set: `DISCORD_BOT_TOKEN`, `DISCORD_CLIENT_SECRET`, `STATE_KEY`; the client
+  id and `GUILD_ID` are vars in `relay/wrangler.jsonc`. Deploy: `cd relay && npx wrangler@4 deploy`.
+- **Discord app** "Duely" (id 1558519461504614493, owner's account): bot private (install link None), Server
+  Members intent on, redirect `…/discord/callback`. Bot is in the Duely server (Create Invite + Kick Members).
+- **Server lockdown** done by the owner: verification Low, content filter all, mentions only, voice channel gone,
+  members can't post. Check: threads permission off and invites revoked (2 invites existed at 13:00).
+- **App:** `src/node/discord.ts`, `src/renderer/components/discordRow.ts`; local mode sends from the desktop, cloud
+  mode from the script (`src/gas/main.ts` `discord()`), daily `/seen` from both.
+- **TODO before real students:** reset the bot token and client secret (both were pasted into chat), then
+  `wrangler secret put` them again.
 
 ## Left to do (P3.5 Phase 1)
 1. Finish the end-to-end run above.
