@@ -5,8 +5,8 @@ import type { LLM } from "./types.ts";
 
 export type Capabilities = { chat: boolean; json: boolean; tools: boolean; vision: boolean; error?: string };
 
-// a 4x4 red PNG
-const RED_PNG = "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAEklEQVR4nGP4z8CAB+GTG8HSALfKY52fTcuYAAAAAElFTkSuQmCC";
+// a 64x64 red PNG (a 4x4 one is refused outright by Gemini: "Unable to process input image")
+const RED_PNG = "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAT0lEQVR42u3PQQkAAAgEsEty/UMZxgi+hcEKLNO+FgEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBywLPLIEA68ZURwAAAABJRU5ErkJggg==";
 
 /** Each test request gets this long; a provider that hangs fails the test instead of spinning forever. */
 export const PROBE_TIMEOUT_MS = 20000;
