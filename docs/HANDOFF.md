@@ -36,7 +36,7 @@ untouched. Copy code from it, never personal data.
 | P2 | Google sign-in (loopback + PKCE, student's own client), keys via safeStorage, scheduler, tray, notifications | done (main); its live test was folded into P3.5 and passed |
 | P3 | UI from the owner's spec: onboarding, Upcoming, Chat, Settings; AI required; Terms + Privacy; setup guide | done (`p3-ui`), **owner hasn't done the UI review yet** |
 | **P3.5** | **Cloud engine**: Duely's engine as an Apps Script in each student's own Google account, so sync and AI announcement reading run 24/7 for $0 with no server of ours | **Phase 0 done live; Phase 1 steps 1–6 built; live end-to-end run in progress** |
-| P4 | Chat polish (history across sessions, proposal flows) | not started |
+| P4 | Chat polish (history across sessions, proposal flows) | **mostly done 2026-10-10** (see "P4" below) |
 | P5 | Screenshot import (timetable/exams); announcement warning moves into the script | **import built 2026-10-10** (owner live test pending); announcement warning not started |
 | P6 | Discord alerts as DMs from a hosted Duely bot (alerts only, no chat) | **done 2026-10-10** (relay live; Connect, test DM and laptop-off alert verified) |
 | P7 | Installers, Releases, auto-update, final docs | not started |
@@ -170,6 +170,16 @@ relaunch with `home-live` from the new location.
 - **TODO before real students:** reset the bot token and client secret (both were pasted into chat), then
   `wrangler secret put` them again. Bot avatar: `~/Desktop/duely-pfp.png` (owner uploads in the portal).
 - **Next milestone: P4** (chat polish: history across sessions, proposal flows).
+
+## P4 (2026-10-10)
+- Chat saved on this computer (`src/node/chatlog.ts`, 200 messages / 30 days), restored with live ticks and question
+  states; Clear chat; typed yes/no/undo settle cards; "what do you need from me?" lists open questions.
+- **Live eval** `node --experimental-strip-types test/eval_models.ts --limit 150 --delay 6000` (key from
+  `~/.local/share/duely-dev/live/gemini.key`; Gemini free tier ≈ 2 runs a day). Found and fixed: Gemini thought
+  signatures (the agent failed every multi-step answer), kind narrowing, tutorial classes, calendar months.
+  Last full run 148/150 with the agent working; rules-only now 811/811.
+- **Still to do:** re-run the "tutorial-classes" templates live after the quota resets (`--only "tutorial-classes:this week,tutorial-classes:tomorrow"`);
+  chat screenshots in xvfb (needs AI quota too); owner check: ask, quit, reopen, history there, Clear chat.
 
 ## Left to do (P3.5 Phase 1)
 1. Finish the end-to-end run above.
