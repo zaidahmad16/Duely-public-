@@ -85,10 +85,12 @@ export type Settings = {
   exams: { key: string; course: string; title: string; date: string; start: string; end: string; room: string }[];
   /** the school's academic dates page, read when importing a timetable (optional) */
   academicDatesUrl: string;
+  /** Discord alerts (P6): who's connected, and the last problem sending (in words), if any */
+  discord: { name: string; error: string } | null;
 };
 
 /** A partial settings change; `aiKey` is write-only (the key never comes back). */
-export type SettingsPatch = Partial<Omit<Settings, "ai" | "terms" | "exams">> & { ai?: Partial<Omit<Settings["ai"], "keySet" | "auto">>; aiKey?: string };
+export type SettingsPatch = Partial<Omit<Settings, "ai" | "terms" | "exams" | "discord">> & { ai?: Partial<Omit<Settings["ai"], "keySet" | "auto">>; aiKey?: string };
 
 /** One term read from timetable screenshots, for review (same shape as src/core/timetableImport.ts Term). */
 export type TermDraft = { name: string; start: string; end: string; no_class: [string, string][]; day_swaps: Record<string, string>;

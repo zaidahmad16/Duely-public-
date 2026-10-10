@@ -7,6 +7,7 @@ import { setOffsetSource } from "../core/time.ts";
 import { type Store, setSha1Source, setSleepSource } from "../core/util.ts";
 import { makeLLM } from "../llm/adapters.ts";
 import type { Provider } from "../llm/types.ts";
+import { RELAY_URL } from "../shared/discord.ts";
 import { loadActions } from "../core/actions.ts";
 import { loadDone } from "../core/done.ts";
 import { loadStudy } from "../core/study.ts";
@@ -133,7 +134,7 @@ export function install(): void {
   setSleepSource(async (ms) => { Utilities.sleep(ms); });
 }
 
-function deps(store: Store): Deps {
+export function deps(store: Store): Deps {
   return {
     store,
     fetch: gasFetch as any,
@@ -152,14 +153,38 @@ function deps(store: Store): Deps {
       await store.put("outbox", out);
       const cfg = (await store.get<any>("config")) ?? {};
       if (cfg.email_alerts) MailApp.sendEmail(Session.getEffectiveUser().getEmail(), `Duely: ${title}`, `${body}${click ? `\n\n${click}` : ""}`);
+      discord("/alert", { title, body, click: click ?? "" }, cfg);
     },
   };
 }
 
 /** The 10-minute trigger (and Sync now, with force). */
+/** A Discord DM through Duely's relay, when the student connected Discord (the app put the device token
+ *  here, so alerts reach their phone with the laptop off). The last failure is kept for the app. */
+function discord(path: string, body: Record<string, unknown>, cfg: any): boolean {
+  const props = PropertiesService.getScriptProperties();
+  const token = props.getProperty("secret:discord_link");
+  if (!token) return false;
+  try {
+    const r = UrlFetchApp.fetch(`${cfg?.discord_relay || RELAY_URL}${path}`, { method: "post", contentType: "application/json",
+      payload: JSON.stringify({ token, ...body }), muteHttpExceptions: true });
+    if (r.getResponseCode() >= 300) {
+      let code = "error";
+      try { code = JSON.parse(r.getContentText()).code ?? code; } catch { /* not JSON */ }
+      props.setProperty("v:discord-error", JSON.stringify({ code, at: Date.now() }));
+      return false;
+    }
+    props.deleteProperty("v:discord-error");
+    return true;
+  } catch { return false; }
+}
+
 export async function duelyTick(now = Date.now(), force = false): Promise<{ synced: boolean }> {
   install();
   const store = propsStore();
+  // Discord's daily check-in (the relay forgets links unseen for 30 days), from here so it holds while the laptop is off
+  const seen = Number(store.getSync("discord-seen")) || 0;
+  if (now - seen > 20 * 3600e3 && discord("/seen", {}, store.getSync("config"))) store.putSync("discord-seen", now);
   const saved = (await store.get<any>("sched")) ?? {};
   const sched = newSched();
   if (force) saved.lastFull = 0;
@@ -252,6 +277,7 @@ export function readState(): any {
     done: store.getSync("done") ?? {}, actions, study: store.getSync("study") ?? { approved: {} },
     inbox: (store.getSync<any[]>("inbox") ?? []).map((x) => x.id), inboxDone: store.getSync("inbox-done") ?? [],
     emailAlerts: !!cfg.email_alerts, aiKeySet: !!PropertiesService.getScriptProperties().getProperty("secret:llm_key"),
+    discordSet: !!PropertiesService.getScriptProperties().getProperty("secret:discord_link"), discordError: store.getSync("discord-error"),
     triggers: ScriptApp.getProjectTriggers().map((t: any) => t.getHandlerFunction()) };
 }
 
@@ -287,13 +313,14 @@ export function command(body: any): any {
     for (const t of ScriptApp.getProjectTriggers()) ScriptApp.deleteTrigger(t);
     if (body.op === "forget") {
       props.deleteProperty("secret:llm_key");
+      props.deleteProperty("secret:discord_link");
       const cfg = store.getSync<any>("config") ?? {};
       store.putSync("config", { ...cfg, feed_url: "", announcement_feeds: [], email_alerts: false });
     }
     return { ok: true };
   }
   if (body?.op === "config") { store.putSync("config", { ...(store.getSync<any>("config") ?? {}), ...(body.config ?? {}) }); return { ok: true }; }
-  if (body?.op === "secret" && ["llm_key"].includes(body.name)) {
+  if (body?.op === "secret" && ["llm_key", "discord_link"].includes(body.name)) {
     if (body.value) props.setProperty(`secret:${body.name}`, String(body.value)); else props.deleteProperty(`secret:${body.name}`);
     return { ok: true };
   }

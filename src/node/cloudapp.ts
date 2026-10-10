@@ -14,7 +14,7 @@ import { upcoming } from "./view.ts";
 const ENGINE_FIELDS = ["feed_url", "announcement_feeds", "ai", "use_ai", "ai_daily_limit", "chat_daily_limit", "tz", "notifications", "phone_alerts",
   "study_blocks", "study_hours", "study_block_hours", "study_window_days", "study_day", "digest_daily", "digest_time", "digest_weekly", "weekly_day",
   "weekly_time", "heavy_threshold", "briefings", "calendar_name", "overrides", "sync_types", "reminders", "event_reminders", "lookback_days",
-  "term", "terms", "classes", "exams"];
+  "term", "terms", "classes", "exams", "discord_relay"];
 
 export function engineConfig(cfg: any, tz: string): any {
   const out: any = {};
@@ -108,6 +108,8 @@ export function cloudApp(d: CloudAppDeps) {
 
     async pushSettings(cfg: any): Promise<void> { await (await ch()).post({ op: "config", config: engineConfig(cfg, d.tz()) }); },
     async setAiKey(key: string): Promise<void> { await (await ch()).post({ op: "secret", name: "llm_key", value: key }); },
+    /** The Discord device token, so the script sends alerts to Discord itself ("" removes it). */
+    async setDiscord(token: string): Promise<void> { await (await ch()).post({ op: "secret", name: "discord_link", value: token }); },
     async email(on: boolean): Promise<void> { await (await ch()).post({ op: "email", on }); },
     async stop(): Promise<void> { await (await ch()).post({ op: "stop" }); },
     async start(): Promise<void> { await (await ch()).post({ op: "start" }); },

@@ -113,6 +113,9 @@ else {
         if (r.needsApproval) await svc.store.put("config", { ...((await svc.store.get<any>("config")) ?? {}), cloud_needs_approval: true });
       },
     });
+    void svc.discordCheckIn();
+    const checkIns = setInterval(() => void svc.discordCheckIn(), 6 * 3600e3);
+    app.on("before-quit", () => clearInterval(checkIns));
     app.on("activate", showWindow);
   });
   app.on("before-quit", () => { quitting = true; jobs?.stop(); });

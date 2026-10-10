@@ -13,6 +13,7 @@ import { PROBE_TIMEOUT_MS, probe } from "../llm/probe.ts";
 import { cached, channel, editorUrl, install, waitForApproval } from "../node/cloud.ts";
 import { engineConfig } from "../node/cloudapp.ts";
 import { applyDecision } from "../node/decisions.ts";
+import { RELAY_URL, connect as discordConnect, discordWords, parseLink, sendTest, unlink as unlinkDiscord } from "../node/discord.ts";
 import { loadCtx } from "../node/runner.ts";
 import { aiFingerprint, aiReady, applyPatch, autoModel, capResult, friendlyAIError, toSettings } from "../node/settings.ts";
 import { chatText, question, rowsFor, upcoming } from "../node/view.ts";
@@ -42,6 +43,16 @@ export function registerApi(c: Ctx): void {
     if (syncTimer) clearTimeout(syncTimer);
     syncTimer = setTimeout(() => { syncTimer = null; void c.jobs()?.syncNow().then(c.changed); }, 1500);
   };
+
+  /** Discord as Settings shows it: who's connected, and the last sending problem in words. In cloud mode
+   *  the script sends, so its last error counts. */
+  const discordState = async () => {
+    const link = parseLink(await svc.secrets.get("discord_link").catch(() => null));
+    if (!link) return null;
+    const err = (await cloudOn()) ? (await cached(store))?.discordError : await store.get<any>("discord-error");
+    return { name: link.name, error: err?.code ? discordWords(err.code) : "" };
+  };
+  const settingsOut = async (cfg: any) => toSettings(cfg, await svc.secrets.has("llm_key"), await discordState());
 
   const handle = <A extends unknown[], T>(name: string, fn: (...a: A) => Promise<T>) =>
     ipcMain.handle(`duely:${name}`, async (_e, ...a) => {
@@ -120,7 +131,7 @@ export function registerApi(c: Ctx): void {
     return { text: chatText(out, rows.length > 0), rows, question: q };
   });
 
-  handle("settings", async () => toSettings(await config(), await svc.secrets.has("llm_key")));
+  handle("settings", async () => settingsOut(await config()));
 
   handle("saveSettings", async (p: SettingsPatch) => {
     const before = await config();
@@ -134,10 +145,10 @@ export function registerApi(c: Ctx): void {
     if (await cloudOn()) {                                               // the engine is in the script: it gets the settings too
       await svc.cloud.pushSettings(next);
       if (p?.aiKey !== undefined) await svc.cloud.setAiKey(String(p.aiKey).trim());
-      return toSettings(next, await svc.secrets.has("llm_key"));
+      return settingsOut(next);
     }
     if (next.feed_url !== before.feed_url || JSON.stringify(next.announcement_feeds) !== JSON.stringify(before.announcement_feeds)) syncSoon();
-    return toSettings(next, await svc.secrets.has("llm_key"));
+    return settingsOut(next);
   });
 
   // tests the saved AI settings; a pass is recorded, which is what unlocks the app (aiReady). With no
@@ -234,7 +245,7 @@ export function registerApi(c: Ctx): void {
       await svc.cloud.pushSettings(next);
       void svc.cloud.sync().then(c.changed, () => {});                // Google starts it within a few minutes
     } else syncSoon();
-    return toSettings(next, await svc.secrets.has("llm_key"));
+    return settingsOut(next);
   };
 
   handle("readTimetable", async (images: unknown) => {
@@ -260,6 +271,37 @@ export function registerApi(c: Ctx): void {
     return saveEngine(saveExams(await config(), exams));
   });
   handle("removeExam", async (key: string) => saveEngine(removeExam(await config(), String(key))));
+
+  // ---- Discord alerts (P6): connect through Duely's relay; alerts follow the Notifications switches
+  const relayUrl = async () => (await config()).discord_relay || RELAY_URL;
+  handle("discordConnect", async () => {
+    const relay = await relayUrl();
+    const link = await discordConnect({ relay, open: (url) => openSafe(url) });
+    await svc.secrets.set("discord_link", JSON.stringify(link));
+    await store.put("discord-error", null);
+    await store.put("discord-seen", Date.now());
+    if (await cloudOn()) await svc.cloud.setDiscord(link.token);      // the script sends from now on, laptop on or off
+    c.showWindow();
+    c.changed();
+    return settingsOut(await config());
+  });
+  handle("discordTest", async () => {
+    const link = parseLink(await svc.secrets.get("discord_link").catch(() => null));
+    if (!link) throw new Error("Connect Discord first.");
+    try { await sendTest(link, { relay: await relayUrl() }); await store.put("discord-error", null); } catch (e) {
+      await store.put("discord-error", { code: (e as any).code ?? "error", at: Date.now() });
+      throw e;
+    }
+  });
+  handle("discordDisconnect", async () => {
+    const link = parseLink(await svc.secrets.get("discord_link").catch(() => null));
+    if (link) await unlinkDiscord(link, { relay: await relayUrl() }).catch(() => {});   // the relay forgets it and removes the member
+    if (await cloudOn()) await svc.cloud.setDiscord("").catch(() => {});
+    await svc.secrets.delete("discord_link");
+    await store.put("discord-error", null);
+    c.changed();
+    return settingsOut(await config());
+  });
 
   handle("syncNow", async () => {
     if (await cloudOn()) { await svc.cloud.sync(); c.changed(); return; }

@@ -194,3 +194,35 @@ test("the storage guard trims when script properties grow past 350 KB", async ()
   await vm.runInContext("Duely.keepStorageSmall(Duely.propsStore())", s.ctx);
   assert.ok(vm.runInContext("Duely.propsStore().bytes()", s.ctx) < 100 * 1024);
 });
+
+test("Discord from the script: alerts go to the relay with the device token (laptop off), daily check-in, forget removes it", async () => {
+  const relay: { url: string; body: any }[] = [];
+  const s = await sandbox(undefined, (url, o) => {
+    if (url.startsWith("https://relay.test/")) { relay.push({ url, body: JSON.parse(o.payload) }); return [200, '{"ok":true}']; }
+    return [404, ""];
+  });
+  s.props.setProperty("secret:channel_key", KEY);
+  s.props.setProperty("v:config", JSON.stringify({ ...CONFIG, discord_relay: "https://relay.test" }));
+  await vm.runInContext(`Duely.deps(Duely.propsStore()).notify("Midterm moved", "COMP 3005: now Oct 22", "")`, s.ctx);
+  assert.equal(relay.length, 0, "not connected: nothing sent");
+  assert.equal(post(s, { op: "secret", name: "discord_link", value: "t".repeat(43) }).ok, true);
+  assert.equal(get(s).discordSet, true);
+  await vm.runInContext(`Duely.deps(Duely.propsStore()).notify("Midterm moved", "COMP 3005: now Oct 22", "")`, s.ctx);
+  assert.deepEqual(relay.at(-1), { url: "https://relay.test/alert", body: { token: "t".repeat(43), title: "Midterm moved", body: "COMP 3005: now Oct 22", click: "" } });
+  await s.run("duelyTick");
+  assert.ok(relay.some((r) => r.url === "https://relay.test/seen"), "the daily check-in, from the script");
+  const n = relay.length;
+  await s.run("duelyTick");
+  assert.equal(relay.filter((r) => r.url.endsWith("/seen")).length, relay.slice(0, n).filter((r) => r.url.endsWith("/seen")).length, "once a day, not every tick");
+  post(s, { op: "forget" });
+  assert.equal(get(s).discordSet, false);
+});
+
+test("Discord from the script: a refused DM is kept for the app to explain", async () => {
+  const s = await sandbox(undefined, (url) => (url.startsWith("https://relay.test/") ? [409, '{"ok":false,"code":"dm_closed"}'] : [404, ""]));
+  s.props.setProperty("secret:channel_key", KEY);
+  s.props.setProperty("v:config", JSON.stringify({ ...CONFIG, discord_relay: "https://relay.test" }));
+  post(s, { op: "secret", name: "discord_link", value: "t".repeat(43) });
+  await vm.runInContext(`Duely.deps(Duely.propsStore()).notify("x", "y", "")`, s.ctx);
+  assert.equal(get(s).discordError.code, "dm_closed");
+});

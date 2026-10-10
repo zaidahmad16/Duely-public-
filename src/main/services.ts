@@ -11,6 +11,7 @@ import { NeedsAuth, googleCal } from "../core/gcal.ts";
 import { type Client, parseClient, tokenSource } from "../google/oauth.ts";
 import { makeLLM } from "../llm/adapters.ts";
 import type { LLM, Provider } from "../llm/types.ts";
+import { RELAY_URL, checkIn, parseLink, sendAlert } from "../node/discord.ts";
 import { dataDir } from "../node/paths.ts";
 import type { Deps } from "../node/runner.ts";
 import { type Cipher, type Secrets, secretStore } from "../node/secrets.ts";
@@ -21,6 +22,8 @@ export type Services = {
   /** cloud mode (P3.5): the engine in the student's Google account */
   cloud: CloudApp; cloudLink(): Promise<CloudLink | null>; saveCloudLink(l: CloudLink | null): Promise<void>;
   scriptApi(): ReturnType<typeof scriptApi>; bundle(): Bundle | null; googleToken(): Promise<string>;
+  /** Discord's daily check-in (the relay removes links unseen for 30 days); at most once a day */
+  discordCheckIn(): Promise<void>;
 };
 
 /** The engine this app version carries (out/gas, packaged as resources/gas). */
@@ -72,12 +75,34 @@ export function services(showWindow: () => void): Services {
     async calendar() { return googleCal(await googleToken()); },
     async notify(title, body, click) {
       if (process.env.DUELY_DEBUG) console.log("notify:", title, "|", body.slice(0, 80));
+      void discord(title, body, click);                                // to the phone too, whatever the desktop can show
       if (!(await notificationsWork()) || !Notification.isSupported()) throw new Error("no notification service on this desktop");   // retried later
       const n = new Notification({ title, body: body.length > 600 ? body.slice(0, 597) + "…" : body, silent: false });
       n.on("click", () => (click ? openSafe(click) : showWindow()));
       n.show();
     },
   };
+  /** The same alert as a Discord DM, in local mode (in cloud mode the script sends it, laptop on or off).
+   *  The last failure is kept for Settings ("discord-error"); a success clears it. */
+  async function discord(title: string, body: string, click?: string): Promise<void> {
+    const link = parseLink(await secrets.get("discord_link").catch(() => null));
+    if (!link || (await cloudLink())) return;
+    const relay = ((await store.get<any>("config")) ?? {}).discord_relay || RELAY_URL;
+    try {
+      await sendAlert(link, { title, body, click }, { relay });
+      if (await store.get("discord-error")) await store.put("discord-error", null);
+    } catch (e) {
+      await store.put("discord-error", { code: (e as any).code ?? "error", message: (e as Error).message, at: Date.now() });
+    }
+  }
+  async function discordCheckIn(): Promise<void> {
+    const link = parseLink(await secrets.get("discord_link").catch(() => null));
+    if (!link || Date.now() - (Number(await store.get("discord-seen")) || 0) < 20 * 3600e3) return;
+    const relay = ((await store.get<any>("config")) ?? {}).discord_relay || RELAY_URL;
+    try { await checkIn(link, { relay }); await store.put("discord-seen", Date.now()); } catch (e) {
+      if ((e as any).code === "not_linked") await store.put("discord-error", { code: "not_linked", message: (e as Error).message, at: Date.now() });
+    }
+  }
   const cloudLink = async (): Promise<CloudLink | null> => {
     const t = await secrets.get("cloud_link").catch(() => null);
     return t ? (JSON.parse(t) as CloudLink) : null;
@@ -88,7 +113,7 @@ export function services(showWindow: () => void): Services {
     store, link: cloudLink, saveLink: saveCloudLink, fetch: (i, init) => fetch(i, init), notify: deps.notify,
     tz: () => Intl.DateTimeFormat().resolvedOptions().timeZone, bundle: loadBundle, scriptApi: async () => api(),
   });
-  return { deps, secrets, store, weakKeychain, cloud, cloudLink, saveCloudLink, scriptApi: api, bundle: loadBundle, googleToken };
+  return { deps, secrets, store, weakKeychain, cloud, cloudLink, saveCloudLink, scriptApi: api, bundle: loadBundle, googleToken, discordCheckIn };
 }
 
 /** Linux: is there a notification service that answers? Without one, libnotify blocks the whole

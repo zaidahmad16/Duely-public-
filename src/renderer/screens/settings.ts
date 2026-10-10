@@ -5,6 +5,7 @@ import type { CapResult, Provider, Settings, SettingsPatch } from "../../shared/
 import { cloudSetup } from "../components/cloudSetup.ts";
 import { openDoc } from "../components/doc.ts";
 import { toast } from "../components/toast.ts";
+import { discordControl } from "../components/discordRow.ts";
 import { importExams, importTimetable, savedList } from "../components/timetableImport.ts";
 import { toggle } from "../components/toggle.ts";
 import { api } from "../ui/api.ts";
@@ -202,7 +203,16 @@ export function settingsScreen(app: AppCtx): Screen {
     return section("Notifications",
       settingRow("Desktop notifications", "Sync problems, changes and digests.", toggle(st.notifications, (v) => save({ notifications: v }), { label: "Desktop notifications" })),
       settingRow("Important announcements", "When a prof posts something with a date.", toggle(st.importantAnnouncements, (v) => save({ importantAnnouncements: v }), { label: "Important announcements" })),
-      settingRow("Discord", "Get your alerts as Discord DMs, so they reach your phone.", h("span", { class: "soon" }, "Coming later"), { muted: true }));
+      discordSetting(st));
+  }
+
+  /** The same alerts as the desktop's, as Discord DMs from the Duely bot (after the AI is set up). */
+  function discordSetting(st: Settings) {
+    const desc = "Your alerts as Discord DMs, so they reach your phone, even when this computer is off (with Duely in your Google account).";
+    if (!app.status?.aiReady && !st.discord) return settingRow("Discord", "Set up your AI first, then you can get alerts on Discord.", null, { muted: true });
+    const row = settingRow("Discord", desc, null, { stack: true });
+    row.append(h("div", { class: "setting-wide" }, discordControl(st.discord, (next) => { s = next; })));
+    return row;
   }
 
   // ---- Study & digests

@@ -11,6 +11,7 @@ import { cloudSetup } from "../components/cloudSetup.ts";
 import { TERMS_VERSION, helpLink, legalLine } from "../components/doc.ts";
 import { spinnerButton } from "./settings.ts";
 import { importTimetable } from "../components/timetableImport.ts";
+import { discordControl } from "../components/discordRow.ts";
 
 const STEPS = 5;
 
@@ -191,7 +192,10 @@ export function onboarding(done: () => void): HTMLElement {
           h("div", { class: "setting" }, h("div", { class: "setting-label" }, h("div", { class: "setting-name" }, "Desktop notifications"), h("div", { class: "setting-desc" }, "Changes, digests and sync problems.")),
             toggle(true, (v) => { notif.notifications = v; }, { label: "Desktop notifications" })),
           h("div", { class: "setting" }, h("div", { class: "setting-label" }, h("div", { class: "setting-name" }, "Important announcements"), h("div", { class: "setting-desc" }, "When a prof posts a date or a change.")),
-            toggle(true, (v) => { notif.important = v; }, { label: "Important announcements" }))), e],
+            toggle(true, (v) => { notif.important = v; }, { label: "Important announcements" })),
+          h("div", { class: "setting is-stacked" }, h("div", { class: "setting-label" }, h("div", { class: "setting-name" }, "Alerts on your phone ", h("span", { class: "optional" }, "Optional")),
+            h("div", { class: "setting-desc" }, "The same alerts as Discord DMs from the Duely bot.")),
+            discordControl(null, () => {}, { compact: true }))), e],
         [back(), finish]);
     },
   ];

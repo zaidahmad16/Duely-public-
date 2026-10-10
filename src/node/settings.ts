@@ -7,7 +7,7 @@ import type { CapResult, Settings, SettingsPatch } from "../shared/types.ts";
 
 const HM = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-export function toSettings(saved: any, keySet: boolean): Settings {
+export function toSettings(saved: any, keySet: boolean, discord: Settings["discord"] = null): Settings {
   const c = { ...DEFAULTS, ...saved };
   return {
     feedUrl: c.feed_url ?? "",
@@ -29,6 +29,7 @@ export function toSettings(saved: any, keySet: boolean): Settings {
       .sort((a, b) => a.start.localeCompare(b.start)),
     exams: (c.exams ?? []).map((e: any) => ({ key: `${e.course}|${e.date}|${e.start}`, course: e.course, title: e.title, date: e.date, start: e.start, end: e.end, room: e.room ?? "" })),
     academicDatesUrl: c.academic_dates_url ?? "",
+    discord,
   };
 }
 

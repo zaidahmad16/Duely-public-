@@ -16,6 +16,8 @@ export type CloudState = {
   ok: boolean; error?: string; version: string; state: any; health: any; sched: any; outbox: any[]; bytes: number;
   syncQueued: boolean; done: Record<string, number>; actions: any[]; study: any; inbox: string[];
   inboxDone: { id: string; at: number; ok: boolean; error?: string }[]; emailAlerts: boolean; aiKeySet: boolean; triggers: string[];
+  /** Discord (P6): the script holds a device token; its last sending problem */
+  discordSet?: boolean; discordError?: { code: string; at: number } | null;
 };
 
 const scopesSig = () => [...SCRIPT_SCOPES].sort().join(" ");

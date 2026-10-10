@@ -1,0 +1,13 @@
+{
+  // Duely's Discord relay (P6): holds the bot token; apps and student scripts send alerts through it.
+  // Secrets (wrangler secret put): DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_BOT_TOKEN, STATE_KEY.
+  "name": "duely-relay",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  // hourly: remove links unseen for 30 days, and server members without a link
+  "triggers": { "crons": ["17 * * * *"] },
+  "vars": { "GUILD_ID": "1558321208481685534", "ADMIN_IDS": "" },
+  "kv_namespaces": [{ "binding": "LINKS", "id": "REPLACE_AT_DEPLOY" }],
+  "observability": { "enabled": true },
+  "workers_dev": true
+}
