@@ -321,12 +321,40 @@ export function settingsScreen(app: AppCtx): Screen {
   // ---- About
   function about() {
     const link = (label: string, run: () => void) => h("button", { class: "btn btn-ghost btn-sm", on: { click: run } }, label);
-    return section("About",
-      settingRow("Duely", `Version ${app.status?.version ?? ""}`, null),
+    const el = section("About",
+      updateRow(),
       settingRow("Terms of Service", null, link("Read", () => openDoc("terms"))),
       settingRow("Privacy Policy", "Your data stays on this computer and in your own Google account, except what goes to the services you connect.", link("Read", () => openDoc("privacy"))),
       settingRow("Setup guide", "Step by step: Brightspace, Google, your AI, announcements.", link("Read", () => openDoc("setup"))),
       settingRow("Source code", "Open source under the MIT License.", link("GitHub", () => void api.openLink("https://github.com/zaidahmad16/Duely-public-"))));
+    el.classList.add("section-about");
+    return el;
+  }
+
+  /** Version and updates: up to date, downloading, ready to restart, or a download link (Mac, .deb). */
+  function updateRow(): HTMLElement {
+    const u = app.status?.update ?? null;
+    const v = app.status?.version ?? "";
+    const btn = (label: string, run: () => Promise<void> | void, primary = false) => {
+      const b = h("button", { class: ["btn", "btn-sm", primary ? "btn-primary" : "btn-ghost"] }, label);
+      b.addEventListener("click", async () => { b.disabled = true; try { await run(); } catch (e) { toast((e as Error).message); } b.disabled = false; });
+      return b;
+    };
+    if (!u) return settingRow("Duely", `Version ${v} (development build: updates come with installed copies)`, null);
+    const checked = u.lastChecked ? ` · checked ${ago(u.lastChecked)}` : "";
+    let desc = `Version ${v}${checked}`, control: HTMLElement | null = btn("Check for updates", () => api.updateCheck());
+    if (u.state === "checking") { desc = `Version ${v} · checking for updates…`; control = null; }
+    else if (u.state === "none") desc = `Version ${v} · up to date${checked}`;
+    else if (u.state === "downloading") { desc = `Downloading Duely ${u.version}… ${u.percent}%`; control = null; }
+    else if (u.state === "ready") { desc = `Duely ${u.version} is ready. It installs when you restart Duely.`; control = btn("Restart now", () => api.updateRestart(), true); }
+    else if (u.state === "available" && !u.canInstall) { desc = `Duely ${u.version} is available. Download it and install it over this one.`; control = btn("Download", () => api.openLink(u.url), true); }
+    else if (u.state === "available") { desc = `Duely ${u.version} is available.`; control = btn("Download update", () => api.updateCheck(), true); }
+    else if (u.state === "error") desc = `Version ${v} · couldn't check for updates (offline?)${checked}`;
+    const row = settingRow("Duely", desc, control);
+    if (!u.canInstall) return row;
+    const auto = settingRow("Download updates automatically", "Updates install when you restart Duely, never in the middle of a sync.",
+      toggle(u.auto, (on) => api.updateAuto(on), { label: "Download updates automatically" }));
+    return h("div", { class: "settings-rows-group" }, row, auto);
   }
 
   function paint() {
@@ -339,7 +367,7 @@ export function settingsScreen(app: AppCtx): Screen {
     el: root,
     mount: () => { void api.settings().then((v) => { s = v; paint(); }); },
     refresh: () => {},
-    status: () => {},
+    status: () => { const old = body.querySelector(".section-about"); if (old) old.replaceWith(about()); },   // update progress
     destroy: () => {},
   };
 }

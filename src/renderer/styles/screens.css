@@ -235,3 +235,4 @@
 .chat-day { display: flex; align-items: center; gap: 10px; color: var(--text-3); font-size: var(--fs-meta); font-weight: 500; }
 .chat-day::before, .chat-day::after { content: ""; flex: 1; height: 1px; background: var(--border); }
 @media (max-width: 860px) { .chat-bar { padding: 8px 20px 0; } }
+.settings-rows-group { display: contents; }

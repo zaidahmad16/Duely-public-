@@ -49,6 +49,8 @@ export type Status = {
   /** the computer's locale (Chromium's own UI locale can differ, e.g. en-GB for en-CA) */
   locale: string;
   version: string;
+  /** updates (packaged app only): what's new, downloading, ready to restart, or a download link */
+  update: { state: string; version: string; percent: number; lastChecked: number; canInstall: boolean; url: string; auto: boolean } | null;
   onboarded: boolean;
   feedSet: boolean;
   google: boolean;

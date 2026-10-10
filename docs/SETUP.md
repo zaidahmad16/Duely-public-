@@ -2,6 +2,15 @@
 
 Duely puts your Brightspace deadlines, tests and classes in Google Calendar, reads your course announcements for new dates, and answers questions like "what's due this week?". Setup takes about 15 minutes, once.
 
+## 0. Install Duely
+
+Download Duely from the [Releases page](https://github.com/zaidahmad16/Duely-public-/releases): `Duely-Setup-….exe` for Windows, `Duely-…-arm64.dmg` (Apple silicon) or `Duely-…-x64.dmg` (Intel) for a Mac, and the `.AppImage` or `.deb` for Linux.
+
+Duely isn't signed with a paid certificate, so the first time you open it your computer asks if you trust it:
+- **Windows:** "Windows protected your PC" → **More info** → **Run anyway**.
+- **macOS:** drag Duely from the `.dmg` to Applications and open it. If macOS won't open it, go to **System Settings → Privacy & Security**, click **Open Anyway** next to Duely, and confirm.
+- **Linux:** make the AppImage executable (right-click → Properties → Permissions → Allow executing) and open it, or install the `.deb`.
+
 ## What you need
 
 - your school's **Brightspace** login;
@@ -179,6 +188,12 @@ The Duely server is only for alerts: you can't post there, and you can mute it. 
 - **Questions** appear at the top when Duely needs you, for example when a quiz disappeared from Brightspace, or to suggest study time. Nothing is added to your calendar until you say yes.
 - **Chat** answers questions like "what's due tomorrow?" or "when is my next test?". You can mark things done ("done lab report 2"), answer Duely's questions by typing "yes" or "no", ask "what do you need from me?" to see anything waiting for you, and say "undo" within 10 minutes. The chat is kept on your computer (the last 200 messages, up to 30 days) until you click **Clear chat**.
 - **Sync now** checks Brightspace straight away. Duely also checks every 10 minutes on its own, and again when your computer wakes up. If Duely runs in your Google account, it checks every 10 minutes even while your computer is off, and Sync now can take a couple of minutes to start (Google decides when).
+
+## Updates
+
+Duely checks for a new version every few hours. On Windows and with the AppImage, it downloads it in the background and installs it when you restart Duely: **Settings → About → Restart now**, or **Restart to update** in the tray menu. It never restarts in the middle of a sync. You can turn off automatic downloads there too. On a Mac and with the `.deb`, Settings → About shows **Download** for a new version: download it and install it over the old one; your settings stay.
+
+If Duely runs in your Google account, a new version updates that script too, by itself.
 
 ## Troubleshooting
 

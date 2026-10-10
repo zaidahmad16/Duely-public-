@@ -19,6 +19,9 @@ export const api = {
   /** the saved chat (rows and question states as of now) */
   chatHistory: () => call<ChatMessage[]>("chatHistory"),
   chatClear: () => call<void>("chatClear"),
+  updateCheck: () => call<void>("updateCheck"),
+  updateRestart: () => call<void>("updateRestart"),
+  updateAuto: (on: boolean) => call<void>("updateAuto", on),
   settings: () => call<Settings>("settings"),
   saveSettings: (p: SettingsPatch) => call<Settings>("saveSettings", p),
   testAI: () => call<CapResult>("testAI"),

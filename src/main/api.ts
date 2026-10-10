@@ -21,10 +21,11 @@ import { chatHistory, chatText, question, resolvedBetween, rowsFor, upcoming } f
 import type { Image } from "../llm/types.ts";
 import type { Button, CapResult, ChatMessage, ChatReply, ExamDraft, Question, Result, SettingsPatch, Status, TermDraft, Upcoming } from "../shared/types.ts";
 import type { Jobs } from "./jobs.ts";
+import type { Updates } from "./updates.ts";
 import { type Services, openSafe } from "./services.ts";
 import { canStartAtLogin, setStartAtLogin, startsAtLogin } from "./tray.ts";
 
-type Ctx = { svc: Services; jobs: () => Jobs | null; changed: () => void; showWindow: () => void; onboarded: () => void };
+type Ctx = { svc: Services; jobs: () => Jobs | null; changed: () => void; showWindow: () => void; onboarded: () => void; updates: () => Updates | null };
 
 const errText = (e: unknown) => (e as Error)?.message ?? String(e);
 
@@ -68,6 +69,7 @@ export function registerApi(c: Ctx): void {
     return {
       locale: app.getSystemLocale() || app.getLocale(),
       version: app.getVersion(),
+      update: c.updates()?.state() ?? null,
       onboarded: !!cfg.onboarded,
       feedSet: !!cfg.feed_url,
       google: await svc.secrets.has("google_refresh"),
@@ -334,6 +336,11 @@ export function registerApi(c: Ctx): void {
     c.changed();
     return settingsOut(await config());
   });
+
+  // ---- updates (P7)
+  handle("updateCheck", async () => { await c.updates()?.check(true); });
+  handle("updateRestart", async () => { await c.updates()?.restart(); });
+  handle("updateAuto", async (on: boolean) => { await c.updates()?.setAuto(!!on); });
 
   handle("syncNow", async () => {
     if (await cloudOn()) { await svc.cloud.sync(); c.changed(); return; }

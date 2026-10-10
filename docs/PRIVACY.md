@@ -60,6 +60,8 @@ Duely connects only to the services you set up, directly from your computer or, 
 | **Your AI provider** (OpenAI-compatible, Anthropic or Google Gemini, with your own API key) | Course codes, titles, dates and descriptions of your Brightspace items; the text of course announcements; your chat messages with the items they're about; and any screenshot you choose to import (it's read once and not kept). | To sort the feed, read announcements for dates, answer your questions and read screenshots. |
 | **Discord** (optional; only if you connect it) | The text of your alerts (for example a moved test, an important announcement, or your morning digest), sent through Duely's Discord relay to the Duely bot, which sends it to you as a direct message. See "Discord alerts" below. | So your alerts reach you on your phone too. |
 
+Duely also checks **GitHub** (where it's published) for new versions every few hours. That request carries no information about you beyond what any web request does (your IP address and the app's version); GitHub's privacy policy applies.
+
 Each of these services handles the information it receives under its own terms and privacy policy, which you agreed to when you set up your account with it. In particular, check what your AI provider does with API requests (for example, whether it keeps or trains on them); many providers let you change this. A local model (such as Ollama or LM Studio) keeps everything on your computer.
 
 ## Google user data
