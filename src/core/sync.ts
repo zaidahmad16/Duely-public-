@@ -20,8 +20,8 @@ export const DEFAULTS = {
   sync_types: { assignment: true, quiz: true, exam: true, event: true, class: true },
   reminders: [1440, 120], event_reminders: false, lookback_days: 14,
   use_ai: true, ai_neuron_daily_limit: 3000,
-  overrides: {}, term: null, classes: [], announcement_feeds: [], phone_alerts: false,
-  slack_user_id: "", tz: "America/Toronto",
+  overrides: {}, term: null, classes: [], announcement_feeds: [], phone_alerts: true,   // notify about important announcements
+  slack_user_id: "", tz: "",   // "" = the computer's time zone
   digest_daily: true, digest_time: "07:30", digest_weekly: true, weekly_day: 6, weekly_time: "19:00", heavy_threshold: 4,
   ...STUDY_DEFAULTS,
 };

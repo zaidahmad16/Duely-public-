@@ -28,11 +28,13 @@ is separate and must stay untouched; code is copied from it, never personal data
 - Never print or commit API keys. For live LLM tests, the personal Mistral key can be passed via env:
   `DUELY_API_KEY=$(python3 -c "import json;print(json.load(open('/home/zaid/.config/syllabus/config.json'))['mistral_key'])") DUELY_PROVIDER=openai DUELY_BASE_URL=https://api.mistral.ai/v1 DUELY_MODEL=ministral-14b-latest`
 
-## State (2026-10-09)
-- `main`: P0 scaffold (ad8667d), CI green on 3 OSes.
-- Branch `p1-engine-port` (pushed, d39179a): P1 complete. 114 tests pass, `tsc --noEmit` clean.
-  Live: `cli.ts test-ai` (Chat ✓ Reading ✓ Screenshots ✗ on ministral) and `cli.ts sync --feed test/fixture.ics` work.
-- TODO first: check CI on `p1-engine-port` (`gh run list -b p1-engine-port`), then merge to main.
+## State (2026-10-09, evening)
+- `main`: P0 + P1 (461d80c), CI green.
+- Branch `p2-google-sync`: P2 code done, see `docs/PROGRESS.md`. Left: the live test (connect a Google
+  account with the student flow, sync the sample feed into the new "Brightspace" calendar). Needs the user
+  to click through Google's consent page in their browser; never drive it for them.
+- Running the GUI headless: `env -u DBUS_SESSION_BUS_ADDRESS DUELY_HOME=<tmp> dbus-run-session -- xvfb-run -a npx electron . --no-sandbox`
+  (own D-Bus session so nothing reaches the real desktop; `DUELY_DEBUG=1` logs ticks and notifications).
 
 ## Commands
 - `npm test` · `npm run typecheck` · `npm run build` · `npm run smoke` (xvfb on Linux)
@@ -47,7 +49,7 @@ is separate and must stay untouched; code is copied from it, never personal data
 - `src/cli.ts` headless runner; `src/main|preload|renderer` Electron shell (still the P0 empty window)
 - `test/helpers.ts` `llmFromRun` / `llmOverFetch` fakes; `test/fixture.ics` sample feed (no personal data)
 
-## Next: P2
+## P2 (done in code; the original brief)
 Google OAuth (loopback redirect + PKCE, student's own client JSON) in `src/google/`; Calendar push using
 `core/gcal.ts`; `src/main/jobs.ts` scheduler (sync, announcements, digests, briefings) with catch-up after
 sleep/wake (`powerMonitor`); tray (Sync now / Open / Quit, start at login optional); desktop notifications;

@@ -33,11 +33,11 @@ export async function briefingText(o: Occ, items: any[], cfg: any, ai: AI, f: ty
   return lines.join("\n");
 }
 
-/** From the minute cron: 19:00–19:30 local, one briefing per test tomorrow, once. */
+/** From the minute tick: 19:00 to `until` local, one briefing per test tomorrow, once. */
 export async function maybeBriefing(store: { get<T>(k: string): Promise<T | null>; put(k: string, v: unknown): Promise<void> },
-  cfg: any, tz: string, now: number, ai: AI, post: (text: string) => Promise<void>, f: typeof fetch = fetch): Promise<number> {
+  cfg: any, tz: string, now: number, ai: AI, post: (text: string) => Promise<void>, f: typeof fetch = fetch, until = "19:30"): Promise<number> {
   const hm = strftime({ t: now, tz }, "%H:%M");
-  if (hm < "19:00" || hm >= "19:30") return 0;
+  if (hm < "19:00" || hm >= until) return 0;
   const tomorrow = addDays(localDate({ t: now, tz }, tz), 1);
   const items: any[] = ((await store.get<any>("state")) ?? {}).items ?? [];
   const done = (await store.get<Record<string, number>>("done")) ?? {};

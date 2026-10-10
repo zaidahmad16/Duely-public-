@@ -1,3 +1,11 @@
-:root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+:root { color-scheme: light dark; font-family: system-ui, sans-serif; --muted: #6b7280; --warn: #b45309; }
 body { margin: 0; }
-main { padding: 32px; }
+main { padding: 32px; max-width: 640px; }
+section { margin-top: 28px; }
+h2 { font-size: 1rem; margin: 0 0 8px; }
+form { display: flex; gap: 8px; }
+input[type="url"] { flex: 1; padding: 6px 8px; }
+button { padding: 6px 14px; }
+.muted { color: var(--muted); margin: 6px 0; }
+.warn { color: var(--warn); }
+.err { color: #dc2626; }

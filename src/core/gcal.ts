@@ -22,7 +22,7 @@ export async function accessToken(env: { GOOGLE_CLIENT_ID: string; GOOGLE_CLIENT
   });
   const text = await r.text();
   if (r.status !== 200) {
-    if (text.includes("invalid_grant")) throw new NeedsAuth("Google sign-in expired or revoked; reconnect Google, then run `syllabus cloud-setup` again");
+    if (text.includes("invalid_grant")) throw new NeedsAuth("Google sign-in expired or was removed. Reconnect Google in Duely's settings.");
     throw new Error(`Google token refresh failed: ${text.slice(0, 200)}`);
   }
   return JSON.parse(text).access_token;
@@ -47,7 +47,8 @@ export function googleCal(token: string, f = fetch): Cal {
   }
   return {
     async ensureCalendar(name, id, tz) {
-      if (id && (await req("GET", `/calendars/${enc(id)}`))) return id;
+      // 403: not a calendar Duely made (it may only see its own), so it makes a fresh one
+      if (id && (await req("GET", `/calendars/${enc(id)}`).catch((e: Error) => { if (/ 403:/.test(e.message)) return null; throw e; }))) return id;
       return (await req("POST", "/calendars", { summary: name, timeZone: tz })).id;
     },
     async listEvents(calId) {

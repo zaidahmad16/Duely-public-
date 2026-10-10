@@ -5,21 +5,14 @@
 // AI from config.json "ai" {provider, model, baseUrl} + key, or env DUELY_PROVIDER / DUELY_MODEL /
 // DUELY_BASE_URL / DUELY_API_KEY (the app keeps the key in the OS keychain instead).
 import { existsSync, readFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
 import { makeLLM } from "./llm/adapters.ts";
 import { describeCaps, probe } from "./llm/probe.ts";
 import type { LLM, Provider } from "./llm/types.ts";
 import { DEFAULTS, build, serial } from "./core/sync.ts";
 import { fileStore } from "./node/store.ts";
+import { dataDir } from "./node/paths.ts";
 
-export function dataDir(): string {
-  if (process.env.DUELY_HOME) return process.env.DUELY_HOME;
-  const home = homedir();
-  if (process.platform === "win32") return join(process.env.APPDATA ?? join(home, "AppData", "Roaming"), "Duely");
-  if (process.platform === "darwin") return join(home, "Library", "Application Support", "Duely");
-  return join(process.env.XDG_CONFIG_HOME ?? join(home, ".config"), "Duely");
-}
+export { dataDir };
 
 export function llmFrom(cfg: any, env = process.env): LLM | undefined {
   const ai = cfg.ai ?? {};

@@ -87,11 +87,12 @@ export function weeklyDigest(items: any[], tz: string, now: number): string {
 
 const minutes = (hm: string) => { const [h, m] = String(hm).split(":").map(Number); return h * 60 + (m || 0); };
 
-/** Is it time (within 30 min after `hm`, local) and not sent yet today? */
-export function due(now: number, tz: string, hm: string, lastSent: string | undefined): boolean {
+/** Is it time (within `windowMin` after `hm`, local) and not sent yet today? The desktop app uses a
+ *  longer window so a laptop that was asleep at `hm` still sends it when it wakes. */
+export function due(now: number, tz: string, hm: string, lastSent: string | undefined, windowMin = 30): boolean {
   const day = localDate({ t: now, tz }, tz);
   if (lastSent === day) return false;
   const nowMin = minutes(strftime({ t: now, tz }, "%H:%M"));
   const at = minutes(hm);
-  return nowMin >= at && nowMin < at + 30;
+  return nowMin >= at && nowMin < at + windowMin;
 }

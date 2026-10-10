@@ -39,7 +39,16 @@
         "deb"
       ],
       "category": "Education"
-    }
+    },
+    "extraResources": [
+      {
+        "from": "resources",
+        "to": ".",
+        "filter": [
+          "*.png"
+        ]
+      }
+    ]
   },
   "devDependencies": {
     "@types/node": "^22.20.5",
