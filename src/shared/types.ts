@@ -59,6 +59,9 @@ export type Status = {
   weakKeychain: boolean;
   startAtLogin: { can: boolean; on: boolean };
   sync: { time: number; error: string; needsGoogle: boolean; items: number; running: boolean };
+  /** where the engine runs: "cloud" = the script in the student's Google account (P3.5) */
+  engine: "cloud" | "local";
+  cloud: { readAt: number; version: string; running: boolean; emailAlerts: boolean; needsApproval: boolean; editor: string } | null;
 };
 
 export type Provider = "openai" | "anthropic" | "gemini";

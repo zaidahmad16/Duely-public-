@@ -9,7 +9,7 @@ export type Cipher = {
   decrypt(data: Buffer): string;
 };
 
-export type SecretName = "llm_key" | "google_client" | "google_refresh" | "discord_link";
+export type SecretName = "llm_key" | "google_client" | "google_refresh" | "discord_link" | "cloud_link";
 
 export type Secrets = {
   get(name: SecretName): Promise<string | null>;

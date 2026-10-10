@@ -25,6 +25,11 @@ export const api = {
   setStartAtLogin: (on: boolean) => call<boolean>("setStartAtLogin", on),
   finishOnboarding: () => call<void>("finishOnboarding"),
   acceptTerms: (version: string) => call<void>("acceptTerms", version),
+  cloudCheck: () => call<{ apiEnabled: boolean; installed: boolean; bundle: boolean }>("cloudCheck"),
+  cloudInstall: () => call<{ editor: string }>("cloudInstall"),
+  cloudWait: () => call<void>("cloudWait"),
+  cloudTimer: (on: boolean) => call<void>("cloudTimer", on),
+  cloudEmail: (on: boolean) => call<void>("cloudEmail", on),
   openLink: (url: string) => call<void>("openLink", url),
   onChanged: (fn: () => void) => window.duely.onChanged(fn),
 };

@@ -4,9 +4,12 @@ import { app, ipcMain } from "electron";
 import { loadActions } from "../core/actions.ts";
 import { answer } from "../core/ask.ts";
 import { loadDone } from "../core/done.ts";
-import { connect, parseClient } from "../google/oauth.ts";
+import { SCOPE, connect, parseClient } from "../google/oauth.ts";
+import { SCRIPT_API_SCOPES } from "../google/script.ts";
 import { makeLLM } from "../llm/adapters.ts";
 import { probe } from "../llm/probe.ts";
+import { cached, channel, editorUrl, install, waitForApproval } from "../node/cloud.ts";
+import { engineConfig } from "../node/cloudapp.ts";
 import { applyDecision } from "../node/decisions.ts";
 import { loadCtx } from "../node/runner.ts";
 import { aiFingerprint, aiReady, applyPatch, capResult, friendlyAIError, toSettings } from "../node/settings.ts";
@@ -24,7 +27,11 @@ export function registerApi(c: Ctx): void {
   const { svc } = c;
   const store = svc.store;
   const config = async () => (await store.get<any>("config")) ?? {};
-  const items = async () => ((await store.get<any>("state")) ?? {}).items ?? [];
+  // cloud mode (P3.5): the script in the student's Google account is the engine; else this computer is
+  const cloudOn = async () => !!(await svc.cloudLink());
+  const items = async () => (await cloudOn())
+    ? ((await cached(store))?.state?.items ?? [])
+    : ((await store.get<any>("state")) ?? {}).items ?? [];
 
   // writes that change the calendar sync soon after, batched (ticking several rows = one sync)
   let syncTimer: NodeJS.Timeout | null = null;
@@ -40,7 +47,9 @@ export function registerApi(c: Ctx): void {
 
   handle("status", async (): Promise<Status> => {
     const cfg = await config();
-    const st = (await store.get<any>("state")) ?? {};
+    const link = await svc.cloudLink();
+    const cs = link ? await cached(store) : null;
+    const st = (link ? cs?.state : await store.get<any>("state")) ?? {};
     return {
       locale: app.getSystemLocale() || app.getLocale(),
       version: app.getVersion(),
@@ -51,31 +60,51 @@ export function registerApi(c: Ctx): void {
       aiReady: aiReady(cfg, (await svc.secrets.get("llm_key").catch(() => null)) ?? ""),
       weakKeychain: svc.weakKeychain,
       startAtLogin: { can: canStartAtLogin(), on: startsAtLogin() },
-      sync: { time: st.time ?? 0, error: st.error ?? "", needsGoogle: !!st.needs_google, running: !!c.jobs()?.isRunning(),
+      sync: { time: st.time ?? 0, error: st.error ?? "", needsGoogle: !!st.needs_google, running: !!c.jobs()?.isRunning() || !!cs?.syncQueued,
         items: (st.items ?? []).filter((i: any) => i.keep !== false).length },
+      engine: link ? "cloud" : "local",
+      cloud: link ? { readAt: (cs as any)?.readAt ?? 0, version: cs?.version ?? "", running: (cs?.triggers ?? []).includes("duelyTick"),
+        emailAlerts: !!cs?.emailAlerts, needsApproval: !!cfg.cloud_needs_approval, editor: editorUrl(link) } : null,
     };
   });
 
   handle("upcoming", async (): Promise<Upcoming> => {
+    if (await cloudOn()) return svc.cloud.upcoming();
     const { tz } = await loadCtx({ ...svc.deps, llm: async () => undefined });
     return upcoming(await items(), await loadDone(store), Object.values(await loadActions(store)), tz);
   });
 
   handle("setDone", async (uid: string, name: string, done: boolean) => {
+    if (await cloudOn()) { await svc.cloud.decide(done ? { kind: "done", uid, name } : { kind: "undo", uid, name }); c.changed(); return; }
     const { tz } = await loadCtx({ ...svc.deps, llm: async () => undefined });
     await applyDecision(store, done ? { kind: "done", uid, name } : { kind: "undo", uid, name }, tz);
     syncSoon();
   });
 
   handle("decide", async (id: string, button: Button, times?: { day: string; time: string }[]) => {
+    const decision = { kind: "decide" as const, id, button, ...(times ? { times } : {}) };
     const { tz } = await loadCtx({ ...svc.deps, llm: async () => undefined });
-    await applyDecision(store, { kind: "decide", id, button, ...(times ? { times } : {}) }, tz);
-    syncSoon();
+    // cloud mode: questions come from the script, except ones chat asked here (they're only in this store)
+    if (await cloudOn() && !(await loadActions(store))[id]) { await svc.cloud.decide(decision); c.changed(); return; }
+    const before = await loadDone(store);
+    await applyDecision(store, decision, tz);
+    if (await cloudOn()) await mirrorDone(before);
+    else syncSoon();
   });
+
+  /** Cloud mode: chat runs here, on a copy of the script's done marks; what it changed goes to the script. */
+  async function mirrorDone(before: Record<string, number>): Promise<void> {
+    const after = await loadDone(store);
+    const all = await items();
+    const name = (uid: string) => { const it = all.find((i: any) => i.uid === uid); return it ? `${it.course ? it.course + " " : ""}${it.title}` : uid; };
+    for (const uid of Object.keys(after)) if (!before[uid]) await svc.cloud.decide({ kind: "done", uid, name: name(uid) });
+    for (const uid of Object.keys(before)) if (!after[uid]) await svc.cloud.decide({ kind: "undo", uid, name: name(uid) });
+  }
 
   handle("chat", async (text: string): Promise<ChatReply> => {
     const ctx = await loadCtx(svc.deps);
     const all = await items();
+    const doneBefore = await loadDone(store);
     let picks: { uid: string; day: string }[] = [];
     let q: Question | undefined;
     const out = await answer(String(text).slice(0, 2000), all, ctx.cfg, store, ctx.tz, svc.deps.fetch, Date.now(), {
@@ -83,6 +112,7 @@ export function registerApi(c: Ctx): void {
       onList: (r) => { picks = r; },
       onProposal: (a) => { q = question(a); },
     });
+    if (await cloudOn()) await mirrorDone(doneBefore).catch(() => {});   // "done 2" in chat reaches the script
     const rows = rowsFor(all, picks, await loadDone(store), ctx.tz);
     return { text: chatText(out, rows.length > 0), rows, question: q };
   });
@@ -98,6 +128,11 @@ export function registerApi(c: Ctx): void {
     }
     await store.put("config", next);
     if (p?.ai || p?.aiKey !== undefined) c.changed();                   // AI changed: it needs testing again (aiReady)
+    if (await cloudOn()) {                                               // the engine is in the script: it gets the settings too
+      await svc.cloud.pushSettings(next);
+      if (p?.aiKey !== undefined) await svc.cloud.setAiKey(String(p.aiKey).trim());
+      return toSettings(next, await svc.secrets.has("llm_key"));
+    }
     if (next.feed_url !== before.feed_url || JSON.stringify(next.announcement_feeds) !== JSON.stringify(before.announcement_feeds)) syncSoon();
     return toSettings(next, await svc.secrets.has("llm_key"));
   });
@@ -124,7 +159,8 @@ export function registerApi(c: Ctx): void {
     const text = String(clientJson ?? "") || (await svc.secrets.get("google_client")) || "";
     if (!text) throw new Error("Choose the client file you downloaded from Google Cloud first.");
     const client = parseClient(text);
-    const refresh = await connect(client, { open: (url) => openSafe(url) });
+    // Duely's own calendar (local mode) + managing Duely's script in the student's account (cloud mode)
+    const refresh = await connect(client, { open: (url) => openSafe(url), scopes: [SCOPE, ...SCRIPT_API_SCOPES] });
     await svc.secrets.set("google_client", text);
     await svc.secrets.set("google_refresh", refresh);
     c.showWindow();
@@ -132,12 +168,49 @@ export function registerApi(c: Ctx): void {
   });
 
   handle("disconnectGoogle", async () => {
+    if (await cloudOn()) {                                               // the script stops and forgets keys and links
+      await svc.cloud.forget().catch(() => {});
+      await svc.saveCloudLink(null);
+    }
     const refresh = await svc.secrets.get("google_refresh").catch(() => null);
     if (refresh) await fetch(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(refresh)}`, { method: "POST" }).catch(() => {});
     await svc.secrets.delete("google_refresh");
   });
 
-  handle("syncNow", async () => { await c.jobs()?.syncNow(); c.changed(); });
+  handle("syncNow", async () => {
+    if (await cloudOn()) { await svc.cloud.sync(); c.changed(); return; }
+    await c.jobs()?.syncNow(); c.changed();
+  });
+
+  // ---- cloud setup (P3.5): Apps Script API on? → install → the student approves once → cloud mode
+  handle("cloudCheck", async () => ({ apiEnabled: await svc.scriptApi().apiEnabled(), installed: await cloudOn(), bundle: !!svc.bundle() }));
+
+  handle("cloudInstall", async () => {
+    const bundle = svc.bundle();
+    if (!bundle) throw new Error("This copy of Duely doesn't include its cloud engine. Reinstall Duely.");
+    const { cfg, tz } = await loadCtx({ ...svc.deps, llm: async () => undefined });
+    const link = await install(svc.scriptApi(), bundle, tz, engineConfig(cfg, tz));
+    await svc.saveCloudLink(link);
+    await store.put("config", { ...(await config()), cloud_approved: false });
+    openSafe(editorUrl(link));
+    return { editor: editorUrl(link) };
+  });
+
+  handle("cloudWait", async () => {
+    const link = await svc.cloudLink();
+    if (!link) throw new Error("Duely isn't installed in your Google account yet.");
+    await waitForApproval(channel(link), { timeoutMs: 10 * 60e3 });
+    // approved: the script gets the full settings and the AI key, then syncs
+    await svc.cloud.pushSettings(await config());
+    const key = await svc.secrets.get("llm_key").catch(() => null);
+    if (key) await svc.cloud.setAiKey(key);
+    await store.put("config", { ...(await config()), cloud_approved: true, cloud_needs_approval: false });
+    await svc.cloud.sync({ timeoutMs: 150e3 }).catch(() => {});
+    c.changed();
+  });
+
+  handle("cloudTimer", async (on: boolean) => { if (on) await svc.cloud.start(); else await svc.cloud.stop(); await svc.cloud.refresh(); c.changed(); });
+  handle("cloudEmail", async (on: boolean) => { await svc.cloud.email(!!on); await svc.cloud.refresh(); c.changed(); });
 
   handle("setStartAtLogin", async (on: boolean) => { setStartAtLogin(!!on); return startsAtLogin(); });
 

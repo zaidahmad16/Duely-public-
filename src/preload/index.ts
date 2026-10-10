@@ -19,6 +19,11 @@ contextBridge.exposeInMainWorld("duely", {
   setStartAtLogin: call("setStartAtLogin"),
   finishOnboarding: call("finishOnboarding"),
   acceptTerms: call("acceptTerms"),
+  cloudCheck: call("cloudCheck"),
+  cloudInstall: call("cloudInstall"),
+  cloudWait: call("cloudWait"),
+  cloudTimer: call("cloudTimer"),
+  cloudEmail: call("cloudEmail"),
   openLink: call("openLink"),
   onChanged: (fn: () => void) => { ipcRenderer.on("duely:changed", () => fn()); },
 });

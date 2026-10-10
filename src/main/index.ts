@@ -101,7 +101,14 @@ else {
       syncNow: () => { void jobs?.syncNow().then(changed); },
       quit: () => { quitting = true; app.quit(); },
     });
-    jobs = startJobs(svc.deps, changed);
+    jobs = startJobs(svc.deps, changed, {
+      on: async () => !!(await svc.cloudLink()),
+      read: () => svc.cloud.refresh(),
+      async update() {
+        const r = await svc.cloud.updateEngine();
+        if (r.needsApproval) await svc.store.put("config", { ...((await svc.store.get<any>("config")) ?? {}), cloud_needs_approval: true });
+      },
+    });
     app.on("activate", showWindow);
   });
   app.on("before-quit", () => { quitting = true; jobs?.stop(); });
