@@ -164,7 +164,7 @@ relaunch with `home-live` from the new location.
   Nothing is built yet.
 
 ## Commands
-- `npm test` (163 tests: node:test with `--experimental-strip-types`)
+- `npm test` (158 tests: node:test with `--experimental-strip-types`)
 - `npm run typecheck`
 - `npm run build` (builds the Apps Script bundle too)
 - `npm run build:gas`
