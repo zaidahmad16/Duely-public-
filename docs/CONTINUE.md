@@ -34,7 +34,8 @@ is separate and must stay untouched; code is copied from it, never personal data
   the sample feed into a new "Brightspace (Duely test)" calendar. The user has to click through Google's
   consent page. Offer to reuse their Desktop client (~/.config/syllabus/client_secret.json) with a temp
   DUELY_HOME, or have them make a fresh one. Don't drive the consent page for them.
-- Next: P3 UI (wizard, Upcoming, Settings; also show the stored proposals).
+- Branch `p3-ui`: P3 UI built to the owner's design spec (see PROGRESS.md). Next: owner reviews the feel with
+  `npm run dev` on their desktop; then P4 polish of chat / P5 announcements + screenshots.
 - Running the GUI headless: `env -u DBUS_SESSION_BUS_ADDRESS DUELY_HOME=<tmp> dbus-run-session -- xvfb-run -a npx electron . --no-sandbox`
   (own D-Bus session so nothing reaches the real desktop; `DUELY_DEBUG=1` logs ticks and notifications).
 

@@ -137,6 +137,7 @@ export async function syncOnce(deps: Deps, force = false): Promise<any> {
     Object.assign(result, await push(items, ctx, cal, WRITE_CAP), { pushed: true });
     await store.put("last-full", { sig, rss_sig: annSig, at: Date.now() });
   } catch (e) {
+    if (process.env.DUELY_DEBUG) console.error(e);
     result.error = e instanceof NeedsAuth ? e.message : (e as Error)?.message || String(e);
     result.needs_google = e instanceof NeedsAuth;
     if (!result.items.length) result.items = prev.items ?? [];
@@ -271,7 +272,7 @@ export async function tick(deps: Deps, sched: Sched, opts: { now?: number; force
     await maybeDigest(deps, now).catch((e) => logError(deps.store, "digest", e));
     await (async () => {
       const c = await loadCtx(deps);
-      if (!notifying(c.cfg)) return;
+      if (!notifying(c.cfg) || c.cfg.briefings === false) return;
       const post = (t: string) => deps.notify(plainText(t.split("\n")[0]), plainText(t.split("\n").slice(1).join("\n").trim()));
       await maybeBriefing(deps.store, c.cfg, c.tz, now, { llm: c.llm }, post, deps.fetch, BRIEFING_UNTIL);
     })().catch((e) => logError(deps.store, "briefing", e));

@@ -5,7 +5,7 @@ export const CATEGORIES = ["assignment", "tutorial", "lab", "module", "quiz", "t
 export type Category = (typeof CATEGORIES)[number];
 
 const TEST_RE = /\b(tests?|midterms?|exams?|finals?)\b/i;
-const NOT_TEST_RE = /\b(review|session|prep|practice|office hours?|reminder|study)\b/i;
+export const NOT_TEST_RE = /\b(review|session|prep|practice|office hours?|reminder|study)\b/i;
 
 export function category(it: any): Category {
   const title = String(it.title ?? "");

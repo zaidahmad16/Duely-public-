@@ -144,7 +144,7 @@ export async function push(items: Item[], ctx: Ctx, cal: Cal, cap = WRITE_CAP) {
 /** Items as the desktop app's state.json has them (ISO strings, plus `next` for repeats). */
 export function serial(it: Item, tz: string): any {
   const out: any = { ...it };
-  const fmt = (w: When | null) => (w === null ? null : isDate(w) ? w : iso(w));
+  const fmt = (w: When | null | undefined) => (w == null ? null : isDate(w) ? w : iso(w));   // older saved records may lack a field
   if (it.meetings?.length) {
     const day = today(tz);
     const s = asDT(it.start, tz);

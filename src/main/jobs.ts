@@ -7,14 +7,15 @@ import { type Deps, newSched, tick } from "../node/runner.ts";
 const EVERY_MS = 60e3;
 const WAKE_DELAY_MS = 8e3;   // let Wi-Fi reconnect first
 
-export type Jobs = { syncNow(): Promise<void>; stop(): void };
+export type Jobs = { syncNow(): Promise<void>; isRunning(): boolean; stop(): void };
 
 export function startJobs(deps: Deps, onRan: () => void): Jobs {
   const sched = newSched();
-  let last = Date.now(), wakeTimer: NodeJS.Timeout | null = null;
+  let last = Date.now(), wakeTimer: NodeJS.Timeout | null = null, running = 0;
   const run = async (forceSync = false) => {
     last = Date.now();
-    try { await tick(deps, sched, { forceSync }); } catch (e) { console.error("tick failed:", e); }
+    running++;
+    try { await tick(deps, sched, { forceSync }); } catch (e) { console.error("tick failed:", e); } finally { running--; }
     if (process.env.DUELY_DEBUG) console.log("tick done", new Date().toISOString());
     onRan();
   };
@@ -31,6 +32,7 @@ export function startJobs(deps: Deps, onRan: () => void): Jobs {
   void run();                                                     // at start: catch up on anything missed
   return {
     syncNow: () => run(true),
+    isRunning: () => running > 0,
     stop() {
       clearInterval(timer);
       if (wakeTimer) clearTimeout(wakeTimer);

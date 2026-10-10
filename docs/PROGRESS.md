@@ -31,4 +31,19 @@ Plan: see the approved plan (milestones P0–P7). Updated 2026-10-09.
   - Tests: 129 pass (runner against an in-memory Google Calendar, OAuth loopback round trip, secrets).
 - **For P7 docs**: a Google client left in "Testing" gets refresh tokens that expire after 7 days. The
   guide must have students publish the consent screen ("In production"; unverified is fine for themselves).
-- **For P3**: proposals (vanished items, study blocks) are stored but not shown anywhere yet.
+- **P3 UI built** (branch `p3-ui`), from the owner's design spec (calm/premium, Linear / Notion Calendar feel,
+  strict motion rules). Plan: `~/.claude/plans/rippling-greeting-kitten.md`.
+  - Vanilla TS + CSS (no framework), Inter bundled, Lucide icons; teal accent from the app icon; warm neutrals;
+    light/dark from the OS; dates/times in the computer's locale (Chromium's UI locale can differ: en-GB for en-CA).
+  - `src/main/api.ts` (IPC, `{ok,value}|{ok,error}`), `src/node/view.ts` (Upcoming groups, questions, chat
+    rows), `src/node/settings.ts` (settings <-> config, validation, plain-language AI errors), `src/shared/types.ts`.
+  - Screens: onboarding (5 steps, compact window), Upcoming (questions capped at 2 + "N more", Today / This week /
+    Next week rows on a subgrid, done animation + Undo toast, Filtered out), Chat (wired to the real chat engine,
+    listed items as rows, proposal buttons), Settings (Sources, AI + Test connection, Notifications, Study &
+    digests, Google). Banners for Google / sync / weak keyring.
+  - Engine fixes found on the way: `serial()` crashed on a saved item missing a date field (broke every sync);
+    "Midterm Review Session" / "Final Project - Due" were classed as exams; a quiz whose description mentions the
+    midterm became an exam (the title decides first now).
+  - Dev: `scripts/demo-data.ts` makes a demo data folder dated around today; `DUELY_SHOT` / `DUELY_SHOT_JS` /
+    `DUELY_SHOT_SIZE` / `DUELY_THEME` env vars capture screenshots (xvfb only).
+  - Not yet: Slack (P6), screenshot import (P5), chat history persistence, the live Google test.

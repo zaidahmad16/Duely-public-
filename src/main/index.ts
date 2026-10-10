@@ -2,11 +2,11 @@
 // The renderer only talks to it through the preload bridge (window.duely). Closing the window keeps
 // Duely running in the tray; Quit is in the tray menu.
 import { join } from "node:path";
-import { BrowserWindow, app, ipcMain } from "electron";
-import { connect, parseClient } from "../google/oauth.ts";
+import { BrowserWindow, app, nativeTheme } from "electron";
+import { registerApi } from "./api.ts";
 import { type Jobs, startJobs } from "./jobs.ts";
 import { type Services, openSafe, services } from "./services.ts";
-import { canStartAtLogin, makeTray, setStartAtLogin, startsAtLogin } from "./tray.ts";
+import { makeTray } from "./tray.ts";
 
 const SMOKE = process.argv.includes("--smoke");   // CI: open the window, then quit with exit code 0
 const HIDDEN = process.argv.includes("--hidden"); // started at login: tray only
@@ -15,23 +15,27 @@ const RES = app.isPackaged ? process.resourcesPath : join(import.meta.dirname, "
 let win: BrowserWindow | null = null;
 let quitting = false;
 let svc: Services;
+let onboarded = false;
 let jobs: Jobs | null = null;
 
 function createWindow(show: boolean): BrowserWindow {
-  const w = new BrowserWindow({
-    width: 980, height: 760, minWidth: 720, minHeight: 520, show: false, title: "Duely", icon: join(RES, "icon.png"),
+  const w: BrowserWindow = new BrowserWindow({
+    ...FULL, minWidth: 640, minHeight: 560, show: false, title: "Duely", icon: join(RES, "icon.png"),
+    autoHideMenuBar: true, backgroundColor: nativeTheme.shouldUseDarkColors ? "#1b1a19" : "#f7f6f3",
     webPreferences: { preload: join(import.meta.dirname, "../preload/index.cjs"), contextIsolation: true, sandbox: true },
   });
   w.once("ready-to-show", () => {
     if (SMOKE) {
       // the UI must reach the main process through the bridge, not just open
-      w.webContents.executeJavaScript("window.duely.status().then((s) => typeof s.feedSet)")
+      w.webContents.executeJavaScript("window.duely.status().then((r) => r.ok && typeof r.value.feedSet)")
         .then((t) => { console.log(t === "boolean" ? "smoke: window ready, bridge works" : `smoke: bridge returned ${t}`); app.exit(t === "boolean" ? 0 : 1); })
         .catch((e) => { console.log("smoke: bridge failed:", e?.message ?? e); app.exit(1); });
       return;
     }
+    if (process.env.DUELY_SHOT) { void screenshot(w); return; }
     if (show) w.show();
   });
+  sizeFor(onboarded, w);
   w.on("close", (e) => { if (!quitting) { e.preventDefault(); w.hide(); } });
   w.webContents.setWindowOpenHandler(({ url }) => { openSafe(url); return { action: "deny" }; });
   w.webContents.on("will-navigate", (e) => e.preventDefault());
@@ -45,71 +49,44 @@ function showWindow() {
   else { win.show(); win.focus(); }
 }
 
-/** What the UI shows. Secrets never leave the main process; only whether they're set. */
-async function status() {
-  const cfg = (await svc.store.get<any>("config")) ?? {};
-  const st = (await svc.store.get<any>("state")) ?? {};
-  return {
-    feedSet: !!cfg.feed_url,
-    google: await svc.secrets.has("google_refresh"),
-    ai: cfg.ai?.provider ? { provider: cfg.ai.provider, model: cfg.ai.model, keySet: await svc.secrets.has("llm_key") } : null,
-    weakKeychain: svc.weakKeychain,
-    startAtLogin: { can: canStartAtLogin(), on: startsAtLogin() },
-    sync: { time: st.time ?? 0, error: st.error ?? "", needsGoogle: !!st.needs_google, items: (st.items ?? []).filter((i: any) => i.keep !== false).length,
-      added: st.added ?? 0, updated: st.updated ?? 0, removed: st.removed ?? 0, ai: st.ai ?? "" },
-  };
+/** Development only (scripts/shots.sh): run DUELY_SHOT_JS in the page, capture DUELY_SHOT (a PNG
+ *  path, or several separated by "|" with "@@" between their scripts), then quit. Never set in use. */
+async function screenshot(w: BrowserWindow) {
+  const { writeFileSync } = await import("node:fs");
+  const [wd, ht] = (process.env.DUELY_SHOT_SIZE ?? "1100x760").split("x").map(Number);
+  w.setMinimumSize(320, 320); w.setContentSize(wd, ht);
+  w.showInactive();
+  const outs = process.env.DUELY_SHOT!.split("|"), scripts = (process.env.DUELY_SHOT_JS ?? "").split("@@");
+  for (let i = 0; i < outs.length; i++) {
+    await new Promise((r) => setTimeout(r, 1500));
+    if (scripts[i]?.trim()) await w.webContents.executeJavaScript(scripts[i]).catch((e) => console.log("shot script failed:", e?.message));
+    await new Promise((r) => setTimeout(r, Number(process.env.DUELY_SHOT_WAIT ?? 900)));
+    writeFileSync(outs[i], (await w.webContents.capturePage()).toPNG());
+    console.log("shot:", outs[i]);
+  }
+  quitting = true; app.exit(0);
 }
 
 const changed = () => { if (win && !win.isDestroyed()) win.webContents.send("duely:changed"); };
-const ok = async () => ({ ok: true, status: await status() });
-const fail = (e: unknown) => ({ ok: false, error: (e as Error)?.message ?? String(e) });
 
-function ipc() {
-  ipcMain.handle("duely:status", () => status());
-  ipcMain.handle("duely:set-feed", async (_e, url: unknown) => {
-    try {
-      const u = new URL(String(url).trim().replace(/^webcal:\/\//, "https://"));
-      if (u.protocol !== "https:") throw new Error("The calendar link should start with https:// or webcal://");
-      const cfg = (await svc.store.get<any>("config")) ?? {};
-      await svc.store.put("config", { ...cfg, feed_url: u.toString() });
-      void jobs?.syncNow().then(changed);
-      return ok();
-    } catch (e) { return fail(e instanceof TypeError ? new Error("That isn't a link.") : e); }
-  });
-  ipcMain.handle("duely:google-connect", async (_e, clientText: unknown) => {
-    try {
-      const text = String(clientText ?? "") || (await svc.secrets.get("google_client")) || "";
-      const client = parseClient(text);
-      const refresh = await connect(client, { open: (url) => openSafe(url) });
-      await svc.secrets.set("google_client", text);
-      await svc.secrets.set("google_refresh", refresh);
-      showWindow();
-      void jobs?.syncNow().then(changed);
-      return ok();
-    } catch (e) { return fail(e); }
-  });
-  ipcMain.handle("duely:google-disconnect", async () => {
-    try {
-      const refresh = await svc.secrets.get("google_refresh").catch(() => null);
-      if (refresh) await fetch(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(refresh)}`, { method: "POST" }).catch(() => {});
-      await svc.secrets.delete("google_refresh");
-      return ok();
-    } catch (e) { return fail(e); }
-  });
-  ipcMain.handle("duely:sync-now", async () => {
-    try { await jobs?.syncNow(); changed(); return ok(); } catch (e) { return fail(e); }
-  });
-  ipcMain.handle("duely:start-at-login", async (_e, on: unknown) => {
-    try { setStartAtLogin(!!on); return ok(); } catch (e) { return fail(e); }
-  });
+/** Setup happens in a compact window; Duely itself gets the full size. */
+const COMPACT = { width: 600, height: 680 }, FULL = { width: 1080, height: 740 };
+function sizeFor(onboarded: boolean, w: BrowserWindow) {
+  const size = onboarded ? FULL : COMPACT;
+  w.setMinimumSize(onboarded ? 640 : 520, 560);
+  w.setSize(size.width, size.height);
+  w.center();
 }
 
 if (!SMOKE && !app.requestSingleInstanceLock()) app.quit();
 else {
   app.on("second-instance", showWindow);
-  app.whenReady().then(() => {
+  app.whenReady().then(async () => {
+    if (process.env.DUELY_THEME === "dark" || process.env.DUELY_THEME === "light") nativeTheme.themeSource = process.env.DUELY_THEME;
     svc = services(showWindow);
-    ipc();
+    onboarded = !!((await svc.store.get<any>("config")) ?? {}).onboarded;
+    registerApi({ svc, jobs: () => jobs, changed, showWindow,
+      onboarded: () => { onboarded = true; if (win && !win.isDestroyed()) sizeFor(true, win); } });
     win = createWindow(!HIDDEN);
     if (SMOKE) return;
     makeTray(join(RES, "tray.png"), {

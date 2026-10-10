@@ -1,0 +1,94 @@
+/* Duely design tokens. One accent (teal, from the app icon), warm neutrals, restrained radius,
+   almost no shadow. Light and dark follow the OS. */
+:root {
+  color-scheme: light dark;
+
+  /* warm neutrals: light */
+  --bg: #f7f6f3;
+  --surface: #ffffff;
+  --surface-2: #f1efeb;          /* hover tint, user messages */
+  --surface-3: #e9e6e0;
+  --border: #e6e3dd;
+  --border-strong: #d6d2ca;
+  --text: #23211e;
+  --text-2: #6b675f;
+  --text-3: #9b968d;
+
+  /* the one accent */
+  --accent: #0b7d6e;
+  --accent-hover: #096b5f;
+  --accent-text: #0a7466;
+  --on-accent: #ffffff;
+  --accent-soft: rgba(11, 125, 110, 0.07);
+  --accent-line: rgba(11, 125, 110, 0.20);
+  --focus: rgba(11, 125, 110, 0.35);
+
+  /* states (used sparingly) */
+  --warn: #9a5b00;
+  --warn-soft: #fbf3e4;
+  --warn-line: #efdcb6;
+  --danger: #b5382a;
+  --danger-soft: #fbecea;
+  --danger-line: #f0cbc5;
+  --success: #2c7d4b;
+
+  /* type */
+  --font: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --fs-title: 26px;
+  --fs-section: 16px;
+  --fs-body: 14.5px;
+  --fs-meta: 12.5px;
+  --fs-small: 12px;
+
+  /* spacing: 4 8 12 16 24 32 48 */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
+
+  /* radius */
+  --r-control: 7px;
+  --r-card: 11px;
+  --r-assist: 13px;
+
+  --shadow-pop: 0 1px 2px rgba(35, 33, 30, 0.06), 0 4px 16px rgba(35, 33, 30, 0.06);
+
+  /* motion */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in: cubic-bezier(0.55, 0, 0.9, 0.4);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --t-fast: 140ms;
+  --t-panel: 200ms;
+  --t-page: 240ms;
+
+  --sidebar: 220px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1b1a19;
+    --surface: #232220;
+    --surface-2: #2a2926;
+    --surface-3: #33312e;
+    --border: #33312d;
+    --border-strong: #423f3a;
+    --text: #ecebe7;
+    --text-2: #a9a49b;
+    --text-3: #78736b;
+
+    --accent: #34b4a0;
+    --accent-hover: #46c2ae;
+    --accent-text: #5cc8b6;
+    --on-accent: #0c1f1c;
+    --accent-soft: rgba(52, 180, 160, 0.09);
+    --accent-line: rgba(52, 180, 160, 0.24);
+    --focus: rgba(52, 180, 160, 0.45);
+
+    --warn: #e0a54e;
+    --warn-soft: #2d2519;
+    --warn-line: #4a3b22;
+    --danger: #ef8a78;
+    --danger-soft: #2f1f1c;
+    --danger-line: #55302a;
+    --success: #6cc690;
+
+    --shadow-pop: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.28);
+  }
+}
