@@ -78,3 +78,11 @@ that server's members). A bot token can't ship inside the app, so this needs a r
   `1558321208481685534` (the relay's `guilds.join` target). Still to do: @everyone read-only (no Send Messages,
   threads, attachments, reactions, voice, invites), default notifications = mentions only, remove the voice
   channel, a welcome note in #general. The browser tab stopped responding mid-way; nothing was saved there.
+- **Members = verified app users only** (owner's requirement). Enforced: (1) no invites at all; the only way into
+  the server is the relay's `guilds.join` during the app's Connect Discord sign-in; (2) hourly relay sweep removes
+  any member not in the link table (needs the bot's Server Members intent); (3) each app checks in daily
+  (`POST /seen` with its token); links unseen for 30 days are deleted and the member removed; Disconnect removes at
+  once; (4) Connect Discord only shows when `aiReady` (connection test passed); (5) Discord verification level
+  "verified email" + explicit content filter. Not enforceable without collecting keys: proof that a working API
+  key exists (the app is open source and local); deliberately not done, since keys must never reach the relay.
+  The Privacy Policy rewrite must mention the daily check-in and the 30-day removal.
