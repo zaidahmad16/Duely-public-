@@ -135,7 +135,8 @@ export function gemini(cfg: LLMConfig, f: typeof fetch = fetch): LLM {
         } else if (m.role === "assistant") {
           const parts: any[] = [];
           if (m.content) parts.push({ text: m.content });
-          for (const c of m.toolCalls ?? []) parts.push({ functionCall: { name: c.name, args: c.args ?? {} } });
+          // newer Gemini models refuse a conversation whose tool calls come back without their thought signature
+          for (const c of m.toolCalls ?? []) parts.push({ functionCall: { name: c.name, args: c.args ?? {} }, ...(c.sig ? { thoughtSignature: c.sig } : {}) });
           contents.push({ role: "model", parts: parts.length ? parts : [{ text: "" }] });
         } else {
           contents.push({ role: "user", parts: [...(m.images ?? []).map((i) => ({ inlineData: { mimeType: i.mime, data: i.b64 } })), { text: m.content }] });
@@ -149,7 +150,8 @@ export function gemini(cfg: LLMConfig, f: typeof fetch = fetch): LLM {
       const parts: any[] = j.candidates?.[0]?.content?.parts ?? [];
       return {
         content: parts.filter((p) => typeof p.text === "string").map((p) => p.text).join(""),
-        toolCalls: parts.filter((p) => p.functionCall).map((p, i) => ({ id: `call${i}`, name: String(p.functionCall.name), args: p.functionCall.args ?? {} })),
+        toolCalls: parts.filter((p) => p.functionCall).map((p, i) => ({ id: `call${i}`, name: String(p.functionCall.name), args: p.functionCall.args ?? {},
+          ...(typeof p.thoughtSignature === "string" ? { sig: p.thoughtSignature } : {}) })),
         usage: { input: Number(j.usageMetadata?.promptTokenCount) || 0, output: Number(j.usageMetadata?.candidatesTokenCount) || 0 },
       };
     },

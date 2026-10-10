@@ -132,3 +132,20 @@ test("a busy provider (503/429) gets one retry; a second refusal is reported", a
   assert.equal(n, 2, "one retry only");
   retry.delayMs = 2000;
 });
+
+test("Gemini: a tool call's thought signature goes back with it next turn (2026-10-10: newer models answer 400 without it)", async () => {
+  const sent: any[] = [];
+  const f = (async (_u: any, init: any) => {
+    sent.push(JSON.parse(init.body));
+    return new Response(JSON.stringify(sent.length === 1
+      ? { candidates: [{ content: { parts: [{ functionCall: { name: "search_items", args: { when: "this week" } }, thoughtSignature: "sig-abc" }] } }] }
+      : { candidates: [{ content: { parts: [{ text: "ok" }] } }] }), { status: 200 });
+  }) as typeof fetch;
+  const llm = gemini({ provider: "gemini", apiKey: "g", model: "m" }, f);
+  const first = await llm.chat([{ role: "user", content: "what's due" }], { tools: [TOOL] });
+  assert.equal(first.toolCalls[0].sig, "sig-abc");
+  await llm.chat([{ role: "user", content: "what's due" }, { role: "assistant", content: "", toolCalls: first.toolCalls },
+    { role: "tool", toolCallId: first.toolCalls[0].id, name: "search_items", content: "2 items" }], { tools: [TOOL] });
+  const part = sent[1].contents[1].parts[0];
+  assert.deepEqual([part.functionCall.name, part.thoughtSignature], ["search_items", "sig-abc"]);
+});

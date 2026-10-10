@@ -342,7 +342,7 @@ const TOOL_DEFS: Tool[] = TOOLS.map((t) => t.function as Tool);
 /** One model call, normalised. */
 async function call(llm: LLM, messages: Msg[], tools: boolean): Promise<{ content: string; calls: { id: string; name: string; args: any }[] }> {
   const r = await llm.chat(messages, { ...(tools ? { tools: TOOL_DEFS } : {}), maxTokens: 500, temperature: 0 });
-  return { content: r.content, calls: r.toolCalls.map((c) => ({ id: c.id, name: c.name, args: c.args ?? {} })) };
+  return { content: r.content, calls: r.toolCalls.map((c) => ({ ...c, args: c.args ?? {} })) };
 }
 
 const GROUP = /[[(]\s*#?\d{1,3}(?:\s*(?:,|and|&)\s*#?\d{1,3})*\s*,?\s*[\])]|(?<![\w[])#\d{1,3}\b/g;
