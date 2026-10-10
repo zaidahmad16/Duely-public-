@@ -40,7 +40,9 @@ function doPost(e) {
 }
 `;
   const manifest = JSON.stringify({ timeZone, runtimeVersion: "V8", exceptionLogging: "STACKDRIVER", oauthScopes: SCOPES,
-    webapp: { executeAs: "USER_DEPLOYING", access: "MYSELF" } }, null, 2);
+    webapp: { executeAs: "USER_DEPLOYING", access: "MYSELF" },
+    // the Calendar advanced service: switched on for the script by this line alone
+    dependencies: { enabledAdvancedServices: [{ userSymbol: "Calendar", serviceId: "calendar", version: "v3" }] } }, null, 2);
   return { code, manifest };
 }
 

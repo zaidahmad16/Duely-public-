@@ -2,14 +2,14 @@
 // file by scripts/build-gas.ts. Apps Script has no fetch, Web Crypto, URL, timers or (reliably) Intl time
 // zones, so this file supplies them from Apps Script's own services, then runs the same engine the
 // desktop app runs (src/node/runner.ts) on a 10-minute timer.
-import { googleCal } from "../core/gcal.ts";
+import type { Cal } from "../core/gcal.ts";
 import { setOffsetSource } from "../core/time.ts";
 import { type Store, setSha1Source } from "../core/util.ts";
 import { makeLLM } from "../llm/adapters.ts";
 import type { Provider } from "../llm/types.ts";
 import { type Deps, FULL_EVERY_MS, newSched, tick } from "../node/runner.ts";
 
-declare const UrlFetchApp: any, Utilities: any, PropertiesService: any, ScriptApp: any, Session: any, MailApp: any, ContentService: any;
+declare const Calendar: any, UrlFetchApp: any, Utilities: any, PropertiesService: any, ScriptApp: any, Session: any, MailApp: any, ContentService: any;
 
 // ---------------------------------------------------------------- host services
 
@@ -89,6 +89,34 @@ export function propsStore(props = PropertiesService.getScriptProperties()): Sto
   };
 }
 
+/** The engine's calendar through Apps Script's Calendar advanced service (declared in the manifest, so
+ *  it's switched on for the script automatically; the REST API would need the student to enable it in a
+ *  hidden Cloud project). Same five calls as core/gcal.ts. */
+export function gasCalendar(): Cal {
+  const gone = (e: unknown) => /not ?found|404|410|deleted/i.test(String((e as Error)?.message ?? e));
+  const forbidden = (e: unknown) => /forbidden|403/i.test(String((e as Error)?.message ?? e));
+  return {
+    async ensureCalendar(name, id, tz) {
+      if (id) {
+        try { if (Calendar.Calendars.get(id)) return id; } catch (e) { if (!gone(e) && !forbidden(e)) throw e; }
+      }
+      return Calendar.Calendars.insert({ summary: name, timeZone: tz }).id;
+    },
+    async listEvents(calId) {
+      let out: any[] = [], token: string | undefined;
+      do {
+        const page = Calendar.Events.list(calId, { maxResults: 2500, showDeleted: false, ...(token ? { pageToken: token } : {}) }) ?? {};
+        out = out.concat(page.items ?? []);
+        token = page.nextPageToken;
+      } while (token);
+      return out;
+    },
+    async insert(calId, body) { Calendar.Events.insert(body, calId); },
+    async update(calId, eventId, body) { Calendar.Events.update(body, calId, eventId); },
+    async delete(calId, eventId) { try { Calendar.Events.remove(calId, eventId); } catch (e) { if (!gone(e)) throw e; } },
+  };
+}
+
 // ---------------------------------------------------------------- wiring
 
 export function install(): void {
@@ -111,7 +139,7 @@ function deps(store: Store): Deps {
       const apiKey = PropertiesService.getScriptProperties().getProperty("secret:llm_key") ?? "";
       return makeLLM({ provider: ai.provider as Provider, model: ai.model, apiKey, baseUrl: ai.baseUrl }, gasFetch as any);
     },
-    async calendar() { return googleCal(ScriptApp.getOAuthToken(), gasFetch as any); },
+    async calendar() { return gasCalendar(); },
     async notify(title, body, click) {
       // kept for the desktop app to show; emailed too when the student turned that on
       const out: any[] = ((await store.get<any[]>("outbox")) ?? []).slice(-49);

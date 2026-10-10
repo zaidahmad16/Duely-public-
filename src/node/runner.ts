@@ -141,7 +141,6 @@ export async function syncOnce(deps: Deps, force = false): Promise<any> {
     Object.assign(result, await push(items, ctx, cal, WRITE_CAP), { pushed: true });
     await store.put("last-full", { sig, rss_sig: annSig, at: Date.now() });
   } catch (e) {
-    if (process.env.DUELY_DEBUG) console.error(e);
     result.error = e instanceof NeedsAuth ? e.message : (e as Error)?.message || String(e);
     result.needs_google = e instanceof NeedsAuth;
     if (!result.items.length) result.items = prev.items ?? [];

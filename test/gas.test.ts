@@ -21,7 +21,9 @@ const CONFIG = { feed_url: FEED_URL, use_ai: false, tz: TZ, digest_daily: false,
 function fakeCalendarApi() {
   const cals = new Map<string, Map<string, any>>();
   let n = 0;
+  const counter = { writes: 0 };
   const handle = (method: string, url: string, body: string | undefined): [number, string] => {
+    if (method !== "get") counter.writes++;
     const u = new URL(url);
     const p = u.pathname.replace("/calendar/v3", "").split("/").map(decodeURIComponent);
     if (method === "post" && p[1] === "calendars" && p.length === 2) {
@@ -41,7 +43,7 @@ function fakeCalendarApi() {
     }
     return [400, JSON.stringify({ error: { message: `unexpected ${method} ${url}` } })];
   };
-  return { cals, handle, events: () => [...cals.values()].flatMap((m) => [...m.values()]) };
+  return { cals, handle, get writes() { return counter.writes; }, events: () => [...cals.values()].flatMap((m) => [...m.values()]) };
 }
 
 /** Script properties with Apps Script's limits (9 KB a value, 500 KB in all). */
@@ -76,10 +78,7 @@ async function sandbox(feed = () => FEED, ai?: (url: string, o: any) => [number,
     UrlFetchApp: {
       fetch(url: string, o: any = {}) {
         fetched.push(url);
-        if (url.startsWith("https://www.googleapis.com/calendar/v3")) {
-          const [code, text] = api.handle(o.method ?? "get", url, o.payload);
-          return response(code, text);
-        }
+        if (url.startsWith("https://www.googleapis.com/calendar/v3")) throw new Error("the calendar must go through the Calendar advanced service, not UrlFetchApp");
         if (url === FEED_URL) return response(200, feed());
         if (ai) { const [code, text] = ai(url, o); return response(code, text); }
         return response(404, "not found");
@@ -108,6 +107,24 @@ async function sandbox(feed = () => FEED, ai?: (url: string, o: any) => [number,
       }) }),
     },
     MailApp: { sendEmail() {} },
+    // the Calendar advanced service over the same fake API (it throws on errors, like the real one)
+    Calendar: (() => {
+      const call = (method: string, path: string, body?: unknown) => {
+        const [code, text] = api.handle(method, `https://www.googleapis.com/calendar/v3${path}`, body === undefined ? undefined : JSON.stringify(body));
+        if (code >= 400) throw new Error(`API call to calendar failed with error: ${code === 404 ? "Not Found" : `code ${code}`}`);
+        return text ? JSON.parse(text) : undefined;
+      };
+      const enc = encodeURIComponent;
+      return {
+        Calendars: { get: (id: string) => call("get", `/calendars/${enc(id)}`), insert: (b: any) => call("post", "/calendars", b) },
+        Events: {
+          list: (c: string) => call("get", `/calendars/${enc(c)}/events`),
+          insert: (b: any, c: string) => call("post", `/calendars/${enc(c)}/events`, b),
+          update: (b: any, c: string, id: string) => call("put", `/calendars/${enc(c)}/events/${id}`, b),
+          remove: (c: string, id: string) => call("delete", `/calendars/${enc(c)}/events/${id}`),
+        },
+      };
+    })(),
     ContentService: { MimeType: { JSON: "json" }, createTextOutput: (text: string) => ({ text, setMimeType() { return this; } }) },
   };
   const ctx = vm.createContext(g);
@@ -150,7 +167,7 @@ test("the bundle runs without Intl, fetch, URL, crypto or timers, and syncs the 
 test("a second tick within 10 minutes doesn't sync again; the next one does, and changes nothing", async () => {
   const s = await sandbox();
   await s.run("duelyTick");
-  const writes = () => s.fetched.filter((u) => u.includes("/events")).length;
+  const writes = () => s.api.writes;
   const before = writes();
   assert.equal((await s.run("duelyTick")).synced, false, "too soon");
   const sched = JSON.parse(s.props.m.get("v:sched")!);
@@ -224,4 +241,20 @@ test("the desktop's channel (web app): doGet/doPost answer synchronously; Sync n
   assert.equal(after.syncQueued, false);
   assert.ok(after.state.items.length >= 4, "the desktop can read the result");
   assert.equal(call(`doPost({ postData: { contents: "not json" } })`).ok, false);
+});
+
+test("a failing sync is recorded, not crashed, inside Apps Script (the error path runs there too)", async () => {
+  const s = await sandbox(() => "<html>not a calendar</html>");
+  const r = await s.run("duelyTick");
+  assert.equal(r.synced, true);
+  const state = JSON.parse(s.props.m.get("v:state")!);
+  assert.match(state.error, /didn't return a calendar/);
+  assert.equal(s.props.m.get("v:errors"), undefined, "nothing crashed");
+  const call = JSON.parse(vm.runInContext("doGet()", s.ctx).text);
+  assert.match(call.state.error, /didn't return a calendar/, "the desktop sees the reason");
+});
+
+test("the bundle doesn't use Node's globals (process, Buffer, require)", async () => {
+  const { code } = await buildGas();
+  for (const g of ["process.", "Buffer.", "require("]) assert.ok(!code.includes(g), `bundle uses ${g}`);
 });
