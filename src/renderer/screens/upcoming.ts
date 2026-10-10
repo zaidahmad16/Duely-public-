@@ -9,6 +9,7 @@ import { ago } from "../ui/format.ts";
 import { clear, h } from "../ui/h.ts";
 import { icon, mark } from "../ui/icons.ts";
 import { collapseOut, enter, stagger } from "../ui/motion.ts";
+import { SLOW, slowHint } from "../ui/slow.ts";
 import type { AppCtx, Screen } from "./types.ts";
 
 export function upcomingScreen(app: AppCtx): Screen {
@@ -46,7 +47,9 @@ export function upcomingScreen(app: AppCtx): Screen {
   }
 
   syncBtn.addEventListener("click", async () => {
+    const stopHint = slowHint(root.querySelector(".page-sub")!, SLOW.sync);
     const ok = await app.sync();
+    stopHint();
     if (!ok) return;
     confirmUntil = Date.now() + 1600;
     statusLine.className = "status-text is-ok";

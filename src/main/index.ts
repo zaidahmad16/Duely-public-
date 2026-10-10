@@ -15,6 +15,10 @@ import { noKeyring } from "./keyring.ts";
 // only lightly protected (services.ts weakKeychain). Must be decided before the app is ready.
 if (noKeyring()) app.commandLine.appendSwitch("password-store", "basic");
 
+// A separate data folder (tests, a second copy) gets its own Electron profile too, so it doesn't
+// collide with a running Duely (single-instance lock, cookies, cache).
+if (process.env.DUELY_HOME) app.setPath("userData", join(process.env.DUELY_HOME, "electron"));
+
 const SMOKE = process.argv.includes("--smoke");   // CI: open the window, then quit with exit code 0
 const HIDDEN = process.argv.includes("--hidden"); // started at login: tray only
 const RES = app.isPackaged ? process.resourcesPath : join(import.meta.dirname, "../../resources");

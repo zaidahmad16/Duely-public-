@@ -8,6 +8,7 @@ import { toast } from "../components/toast.ts";
 import { toggle } from "../components/toggle.ts";
 import { api } from "../ui/api.ts";
 import { ago } from "../ui/format.ts";
+import { SLOW, slowHint } from "../ui/slow.ts";
 import { clear, h } from "../ui/h.ts";
 import { icon } from "../ui/icons.ts";
 import { enter, expandIn, stagger } from "../ui/motion.ts";
@@ -150,7 +151,9 @@ export function settingsScreen(app: AppCtx): Screen {
       await keySave();
       spinnerButton(test, true, "Testing…");
       clear(results);
+      const stopHint = slowHint(results, SLOW.test);
       const r = await api.testAI().catch((e) => ({ ok: false, message: (e as Error).message }) as CapResult);
+      stopHint();
       spinnerButton(test, false, "Test connection");
       results.append(capList(r));
     });

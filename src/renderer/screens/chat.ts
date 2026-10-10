@@ -9,6 +9,7 @@ import { dayLong, rich } from "../ui/format.ts";
 import { h } from "../ui/h.ts";
 import { assistant, icon, mark } from "../ui/icons.ts";
 import { enter, stagger } from "../ui/motion.ts";
+import { SLOW, slowHint } from "../ui/slow.ts";
 import type { AppCtx, Screen } from "./types.ts";
 
 const SUGGESTIONS = ["What's due tomorrow?", "What do I have this week?", "When is my next test?"];
@@ -58,11 +59,13 @@ export function chatScreen(_app: AppCtx): Screen {
     enter(thinking, { y: 4, dur: 160, delay: 80 });
     toBottom();
     let reply: ChatReply;
+    const stopHint = slowHint(thinking.querySelector(".dots")!, SLOW.chat);
     try {
       reply = await api.chat(text);
     } catch (e) {
       reply = { text: `I couldn't answer that just now. ${(e as Error).message}`, rows: [] };
     }
+    stopHint();
     thinking.remove();
     const msg = answer(reply);
     thread.append(msg);

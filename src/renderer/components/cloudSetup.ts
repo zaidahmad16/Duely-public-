@@ -4,6 +4,7 @@ import { api } from "../ui/api.ts";
 import { h } from "../ui/h.ts";
 import { icon } from "../ui/icons.ts";
 import { enter } from "../ui/motion.ts";
+import { SLOW, slowHint } from "../ui/slow.ts";
 
 const SETTINGS = "https://script.google.com/home/usersettings";
 
@@ -47,7 +48,8 @@ export function cloudSetup(onDone: () => void): HTMLElement {
       const go = btn("Install Duely in my Google account");
       go.addEventListener("click", async () => {
         busy(go, "Installing…");
-        try { await api.cloudInstall(); void paint("approve"); } catch (e) { err.textContent = (e as Error).message; void paint("install"); }
+        const stopHint = slowHint(go, SLOW.install);
+        try { await api.cloudInstall(); stopHint(); void paint("approve"); } catch (e) { stopHint(); err.textContent = (e as Error).message; void paint("install"); }
       });
       b2 = h("div", null, h("p", { class: "help" }, "Duely adds a small script to your Google account. Only you can see it."), go);
     }

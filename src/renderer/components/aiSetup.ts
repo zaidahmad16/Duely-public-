@@ -7,6 +7,7 @@ import { api } from "../ui/api.ts";
 import { clear, h } from "../ui/h.ts";
 import { icon } from "../ui/icons.ts";
 import { enter } from "../ui/motion.ts";
+import { SLOW, slowHint } from "../ui/slow.ts";
 
 export type AiSetup = { el: HTMLElement; /** true once a test passed for what's entered */ ready(): boolean };
 
@@ -53,6 +54,7 @@ export function aiSetup(onChange: (ready: boolean) => void, saved?: Settings, ve
   test.addEventListener("click", async () => {
     err.textContent = ""; clear(results);
     spinnerButton(test, true, "Testing…");
+    const stopHint = slowHint(test.parentElement!, SLOW.test);
     try {
       await api.saveSettings({ ai: { provider: provider as Provider, model: model.value, baseUrl: provider === "openai" ? base.value : "" },
         ...(key.value.trim() ? { aiKey: key.value } : {}) });
@@ -63,6 +65,7 @@ export function aiSetup(onChange: (ready: boolean) => void, saved?: Settings, ve
       err.textContent = (x as Error).message;
       set(false);
     }
+    stopHint();
     spinnerButton(test, false, "Test connection");
   });
 

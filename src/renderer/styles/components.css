@@ -206,3 +206,7 @@ input[type="time"].input, input[type="date"].input { font-variant-numeric: tabul
 .doc-body li > ul { margin: 4px 0 2px; }
 .doc-body li > p { margin: 6px 0 2px; }
 .doc-body h2, .doc-body h3 { scroll-margin-top: 14px; }
+
+/* "still working" line for slow actions */
+.slow-hint { margin: 6px 0 0; font-size: var(--fs-meta); color: var(--text-2); }
+.thinking .slow-hint { margin: 0 0 0 10px; display: inline; }
