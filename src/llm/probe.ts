@@ -12,7 +12,7 @@ export async function probe(llm: LLM): Promise<Capabilities> {
   const caps: Capabilities = { chat: false, json: false, tools: false, vision: false };
   try {
     const r = await llm.chat([{ role: "user", content: "Reply with the single word: ready" }], { maxTokens: 20 });
-    caps.chat = /ready/i.test(r.content);
+    caps.chat = r.content.trim().length > 0 || r.toolCalls.length > 0;   // any answer: models paraphrase ("Go.", "Ready!")
   } catch (e) {
     caps.error = (e as Error).message;
     return caps;                                                       // bad key / model / URL: nothing else will work

@@ -1,0 +1,72 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Desire2Learn Inc//D2L Calendar//EN
+X-WR-CALNAME:Brightspace
+X-WR-TIMEZONE:America/Toronto
+BEGIN:VEVENT
+UID:6606_2000_1@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20301009T235900
+DTEND;TZID=America/Toronto:20301009T235900
+SUMMARY:Assignment 3 - Due
+LOCATION:COMP 2401A Introduction to Systems Programming (Fall 2030)
+DESCRIPTION:Submit your tarball to the dropbox.\nLate penalty 10%/day. Thi
+ s line is folded.
+URL:https://brightspace.example.ca/d2l/lms/dropbox/user/folder_submit_files.d2l?ou=1&db=2
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_3000_1@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20301012T100000
+DTEND;TZID=America/Toronto:20301012T100000
+SUMMARY:Quiz 2 - Availability Starts
+LOCATION:COMP 2401A Introduction to Systems Programming (Fall 2030)
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_3000_2@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20301012T110000
+DTEND;TZID=America/Toronto:20301012T110000
+SUMMARY:Quiz 2 - Availability Ends
+LOCATION:COMP 2401A Introduction to Systems Programming (Fall 2030)
+DESCRIPTION:Pointers and memory
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_4000_1@brightspace.example.ca
+DTSTART:20301014T150000Z
+DTEND:20301014T150000Z
+SUMMARY:Week 6 Content - Availability Starts
+LOCATION:MATH 1104B Linear Algebra (Fall 2030)
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_5000_1@brightspace.example.ca
+DTSTART;TZID=Eastern Standard Time:20301020T183000
+DTEND;TZID=Eastern Standard Time:20301020T203000
+SUMMARY:Midterm Exam
+LOCATION:MATH 1104B Linear Algebra (Fall 2030)
+DESCRIPTION:Room: Southam Hall 
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_6000_1@brightspace.example.ca
+DTSTART;VALUE=DATE:20301026
+DTEND;VALUE=DATE:20301031
+SUMMARY:Fall Reading Week - No Classes
+LOCATION:MATH 1104B Linear Algebra (Fall 2030)
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_7000_1@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20301101T090000
+DTEND;TZID=America/Toronto:20301101T090000
+SUMMARY:Checklist: Week 8 readings - Due
+LOCATION:MATH 1104B Linear Algebra (Fall 2030)
+DESCRIPTION:
+END:VEVENT
+BEGIN:VEVENT
+UID:6606_8000_1@brightspace.example.ca
+DTSTART;TZID=America/Toronto:20301101T080000
+DTEND;TZID=America/Toronto:20301108T235900
+SUMMARY:Online Quiz 4 - Availability Ends
+LOCATION:MATH 1104B Linear Algebra (Fall 2030)
+DESCRIPTION:Chapters 3-4
+END:VEVENT
+END:VCALENDAR
