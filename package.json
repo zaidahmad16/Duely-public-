@@ -9,12 +9,12 @@
   "type": "module",
   "scripts": {
     "dev": "electron-vite dev",
-    "build": "electron-vite build",
+    "build": "npm run build:gas && electron-vite build",
     "start": "electron-vite preview",
     "test": "node --experimental-strip-types --no-warnings --test \"test/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
-    "smoke": "electron-vite build && electron . --smoke",
-    "dist": "electron-vite build && electron-builder",
+    "smoke": "npm run build && electron . --smoke",
+    "dist": "npm run build && electron-builder",
     "build:gas": "node --experimental-strip-types --no-warnings scripts/build-gas.ts"
   },
   "build": {
@@ -47,6 +47,14 @@
         "to": ".",
         "filter": [
           "*.png"
+        ]
+      },
+      {
+        "from": "out/gas",
+        "to": "gas",
+        "filter": [
+          "Code.js",
+          "version.txt"
         ]
       }
     ]

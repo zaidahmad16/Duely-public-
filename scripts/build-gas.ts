@@ -7,18 +7,12 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import { build } from "esbuild";
+import { manifest as makeManifest } from "../src/gas/manifest.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 export const OUT = join(root, "out", "gas");
 
-/** Permissions the script itself asks for (shown on Google's approval screen). */
-export const SCOPES = [
-  "https://www.googleapis.com/auth/calendar.app.created",   // only the calendar Duely makes
-  "https://www.googleapis.com/auth/script.external_request", // Brightspace, the AI provider
-  "https://www.googleapis.com/auth/script.scriptapp",       // its own 10-minute timer
-  "https://www.googleapis.com/auth/script.send_mail",       // alerts by email, only if turned on
-  "https://www.googleapis.com/auth/userinfo.email",         // whose inbox those emails go to
-];
+export { SCRIPT_SCOPES as SCOPES } from "../src/gas/manifest.ts";
 
 export async function buildGas(timeZone = "America/Toronto"): Promise<{ code: string; manifest: string; version: string }> {
   const r = await build({
@@ -32,7 +26,6 @@ export async function buildGas(timeZone = "America/Toronto"): Promise<{ code: st
 var DUELY_ENGINE_VERSION = ${JSON.stringify(version)};
 // Apps Script entry points (run by name)
 function duelyTick() { return Duely.duelyTick(); }
-function duelySetup() { return Duely.duelySetup(); }
 function duelyStop() { return Duely.duelyStop(); }
 function duelySyncNow() { return Duely.duelySyncNow(); }
 // The desktop app's channel, deployed as a private web app. Both answer synchronously: a web app's reply
@@ -49,17 +42,15 @@ function doPost(e) {
   return Duely.json(Duely.command(body));
 }
 `;
-  const manifest = JSON.stringify({ timeZone, runtimeVersion: "V8", exceptionLogging: "STACKDRIVER", oauthScopes: SCOPES,
-    webapp: { executeAs: "USER_DEPLOYING", access: "ANYONE_ANONYMOUS" },   // guarded by the channel key
-    // the Calendar advanced service: switched on for the script by this line alone
-    dependencies: { enabledAdvancedServices: [{ userSymbol: "Calendar", serviceId: "calendar", version: "v3" }] } }, null, 2);
+  const manifest = makeManifest(timeZone);
   return { code, manifest, version };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const { code, manifest } = await buildGas();
+  const { code, manifest, version } = await buildGas();
   mkdirSync(OUT, { recursive: true });
   writeFileSync(join(OUT, "Code.js"), code);
   writeFileSync(join(OUT, "appsscript.json"), manifest);
+  writeFileSync(join(OUT, "version.txt"), version);
   console.log(`out/gas/Code.js ${(code.length / 1024).toFixed(0)} KB`);
 }

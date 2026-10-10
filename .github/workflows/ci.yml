@@ -14,7 +14,7 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
-      - run: npx electron-vite build
+      - run: npm run build
       - name: Smoke (the app opens a window)
         if: runner.os == 'Linux'
         run: xvfb-run -a npx electron . --smoke --no-sandbox
