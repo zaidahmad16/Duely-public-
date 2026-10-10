@@ -39,7 +39,7 @@ untouched. Copy code from it, never personal data.
 | P4 | Chat polish (history across sessions, proposal flows) | **mostly done 2026-10-10** (see "P4" below) |
 | P5 | Screenshot import (timetable/exams); announcement warning moves into the script | **import built 2026-10-10** (owner live test pending); announcement warning not started |
 | P6 | Discord alerts as DMs from a hosted Duely bot (alerts only, no chat) | **done 2026-10-10** (relay live; Connect, test DM and laptop-off alert verified) |
-| P7 | Installers, Releases, auto-update, final docs | not started |
+| P7 | Installers, Releases, auto-update, final docs | **built 2026-10-10**; `v0.2.0-beta.1` draft pre-release ready, owner to publish |
 
 Plans:
 - `docs/PLAN-cloud-engine.md` (P3.5 overview);
@@ -180,6 +180,15 @@ relaunch with `home-live` from the new location.
   Last full run 148/150 with the agent working; rules-only now 811/811.
 - **Still to do:** re-run the "tutorial-classes" templates live after the quota resets (`--only "tutorial-classes:this week,tutorial-classes:tomorrow"`);
   chat screenshots in xvfb (needs AI quota too); owner check: ask, quit, reopen, history there, Clear chat.
+
+## P7 (2026-10-10)
+- Unsigned installers (owner's choice): Windows NSIS per-user, macOS dmg+zip arm64/x64 (ad-hoc), Linux AppImage+deb.
+  `.github/workflows/release.yml`: tag `v*` → build + packaged smoke on 3 OSes → **draft** release (pre-release for
+  `-beta`). How to cut one: `docs/DEVELOPING.md`.
+- Auto-update: `src/main/updates.ts` (electron-updater); Windows/AppImage install on restart, macOS/deb get a link.
+- `v0.2.0-beta.1` built and verified (all 15 files incl. latest*.yml); notes added; **owner publishes** on the
+  Releases page. Then: cut `v0.2.0-beta.2` to test that beta.1 offers the update (AppImage here).
+- Not done: a real Windows/Mac install (needs someone with one); merging to `main`/v1.0 after the UI review.
 
 ## Left to do (P3.5 Phase 1)
 1. Finish the end-to-end run above.
