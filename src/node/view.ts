@@ -4,7 +4,8 @@ import type { Action } from "../core/actions.ts";
 import { type Occ, occurrences } from "../core/ask.ts";
 import { category } from "../core/kinds.ts";
 import { addDays, localDate, weekday } from "../core/time.ts";
-import type { Category, Question, Row, Upcoming } from "../shared/types.ts";
+import type { Category, ChatMessage, Question, Row, Upcoming } from "../shared/types.ts";
+import type { LogEntry } from "./chatlog.ts";
 
 const LABEL: Record<Category, string> = {
   assignment: "Assignment", tutorial: "Tutorial", lab: "Lab", module: "Module", quiz: "Quiz", test: "Test",
@@ -108,4 +109,25 @@ export function rowsFor(items: any[], picks: { uid: string; day: string }[], don
     if (o) out.push(toRow(o, done));
   }
   return out;
+}
+
+const OUTCOME: Record<string, string> = { executed: "Done", declined: "Skipped", expired: "Expired", reverted: "Undone" };
+
+/** Questions a message answered: proposed before, something else after ("yes" → Done, "no" → Skipped). */
+export function resolvedBetween(before: Record<string, Action>, after: Record<string, Action>): { id: string; word: string }[] {
+  return Object.values(before).filter((a) => after[a.id] && after[a.id].status !== a.status && OUTCOME[after[a.id].status])
+    .map((a) => ({ id: a.id, word: OUTCOME[after[a.id].status] }));
+}
+
+/** The saved chat as the window shows it: rows from today's items and done marks, each question live or settled. */
+export function chatHistory(log: LogEntry[], items: any[], done: Record<string, number>, actions: Record<string, Action>, tz: string, now = Date.now()): ChatMessage[] {
+  return log.map((e) => {
+    const ids = e.actionIds ?? [];
+    return {
+      id: e.id, at: e.at, who: e.who, text: e.text,
+      rows: e.picks?.length ? rowsFor(items, e.picks, done, tz, now) : [],
+      questions: ids.filter((id) => actions[id]?.status === "proposed").map((id) => question(actions[id])),
+      resolved: ids.filter((id) => actions[id] && actions[id].status !== "proposed").map((id) => ({ id, word: OUTCOME[actions[id].status] ?? "Done" })),
+    };
+  });
 }

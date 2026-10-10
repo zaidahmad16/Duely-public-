@@ -12,7 +12,7 @@ const LABEL: Record<Button, string> = { keep: "Keep it", remove: "Remove it", ad
 const DONE: Record<Button, string> = { keep: "Kept", remove: "Removed", add: "Added", notnow: "Skipped", change: "Saved", yes: "Done", no: "OK" };
 const PRIMARY: Button[] = ["keep", "add", "yes"];
 
-export type CardOpts = { tz: string; inline?: boolean; onResolved?: (q: Question, b: Button) => void };
+export type CardOpts = { tz: string; inline?: boolean; onResolved?: (q: Question, b: Button) => void; /** restored from history: no entry animation */ quiet?: boolean };
 
 export function proposalCard(q: Question, o: CardOpts): HTMLElement {
   const many = q.kind === "vanished" && /items disappeared/.test(q.title);
@@ -85,8 +85,22 @@ export function proposalCard(q: Question, o: CardOpts): HTMLElement {
     });
   }
 
-  enter(card, { y: 6, dur: 200 });
+  if (!o.quiet) enter(card, { y: 6, dur: 200 });
   return card;
+}
+
+/** A card answered somewhere else (typed "yes", Upcoming, expired): its buttons give way to the outcome. */
+export function settle(card: HTMLElement, word: string): void {
+  if (card.classList.contains("is-settled")) return;
+  card.classList.add("is-settled");
+  const actions = card.querySelector(".proposal-actions");
+  card.querySelector(".proposal-times")?.remove();
+  actions?.replaceWith(outcome(word));
+}
+
+/** "✓ Done" / "Skipped" under a question that's been answered. */
+export function outcome(word: string): HTMLElement {
+  return h("p", { class: ["proposal-outcome", word === "Done" && "is-done"] }, word === "Done" ? "✓ Done" : word);
 }
 
 /** Button label changes by crossfading (with a touch of blur so it reads as one morph). */

@@ -229,3 +229,9 @@
 .spinner.is-on { display: inline-block; }
 .ob-cloud:empty { display: none; }
 .ob-cloud { margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--border); }
+.chat-bar { position: sticky; top: 0; z-index: 2; display: flex; justify-content: flex-end; align-items: center; gap: 8px; max-width: 640px; margin: 0 auto; padding: 10px 32px 0; }
+.chat-bar .confirm-line { flex: 1; padding: 6px 10px; border-radius: var(--r-control); background: var(--surface); border: 1px solid var(--border); }
+.chat-bar .chat-clear:not([hidden]) + .confirm-line { margin-left: 0; }
+.chat-day { display: flex; align-items: center; gap: 10px; color: var(--text-3); font-size: var(--fs-meta); font-weight: 500; }
+.chat-day::before, .chat-day::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+@media (max-width: 860px) { .chat-bar { padding: 8px 20px 0; } }

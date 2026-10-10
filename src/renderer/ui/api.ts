@@ -1,5 +1,5 @@
 // window.duely, typed. Calls resolve to the value or throw the main process's message.
-import type { Button, CapResult, ChatReply, ExamDraft, Result, Settings, SettingsPatch, Status, TermDraft, Upcoming } from "../../shared/types.ts";
+import type { Button, CapResult, ChatMessage, ChatReply, ExamDraft, Result, Settings, SettingsPatch, Status, TermDraft, Upcoming } from "../../shared/types.ts";
 
 type Raw = Record<string, (...a: unknown[]) => Promise<Result<any>>> & { onChanged(fn: () => void): void };
 declare global { interface Window { duely: Raw } }
@@ -16,6 +16,9 @@ export const api = {
   setDone: (uid: string, name: string, done: boolean) => call<void>("setDone", uid, name, done),
   decide: (id: string, button: Button, times?: { day: string; time: string }[]) => call<void>("decide", id, button, times),
   chat: (text: string) => call<ChatReply>("chat", text),
+  /** the saved chat (rows and question states as of now) */
+  chatHistory: () => call<ChatMessage[]>("chatHistory"),
+  chatClear: () => call<void>("chatClear"),
   settings: () => call<Settings>("settings"),
   saveSettings: (p: SettingsPatch) => call<Settings>("saveSettings", p),
   testAI: () => call<CapResult>("testAI"),

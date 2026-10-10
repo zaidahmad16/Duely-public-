@@ -177,7 +177,7 @@ The Duely server is only for alerts: you can't post there, and you can mute it. 
 
 - **Upcoming** shows today, the rest of this week and next week. Tick the box when you've handed something in; it gets a ✓ in your calendar. Click a row to open it in Brightspace.
 - **Questions** appear at the top when Duely needs you, for example when a quiz disappeared from Brightspace, or to suggest study time. Nothing is added to your calendar until you say yes.
-- **Chat** answers questions like "what's due tomorrow?" or "when is my next test?".
+- **Chat** answers questions like "what's due tomorrow?" or "when is my next test?". You can mark things done ("done lab report 2"), answer Duely's questions by typing "yes" or "no", ask "what do you need from me?" to see anything waiting for you, and say "undo" within 10 minutes. The chat is kept on your computer (the last 200 messages, up to 30 days) until you click **Clear chat**.
 - **Sync now** checks Brightspace straight away. Duely also checks every 10 minutes on its own, and again when your computer wakes up. If Duely runs in your Google account, it checks every 10 minutes even while your computer is off, and Sync now can take a couple of minutes to start (Google decides when).
 
 ## Troubleshooting

@@ -100,6 +100,19 @@ export type ExamDraft = { course: string; title: string; date: string; start: st
 
 export type CapResult = { ok: boolean; message: string; caps?: { label: string; ok: boolean; note: string }[]; /** the model tested, and whether Duely chose it */ model?: string; auto?: boolean };
 
-export type ChatReply = { text: string; rows: Row[]; question?: Question };
+export type ChatReply = {
+  text: string; rows: Row[]; question?: Question;
+  /** "what do you need from me?": Duely's open questions, as cards */
+  questions?: Question[];
+  /** questions this message answered (typed "yes", "undo"…): earlier cards show the outcome */
+  resolved?: { id: string; word: string }[];
+};
+
+/** One message of the saved chat (Duely's replies rebuilt with today's rows and question states). */
+export type ChatMessage = {
+  id: string; at: number; who: "me" | "duely"; text: string; rows: Row[];
+  /** still waiting: live cards; answered: the outcome word per question id */
+  questions: Question[]; resolved: { id: string; word: string }[];
+};
 
 export type Result<T = undefined> = { ok: true; value?: T } | { ok: false; error: string };

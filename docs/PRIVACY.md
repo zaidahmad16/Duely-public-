@@ -24,7 +24,7 @@ That folder holds:
 - your settings, including your Brightspace calendar link and announcement links (these links contain a private token from your school);
 - the deadlines, tests, classes and events Duely read from Brightspace, and which ones you marked done;
 - the questions Duely asked you (for example, whether to keep an item that disappeared) and your answers;
-- for chat, your last few messages and Duely's replies, so follow-up questions make sense;
+- your chat with Duely (the last 200 messages, up to 30 days), so it's still there when you reopen Duely and follow-up questions make sense. **Clear chat** (at the top of the chat) deletes it;
 - a cache of announcements it has already read, a count of today's AI requests, and a short log of recent errors.
 
 **Keys and sign-ins** (your AI API key, your Google sign-in, and your Discord link if you connect it) are encrypted with your operating system's keychain: Keychain on macOS, Data Protection (DPAPI) on Windows, and the Secret Service keyring on Linux. If a Linux computer has no keyring, Duely falls back to Electron's basic storage, which only lightly protects them, and tells you so in the app.

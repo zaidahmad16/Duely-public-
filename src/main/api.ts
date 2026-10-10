@@ -12,13 +12,14 @@ import { listModels, pickModel } from "../llm/models.ts";
 import { PROBE_TIMEOUT_MS, probe } from "../llm/probe.ts";
 import { cached, channel, editorUrl, install, waitForApproval } from "../node/cloud.ts";
 import { engineConfig } from "../node/cloudapp.ts";
+import { appendChat, asksForQuestions, clearChat, loadChat } from "../node/chatlog.ts";
 import { applyDecision } from "../node/decisions.ts";
 import { RELAY_URL, connect as discordConnect, discordWords, parseLink, sendTest, unlink as unlinkDiscord } from "../node/discord.ts";
 import { loadCtx } from "../node/runner.ts";
 import { aiFingerprint, aiReady, applyPatch, autoModel, capResult, friendlyAIError, toSettings } from "../node/settings.ts";
-import { chatText, question, rowsFor, upcoming } from "../node/view.ts";
+import { chatHistory, chatText, question, resolvedBetween, rowsFor, upcoming } from "../node/view.ts";
 import type { Image } from "../llm/types.ts";
-import type { Button, CapResult, ChatReply, ExamDraft, Question, Result, SettingsPatch, Status, TermDraft, Upcoming } from "../shared/types.ts";
+import type { Button, CapResult, ChatMessage, ChatReply, ExamDraft, Question, Result, SettingsPatch, Status, TermDraft, Upcoming } from "../shared/types.ts";
 import type { Jobs } from "./jobs.ts";
 import { type Services, openSafe } from "./services.ts";
 import { canStartAtLogin, setStartAtLogin, startsAtLogin } from "./tray.ts";
@@ -82,11 +83,20 @@ export function registerApi(c: Ctx): void {
     };
   });
 
-  handle("upcoming", async (): Promise<Upcoming> => {
+  const upcomingNow = async (): Promise<Upcoming> => {
     if (await cloudOn()) return svc.cloud.upcoming();
     const { tz } = await loadCtx({ ...svc.deps, llm: async () => undefined });
     return upcoming(await items(), await loadDone(store), Object.values(await loadActions(store)), tz);
-  });
+  };
+  handle("upcoming", upcomingNow);
+
+  /** Every question Duely asked: chat's own (this computer) and, in cloud mode, the script's. */
+  const allActions = async (): Promise<Record<string, any>> => {
+    const local = await loadActions(store);
+    if (!(await cloudOn())) return local;
+    const remote = (await cached(store))?.actions ?? [];
+    return { ...Object.fromEntries(remote.map((a: any) => [a.id, a])), ...local };
+  };
 
   handle("setDone", async (uid: string, name: string, done: boolean) => {
     if (await cloudOn()) { await svc.cloud.decide(done ? { kind: "done", uid, name } : { kind: "undo", uid, name }); c.changed(); return; }
@@ -116,9 +126,17 @@ export function registerApi(c: Ctx): void {
   }
 
   handle("chat", async (text: string): Promise<ChatReply> => {
+    const said = String(text).slice(0, 2000), at = Date.now();
+    if (asksForQuestions(said)) {                                      // "what do you need from me?": the open questions
+      const qs = (await upcomingNow()).questions;
+      const reply = qs.length ? (qs.length === 1 ? "Just one thing:" : `${qs.length} things are waiting for you:`) : "Nothing right now. I'll ask when something needs you.";
+      await appendChat(store, [{ at, who: "me", text: said }, { at: at + 1, who: "duely", text: reply, actionIds: qs.map((q) => q.id) }], at);
+      return { text: reply, rows: [], questions: qs };
+    }
     const ctx = await loadCtx(svc.deps);
     const all = await items();
     const doneBefore = await loadDone(store);
+    const before = await loadActions(store);
     let picks: { uid: string; day: string }[] = [];
     let q: Question | undefined;
     const out = await answer(String(text).slice(0, 2000), all, ctx.cfg, store, ctx.tz, svc.deps.fetch, Date.now(), {
@@ -128,8 +146,22 @@ export function registerApi(c: Ctx): void {
     });
     if (await cloudOn()) await mirrorDone(doneBefore).catch(() => {});   // "done 2" in chat reaches the script
     const rows = rowsFor(all, picks, await loadDone(store), ctx.tz);
-    return { text: chatText(out, rows.length > 0), rows, question: q };
+    const after = await loadActions(store);
+    const resolved = resolvedBetween(before, after);
+    const reply = chatText(out, rows.length > 0);
+    await appendChat(store, [{ at, who: "me", text: said },
+      { at: Date.now(), who: "duely", text: reply, ...(picks.length ? { picks } : {}), ...(q ? { actionIds: [(q as Question).id] } : {}) }], at);
+    return { text: reply, rows, question: q, ...(resolved.length ? { resolved } : {}) };
   });
+
+  /** The saved chat, rebuilt with today's rows (ticks show) and where each question stands now. */
+  handle("chatHistory", async (): Promise<ChatMessage[]> => {
+    const log = await loadChat(store);
+    if (!log.length) return [];
+    const { tz } = await loadCtx({ ...svc.deps, llm: async () => undefined });
+    return chatHistory(log, await items(), await loadDone(store), await allActions(), tz);
+  });
+  handle("chatClear", async () => { await clearChat(store); });
 
   handle("settings", async () => settingsOut(await config()));
 

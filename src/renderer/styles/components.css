@@ -255,3 +255,5 @@ button.dropzone { width: 100%; background: none; cursor: pointer; text-align: le
 button.dropzone:hover { border-color: var(--accent); color: var(--text-2); }
 @media (max-width: 560px) { .import-grid.three, .import-grid.four { grid-template-columns: 1fr 1fr; } .import-details { padding-left: 12px; } }
 .input-multi { height: auto; min-height: 56px; padding: 7px 10px; line-height: 1.45; resize: vertical; font-family: inherit; }
+.proposal-outcome { margin: 8px 0 0; font-size: 13px; font-weight: 500; color: var(--text-2); }
+.proposal-outcome.is-done { color: var(--success); }

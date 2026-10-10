@@ -16,6 +16,8 @@ contextBridge.exposeInMainWorld("duely", {
   aiModels: call("aiModels"),
   readTimetable: call("readTimetable"),
   discordConnect: call("discordConnect"),
+  chatHistory: call("chatHistory"),
+  chatClear: call("chatClear"),
   discordTest: call("discordTest"),
   discordDisconnect: call("discordDisconnect"),
   readExams: call("readExams"),
