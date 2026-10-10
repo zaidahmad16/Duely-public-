@@ -1,19 +1,19 @@
 # Terms of Service
 
-**Effective:** October 9, 2026
+**Effective:** October 10, 2026
 
 These terms cover your use of Duely, a free, open-source desktop app. By installing or using Duely, you agree to them. If you don't agree, please don't use Duely.
 
 ## 1. What Duely is
 
-Duely reads your Brightspace calendar and course announcements, puts your deadlines, tests and classes in a Google Calendar of its own, and answers questions about them using an AI provider you choose. It runs on your computer. Its source code is published under the MIT License, and nothing in these terms limits the rights that license gives you to the code.
+Duely reads your Brightspace calendar and course announcements, puts your deadlines, tests and classes in a Google Calendar of its own, and answers questions about them using an AI provider you choose. It runs on your computer and, if you turn it on, as a small script in your own Google account so it keeps working while your computer is off. Its source code is published under the MIT License, and nothing in these terms limits the rights that license gives you to the code.
 
 ## 2. Your accounts and costs
 
 To use Duely you connect accounts that belong to you:
 
 - your school's **Brightspace** (through its calendar and announcement links);
-- **Google**, through a Google Cloud client you create yourself;
+- **Google**, through a Google Cloud client you create yourself (and, if you turn it on, a "Duely" Apps Script project in your Google account, which runs under your account and Google's terms and limits);
 - an **AI provider** (OpenAI-compatible, Anthropic or Google Gemini), with your own API key;
 - optionally, later, **Discord** (to get your alerts as direct messages).
 
@@ -24,7 +24,7 @@ You are responsible for these accounts, for keeping your links and keys private,
 **You alone are responsible for your API keys and for every charge made with them.**
 
 - **Billing.** AI providers (and any other paid service you connect) bill you directly. Duely's developers are not responsible for any fees, overages, usage charges, rate-limit costs or other billing from any provider, whatever the cause, including heavy use by Duely, a model or price change, a misconfigured setting, or a bug. Duely's daily request cap is a convenience, not a guarantee that charges stay below any amount.
-- **Leaked or misused keys.** Duely stores keys on your computer, encrypted with your operating system's keychain when one is available. No storage is perfectly secure. Duely's developers are not responsible for any key, token, link or other credential that is exposed, leaked, stolen or misused, or for any charges or harm that follow, however it happens. That includes malware or another person on your computer, backups or copies of your data folder, sharing your screen or files, the lightly protected storage used on computers without a keyring, your provider's own systems, or a defect in Duely.
+- **Leaked or misused keys.** Duely stores keys on your computer, encrypted with your operating system's keychain when one is available. If you run Duely in your Google account, your AI key is also stored in that script's storage in your Google account, protected by your Google account's security, and the script uses it while your computer is off. No storage is perfectly secure. Duely's developers are not responsible for any key, token, link or other credential that is exposed, leaked, stolen or misused, or for any charges or harm that follow, however it happens. That includes malware or another person on your computer, backups or copies of your data folder, sharing your screen or files, the lightly protected storage used on computers without a keyring, access to your Google account, your provider's own systems, or a defect in Duely.
 - **Protect yourself.** Set a spending limit or budget alert with your provider, use a key only for Duely, and if you think a key was exposed, revoke it with your provider right away and create a new one.
 
 ## 4. Check important dates yourself
@@ -51,11 +51,11 @@ To the fullest extent the law allows, Duely's developers and contributors are no
 
 ## 9. Privacy
 
-How Duely handles your information is described in the [Privacy Policy](PRIVACY.md). In short: everything stays on your computer except what Duely sends to the services you connect.
+How Duely handles your information is described in the [Privacy Policy](PRIVACY.md). In short: everything stays on your computer, and in your own Google account if you turn that on, except what Duely sends to the services you connect.
 
 ## 10. Stopping
 
-You can stop using Duely at any time by uninstalling it and deleting its data folder (see the Privacy Policy). You can also disconnect Google and remove your AI key in Settings.
+You can stop using Duely at any time: disconnect Google in Settings, uninstall Duely, delete its data folder, and delete the "Duely" project in your Google account (the Privacy Policy explains each step). You can also pause Duely in your Google account or remove your AI key in Settings.
 
 ## 11. Changes
 

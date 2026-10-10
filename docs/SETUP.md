@@ -41,7 +41,7 @@ Google needs to know which app is asking for access, so you create a small, free
    - **Audience:** choose **External**. Click **Next**.
    - **Contact information:** your email. Click **Next**.
    - Tick **I agree to the Google API Services: User Data Policy**, then click **Continue** and **Create**.
-5. Add yourself as a test user: go to **Google Auth Platform → Audience**, find **Test users**, click **Add users**, enter your own Gmail address, and save.
+5. Add yourself as a test user: go to **Google Auth Platform → Audience**, find **Test users**, click **Add users**, enter your own Gmail address, and click **Save**. If the dialog stays open, click **Save** again.
 6. Create the client: go to **Google Auth Platform → Clients**, click **Create client**, choose **Desktop app** as the application type, name it `Duely`, and click **Create**.
 7. **Download the JSON file** right away (the download button in the dialog, or next to the client in the list). Google may only show the secret once. Keep the file somewhere private; it's what you'll give Duely.
 
@@ -50,8 +50,19 @@ Google needs to know which app is asking for access, so you create a small, free
 1. In Duely, click **Choose file** and pick the JSON file you downloaded.
 2. Click **Connect Google**. Your browser opens Google's sign-in.
 3. Choose your account. Google warns that it **hasn't verified this app**. That's expected: it's your own client, not a published app. Continue past the warning (on some screens this is under **Advanced**).
-4. Allow Duely to **make secondary calendars and manage their events**.
+4. Allow everything Duely asks for: **make secondary calendars and manage their events**, **see your email address**, and **create and update Apps Script projects** (so it can set itself up in your account, next).
 5. When the page says **Google is connected**, go back to Duely.
+
+### Run Duely in your Google account (recommended)
+
+Right after you connect, Duely offers to run in your own Google account, so your calendar stays up to date and announcements still get read while your computer is off. It's a small Apps Script project named "Duely" that only you can see. It's free, and nothing goes to Duely's developers. You can also set it up later in **Settings → Google**, or choose to keep Duely on this computer only.
+
+1. Click **Open Apps Script settings**, switch on **Google Apps Script API**, go back to Duely and click **I turned it on**.
+2. Click **Install Duely in my Google account**.
+3. Your browser opens the script in Google's editor, on a function called `duelySetup`. Click **Run**. Google asks you to approve it: choose your account, click **Advanced → Go to Duely (unsafe)** (it's your own project, so Google hasn't checked it), then **Allow**.
+4. Duely shows a ✓ as soon as the approval is done. Upcoming then says **Updated by Duely in the cloud**.
+
+When it's on, **Settings → Google** shows **Duely in your Google account** (with a switch to pause it) and **Email me alerts**, which also sends your alerts to your Gmail. Your AI key is kept in the script too, so it can read announcements while your computer is off (see the [Privacy Policy](PRIVACY.md)).
 
 ### Stay connected (recommended)
 
@@ -83,7 +94,7 @@ Copy the key when it's shown; most providers only show it once.
 
 1. Choose the provider.
 2. Paste your **API key**.
-3. Check the **Model**. Duely fills in a suggestion; you can type any model your provider offers. A small, fast model is plenty.
+3. Check the **Model**. Duely fills in a suggestion; you can type any model your provider offers. A small, fast model is plenty. For Gemini, use `gemini-flash-lite-latest`: it's quick and on the free tier. Some newer Gemini models are often overloaded, and older ones aren't offered to new keys.
 4. For OpenAI-compatible providers other than OpenAI, fill in the **Base URL** from the table.
 5. Click **Test connection**. Duely checks three things:
    - **Chat:** the model can use tools, so chat understands your questions. Without it, chat answers with simple lists.
@@ -134,12 +145,18 @@ Duely keeps working when you close its window. It stays in the system tray (or m
 - **Upcoming** shows today, the rest of this week and next week. Tick the box when you've handed something in; it gets a ✓ in your calendar. Click a row to open it in Brightspace.
 - **Questions** appear at the top when Duely needs you, for example when a quiz disappeared from Brightspace, or to suggest study time. Nothing is added to your calendar until you say yes.
 - **Chat** answers questions like "what's due tomorrow?" or "when is my next test?".
-- **Sync now** checks Brightspace straight away. Duely also checks every 10 minutes on its own, and again when your computer wakes up.
+- **Sync now** checks Brightspace straight away. Duely also checks every 10 minutes on its own, and again when your computer wakes up. If Duely runs in your Google account, it checks every 10 minutes even while your computer is off, and Sync now can take a couple of minutes to start (Google decides when).
 
 ## Troubleshooting
 
 **"Google needs to be reconnected"**
 Your Google client is still in Testing, so the sign-in expired after 7 days. Publish it (see "Stay connected") and connect again.
+
+**"Google Apps Script API" is still off**
+Open [script.google.com/home/usersettings](https://script.google.com/home/usersettings) in the same Google account you connected, switch it on, wait a few seconds, and click **I turned it on** again.
+
+**Google's editor opened in a different account**
+If you're signed in to several Google accounts, check the account picture at the top right of the editor. Duely opens links in the account you connected, but if you switched accounts, close the tab and click **Open it again** in Duely.
 
 **"Access blocked" or "Error 403: access_denied" when connecting Google**
 Your account isn't a test user of your Google client. Add it under **Google Auth Platform → Audience → Test users**, or publish the app.
@@ -167,4 +184,4 @@ Your computer has no keyring, so Duely can't use the system's encryption for you
 
 ## Privacy
 
-Everything Duely stores stays on your computer. It only talks to Brightspace, Google and your AI provider, directly. Read the [Privacy Policy](PRIVACY.md) for the details.
+Everything Duely stores stays on your computer, and in your own Google account if you run it there. It only talks to Brightspace, Google and your AI provider, directly. Read the [Privacy Policy](PRIVACY.md) for the details.
