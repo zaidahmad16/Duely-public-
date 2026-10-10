@@ -14,10 +14,10 @@ import { icon } from "../ui/icons.ts";
 import { enter, expandIn, stagger } from "../ui/motion.ts";
 import type { AppCtx, Screen } from "./types.ts";
 
-export const PROVIDERS: { id: Provider; name: string; hint: string; model: string; base: string }[] = [
-  { id: "openai", name: "OpenAI-compatible", hint: "OpenAI, Mistral, Groq, Ollama…", model: "gpt-4o-mini", base: "https://api.openai.com/v1" },
-  { id: "anthropic", name: "Anthropic", hint: "Claude models", model: "claude-haiku-4-5", base: "" },
-  { id: "gemini", name: "Gemini", hint: "Google AI Studio key", model: "gemini-flash-lite-latest", base: "" },
+export const PROVIDERS: { id: Provider; name: string; hint: string; base: string }[] = [
+  { id: "openai", name: "OpenAI-compatible", hint: "OpenAI, Mistral, Groq, Ollama…", base: "https://api.openai.com/v1" },
+  { id: "anthropic", name: "Anthropic", hint: "Claude models", base: "" },
+  { id: "gemini", name: "Gemini", hint: "Google AI Studio key", base: "" },
 ];
 
 export function settingRow(name: string, desc: string | null, control: Node | null, o: { muted?: boolean; stack?: boolean } = {}): HTMLElement {
@@ -31,7 +31,8 @@ export function capList(r: CapResult): HTMLElement {
   if (!r.ok) return h("div", { class: "caps" }, h("p", { class: "cap-fail" }, icon("alert", 14), r.message));
   const el = h("ul", { class: "caps" }, (r.caps ?? []).map((c) =>
     h("li", { class: ["cap", c.ok ? "is-ok" : "is-no"] }, h("span", { class: "cap-label" }, c.label),
-      h("span", { class: "cap-state" }, c.ok ? icon("check", 14) : icon("x", 14)), c.note && h("span", { class: "cap-note" }, c.note))));
+      h("span", { class: "cap-state" }, c.ok ? icon("check", 14) : icon("x", 14)), c.note && h("span", { class: "cap-note" }, c.note))),
+    r.model && h("li", { class: "cap-model" }, `Using ${r.model}${r.auto ? ", chosen by Duely" : ""}`));
   stagger(el.children, 90, { y: 3, dur: 180 });
   return el;
 }
@@ -120,9 +121,20 @@ export function settingsScreen(app: AppCtx): Screen {
   // ---- AI
   function ai(st: Settings) {
     let provider: Provider | "" = st.ai.provider;
-    const p = () => PROVIDERS.find((x) => x.id === provider);
     const seg = h("div", { class: "segmented", attrs: { role: "radiogroup", "aria-label": "AI provider" } });
-    const model = field(st.ai.model, { label: "Model", placeholder: p()?.model ?? "model name", onSave: (v) => ({ ai: { model: v } }) });
+    // empty = Duely picks (and the row says which); a name = the student's own choice
+    const model = field(st.ai.auto ? "" : st.ai.model, { label: "Model", placeholder: "Automatic", onSave: (v) => ({ ai: { model: v } }) });
+    const modelList = h("datalist", { attrs: { id: "settings-ai-models" } });
+    model.setAttribute("list", modelList.id);
+    model.addEventListener("focus", () => { if (!modelList.childElementCount) void api.aiModels().then((n) => modelList.append(...n.map((v) => h("option", { value: v })))).catch(() => {}); });
+    const modelRow = settingRow("Model", "-", h("div", null, model, modelList));
+    const modelDesc = (auto: boolean, name: string) => {
+      modelRow.querySelector(".setting-desc")!.textContent = auto && name ? `Chosen by Duely: ${name}. Type a name to use your own.`
+        : auto ? "Duely picks one that works with your key when you test the connection." : "Your choice. Clear it to let Duely pick.";
+    };
+    modelDesc(st.ai.auto, st.ai.model);
+    let typed = model.value;                                           // the description follows an edit
+    model.addEventListener("blur", () => { if (model.value !== typed) { typed = model.value; modelDesc(!typed.trim(), ""); } });
     const base = field(st.ai.baseUrl, { label: "Base URL", placeholder: "https://api.openai.com/v1", onSave: (v) => ({ ai: { baseUrl: v } }) });
     const baseRow = settingRow("Base URL", "Leave empty for OpenAI. Other providers list theirs in their docs.", base);
     const key = h("input", { class: "input", type: "password", placeholder: st.ai.keySet ? "•••••••••••• saved" : "Paste your API key", attrs: { "aria-label": "API key", autocomplete: "off" } });
@@ -138,7 +150,7 @@ export function settingsScreen(app: AppCtx): Screen {
         const b = h("button", { class: ["seg", provider === x.id && "is-active"], attrs: { role: "radio", "aria-checked": String(provider === x.id) } }, x.name);
         b.addEventListener("click", async () => {
           if (provider === x.id) return;
-          try { await save({ ai: { provider: x.id } }); provider = x.id; paintSeg(); model.placeholder = x.model; baseRow.hidden = x.id !== "openai"; } catch { /* toast */ }
+          try { await save({ ai: { provider: x.id } }); provider = x.id; paintSeg(); model.value = typed = ""; modelList.replaceChildren(); modelDesc(true, ""); baseRow.hidden = x.id !== "openai"; } catch { /* toast */ }
         });
         seg.append(b);
       }
@@ -156,13 +168,14 @@ export function settingsScreen(app: AppCtx): Screen {
       stopHint();
       spinnerButton(test, false, "Test connection");
       results.append(capList(r));
+      if (r.ok && r.model) modelDesc(!!r.auto, r.model);
     });
     const cap = field(String(st.ai.dailyLimit), { label: "Daily cap", type: "number", width: "96px", onSave: (v) => ({ ai: { dailyLimit: Number(v) } }) });
     const testRow = settingRow("Test connection", "Checks what this model can do for Duely.", test);
     testRow.append(results);
     return section("AI",
       settingRow("Provider", null, seg),
-      settingRow("Model", null, model),
+      modelRow,
       baseRow,
       settingRow("API key", "Kept in your computer's keychain. You're responsible for this key and any charges on it.", key),
       testRow,
@@ -268,7 +281,7 @@ export function settingsScreen(app: AppCtx): Screen {
     return section("About",
       settingRow("Duely", `Version ${app.status?.version ?? ""}`, null),
       settingRow("Terms of Service", null, link("Read", () => openDoc("terms"))),
-      settingRow("Privacy Policy", "Your data stays on this computer, except what goes to the services you connect.", link("Read", () => openDoc("privacy"))),
+      settingRow("Privacy Policy", "Your data stays on this computer and in your own Google account, except what goes to the services you connect.", link("Read", () => openDoc("privacy"))),
       settingRow("Setup guide", "Step by step: Brightspace, Google, your AI, announcements.", link("Read", () => openDoc("setup"))),
       settingRow("Source code", "Open source under the MIT License.", link("GitHub", () => void api.openLink("https://github.com/zaidahmad16/Duely-public-"))));
   }

@@ -136,7 +136,7 @@ export function onboarding(done: () => void): HTMLElement {
         setup.el.replaceWith(fresh.el); Object.assign(setup, fresh);
         next.disabled = !st.aiReady;
       }).catch(() => {});
-      return view("Choose your AI", "Duely uses one AI of your choice to answer questions and read announcements. Your key stays on this computer.",
+      return view("Choose your AI", "Duely uses one AI of your choice to answer questions and read announcements. Only you and your AI provider ever see your key.",
         [setup.el], [back(), next], "3. Your AI");
     },
     // 4. More context (optional)

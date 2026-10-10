@@ -19,6 +19,8 @@ export const api = {
   settings: () => call<Settings>("settings"),
   saveSettings: (p: SettingsPatch) => call<Settings>("saveSettings", p),
   testAI: () => call<CapResult>("testAI"),
+  /** the models the saved key can use (empty when the provider can't list them) */
+  aiModels: () => call<string[]>("aiModels"),
   connectGoogle: (clientJson?: string) => call<void>("connectGoogle", clientJson),
   disconnectGoogle: () => call<void>("disconnectGoogle"),
   syncNow: () => call<void>("syncNow"),

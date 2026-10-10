@@ -69,7 +69,7 @@ export type Provider = "openai" | "anthropic" | "gemini";
 export type Settings = {
   feedUrl: string;
   announcementFeeds: string[];
-  ai: { provider: Provider | ""; model: string; baseUrl: string; keySet: boolean; dailyLimit: number };
+  ai: { provider: Provider | ""; model: string; /** Duely picks the model (the student left Model empty) */ auto: boolean; baseUrl: string; keySet: boolean; dailyLimit: number };
   notifications: boolean;
   importantAnnouncements: boolean;
   studyBlocks: boolean;
@@ -83,9 +83,9 @@ export type Settings = {
 };
 
 /** A partial settings change; `aiKey` is write-only (the key never comes back). */
-export type SettingsPatch = Partial<Omit<Settings, "ai">> & { ai?: Partial<Omit<Settings["ai"], "keySet">>; aiKey?: string };
+export type SettingsPatch = Partial<Omit<Settings, "ai">> & { ai?: Partial<Omit<Settings["ai"], "keySet" | "auto">>; aiKey?: string };
 
-export type CapResult = { ok: boolean; message: string; caps?: { label: string; ok: boolean; note: string }[] };
+export type CapResult = { ok: boolean; message: string; caps?: { label: string; ok: boolean; note: string }[]; /** the model tested, and whether Duely chose it */ model?: string; auto?: boolean };
 
 export type ChatReply = { text: string; rows: Row[]; question?: Question };
 

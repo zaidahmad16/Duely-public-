@@ -7,14 +7,15 @@ import { loadDone } from "../core/done.ts";
 import { SCOPE, connect, parseClient } from "../google/oauth.ts";
 import { SCRIPT_API_SCOPES, accountEmail } from "../google/script.ts";
 import { makeLLM } from "../llm/adapters.ts";
-import { probe } from "../llm/probe.ts";
+import { listModels, pickModel } from "../llm/models.ts";
+import { PROBE_TIMEOUT_MS, probe } from "../llm/probe.ts";
 import { cached, channel, editorUrl, install, waitForApproval } from "../node/cloud.ts";
 import { engineConfig } from "../node/cloudapp.ts";
 import { applyDecision } from "../node/decisions.ts";
 import { loadCtx } from "../node/runner.ts";
-import { aiFingerprint, aiReady, applyPatch, capResult, friendlyAIError, toSettings } from "../node/settings.ts";
+import { aiFingerprint, aiReady, applyPatch, autoModel, capResult, friendlyAIError, toSettings } from "../node/settings.ts";
 import { chatText, question, rowsFor, upcoming } from "../node/view.ts";
-import type { Button, ChatReply, Question, Result, SettingsPatch, Status, Upcoming } from "../shared/types.ts";
+import type { Button, CapResult, ChatReply, Question, Result, SettingsPatch, Status, Upcoming } from "../shared/types.ts";
 import type { Jobs } from "./jobs.ts";
 import { type Services, openSafe } from "./services.ts";
 import { canStartAtLogin, setStartAtLogin, startsAtLogin } from "./tray.ts";
@@ -137,22 +138,48 @@ export function registerApi(c: Ctx): void {
     return toSettings(next, await svc.secrets.has("llm_key"));
   });
 
-  // tests the saved AI settings; a pass is recorded, which is what unlocks the app (aiReady)
+  // tests the saved AI settings; a pass is recorded, which is what unlocks the app (aiReady). With no
+  // model chosen by the student, Duely finds one that works with the key (src/llm/models.ts).
   handle("testAI", async () => {
     const cfg = await config();
     const ai = cfg.ai ?? {};
-    if (!ai.provider || !ai.model) return { ok: false, message: "Pick a provider and enter a model name first." };
+    const auto = autoModel(ai);
+    if (!ai.provider) return { ok: false, message: "Pick a provider first." };
+    if (!auto && !ai.model) return { ok: false, message: "Enter a model name first." };
     const apiKey = (await svc.secrets.get("llm_key").catch(() => null)) ?? "";
-    let r;
+    const conn = { provider: ai.provider, apiKey, baseUrl: ai.baseUrl || undefined };
+    let r: CapResult; let model: string = ai.model;
     try {
-      r = capResult(await probe(makeLLM({ provider: ai.provider, model: ai.model, apiKey, baseUrl: ai.baseUrl || undefined })));
+      if (auto) {
+        const pick = await pickModel(conn);
+        r = capResult(pick.caps);
+        if (pick.model) model = pick.model;
+      } else {
+        r = capResult(await probe(makeLLM({ ...conn, model })));
+      }
     } catch (e) {
       r = { ok: false, message: friendlyAIError(errText(e)) };
     }
+    if (r.ok) { r.model = model; r.auto = auto; }
     const now = (await config());                                  // re-read: don't undo a change made meanwhile
-    const verified = r.ok && JSON.stringify(now.ai ?? {}) === JSON.stringify(ai) ? aiFingerprint(ai, apiKey) : undefined;
-    if (verified !== now.ai_verified) { await store.put("config", { ...now, ai_verified: verified }); c.changed(); }
+    if (JSON.stringify(now.ai ?? {}) !== JSON.stringify(ai)) return r;
+    const tested = { ...ai, model, ...(auto ? { auto: true } : {}) };
+    const verified = r.ok ? aiFingerprint(tested, apiKey) : undefined;
+    if (verified !== now.ai_verified || model !== ai.model) {
+      const next = { ...now, ai: tested, ai_verified: verified };
+      await store.put("config", next);
+      c.changed();
+      if (model !== ai.model && await cloudOn()) await svc.cloud.pushSettings(next).catch(() => {});   // the script reads with it too
+    }
     return r;
+  });
+
+  handle("aiModels", async () => {
+    const ai = (await config()).ai ?? {};
+    if (!ai.provider) return [];
+    const apiKey = (await svc.secrets.get("llm_key").catch(() => null)) ?? "";
+    const list = await listModels({ provider: ai.provider, apiKey, model: "", baseUrl: ai.baseUrl || undefined }, fetch, AbortSignal.timeout(PROBE_TIMEOUT_MS));
+    return (list.models ?? []).sort();
   });
 
   handle("connectGoogle", async (clientJson?: string) => {

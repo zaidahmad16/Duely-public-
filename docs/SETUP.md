@@ -94,15 +94,16 @@ Copy the key when it's shown; most providers only show it once.
 
 1. Choose the provider.
 2. Paste your **API key**.
-3. Check the **Model**. Duely fills in a suggestion; you can type any model your provider offers. A small, fast model is plenty. For Gemini, use `gemini-flash-lite-latest`: it's quick and on the free tier. Some newer Gemini models are often overloaded, and older ones aren't offered to new keys.
-4. For OpenAI-compatible providers other than OpenAI, fill in the **Base URL** from the table.
-5. Click **Test connection**. Duely checks three things:
+3. For OpenAI-compatible providers other than OpenAI, fill in the **Base URL** from the table.
+4. Click **Test connection**. Duely asks your provider which models your key can use, picks a small, fast one that works, and checks three things:
    - **Chat:** the model can use tools, so chat understands your questions. Without it, chat answers with simple lists.
    - **Reading:** the model gives structured answers, so announcements can be read for dates.
    - **Screenshots:** the model can read images, for importing a timetable from a screenshot.
 
-   The test must at least connect. A ✗ on one of them only turns that feature off.
-6. Click **Continue**.
+   The test must at least connect. A ✗ on one of them only turns that feature off. If a model is busy or isn't available to your key, Duely tries the next one; the result says which model it chose.
+5. Click **Continue**.
+
+You don't need to know model names. If you want a particular one, open **Advanced** and type or pick it; leave it empty to let Duely choose. You can change it later in **Settings → AI**. For a model on your own computer (Ollama, LM Studio), Duely picks from the models you've downloaded.
 
 ### Costs and your key
 
@@ -168,7 +169,10 @@ You created the wrong kind of client. Create a new one with application type **D
 The link is wrong or was reset. Copy it again from **Calendar → Subscribe** in Brightspace.
 
 **"The API key wasn't accepted" / "That model wasn't found"**
-Check that the whole key was copied (no spaces), that the model name matches your provider's list exactly, and the base URL for OpenAI-compatible providers.
+Check that the whole key was copied (no spaces), and the base URL for OpenAI-compatible providers. If you typed a model under **Advanced**, clear it to let Duely choose.
+
+**"The provider is busy right now"**
+Every model Duely tried was overloaded (this happens with Gemini at busy times). Try again in a minute.
 
 **"The provider is limiting requests or the account has no credit"**
 Add credit or wait a minute. Free tiers have per-minute limits.

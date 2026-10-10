@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld("duely", {
   settings: call("settings"),
   saveSettings: call("saveSettings"),
   testAI: call("testAI"),
+  aiModels: call("aiModels"),
   connectGoogle: call("connectGoogle"),
   disconnectGoogle: call("disconnectGoogle"),
   syncNow: call("syncNow"),

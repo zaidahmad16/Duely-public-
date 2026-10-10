@@ -12,7 +12,7 @@ export function toSettings(saved: any, keySet: boolean): Settings {
   return {
     feedUrl: c.feed_url ?? "",
     announcementFeeds: (c.announcement_feeds ?? []).filter((u: unknown) => typeof u === "string"),
-    ai: { provider: c.ai?.provider ?? "", model: c.ai?.model ?? "", baseUrl: c.ai?.baseUrl ?? "", keySet, dailyLimit: Number(c.ai_daily_limit ?? 200) },
+    ai: { provider: c.ai?.provider ?? "", model: c.ai?.model ?? "", auto: autoModel(c.ai), baseUrl: c.ai?.baseUrl ?? "", keySet, dailyLimit: Number(c.ai_daily_limit ?? 200) },
     notifications: c.notifications !== false,
     importantAnnouncements: c.phone_alerts !== false,
     studyBlocks: !!c.study_blocks,
@@ -48,7 +48,8 @@ export function applyPatch(saved: any, p: SettingsPatch): any {
       if (!["openai", "anthropic", "gemini"].includes(p.ai.provider)) throw new Error("Pick a provider.");
       ai.provider = p.ai.provider;
     }
-    if (p.ai.model !== undefined) ai.model = String(p.ai.model).trim();
+    // a model name is the student's own choice; empty means "Duely picks"
+    if (p.ai.model !== undefined) { ai.model = String(p.ai.model).trim(); ai.auto = !ai.model; }
     if (p.ai.baseUrl !== undefined) {
       const b = String(p.ai.baseUrl).trim();
       if (b) {
@@ -58,6 +59,12 @@ export function applyPatch(saved: any, p: SettingsPatch): any {
         if (u.protocol !== "https:" && !(local && u.protocol === "http:")) throw new Error("The base URL should start with https:// (http:// only for this computer).");
       }
       ai.baseUrl = b.replace(/\/+$/, "");
+    }
+    // model names don't carry over to another provider: Duely picks again. On another server, a model
+    // Duely picked is picked again too (one the student typed is kept).
+    if (p.ai.model === undefined) {
+      if (p.ai.provider !== undefined && p.ai.provider !== c.ai?.provider) { ai.model = ""; ai.auto = true; }
+      else if (p.ai.baseUrl !== undefined && ai.baseUrl !== (c.ai?.baseUrl ?? "") && autoModel(ai)) ai.model = "";
     }
     if (p.ai.dailyLimit !== undefined) {
       const n = Math.round(Number(p.ai.dailyLimit));
@@ -90,11 +97,19 @@ export function applyPatch(saved: any, p: SettingsPatch): any {
   return c;
 }
 
+/** Duely chooses the model unless the student typed one (settings from before this have a model and no
+ *  flag: that was typed or accepted by them, so it's kept). */
+export function autoModel(ai: any): boolean {
+  return ai?.auto ?? !ai?.model;
+}
+
 /** An AI error in words a student can act on. */
 export function friendlyAIError(raw: string | undefined): string {
   const m = String(raw ?? "");
   if (/\b(401|403)\b|unauthori[sz]ed|invalid.*key|api key/i.test(m)) return "The API key wasn't accepted. Check that it's copied in full.";
+  if (/no models available/i.test(m)) return "Duely couldn't find a model to use with this key. Choose one under Advanced.";
   if (/\b404\b|not found|does not exist|unknown model/i.test(m)) return "That model wasn't found. Check the model name (and the base URL).";
+  if (/\b(503|500|502)\b|overloaded|high demand|unavailable/i.test(m)) return "The provider is busy right now. Try again in a minute, or choose another model under Advanced.";
   if (/\b429\b|rate|quota|insufficient/i.test(m)) return "The provider is limiting requests or the account has no credit. Try again in a minute.";
   if (/fetch failed|ENOTFOUND|ECONNREFUSED|EAI_AGAIN|ETIMEDOUT|network/i.test(m)) return "Couldn't reach the provider. Check your internet connection or the base URL.";
   if (/timed? ?out/i.test(m)) return "The provider took too long to answer. Try again.";
