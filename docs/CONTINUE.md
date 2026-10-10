@@ -1,3 +1,7 @@
+# Continue here
+
+**Read `docs/HANDOFF.md` first** (current state, rules, live test setup, what's left). Older notes below.
+
 # Continue here (handoff for a fresh session)
 
 Read this, then `docs/PROGRESS.md`, then the plan at
