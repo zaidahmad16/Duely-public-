@@ -57,9 +57,20 @@ Plan: see the approved plan (milestones P0–P7). Updated 2026-10-09.
     Governing law / jurisdiction intentionally left out (owner's call).
   - Not yet: Slack (P6), screenshot import (P5), chat history persistence, the live Google test.
 
-## Plan change: P6 is Discord alerts (was Slack)
-Owner's call: alerts only, no chat, in Discord instead of Slack. Use a **Discord webhook** the student creates in a
-server they own (Server Settings → Integrations → Webhooks), pasted into Settings; stored as the `discord_webhook`
-secret (the link is a credential). No shared bot: a bot token can't ship inside the app, and a hosted bot means a
-server holding students' data (against "no Duely server" in the Privacy Policy). Send the same alerts as desktop
-notifications (plain text; digests may need Discord's 2000-character limit handled), with a "Send test alert" button.
+## Plan change: P6 is Discord alerts by DM from a hosted Duely bot (was Slack)
+Owner's call (twice): alerts only, no chat; Discord, not Slack; and as **DMs from one Duely bot**, so students
+create nothing (option 1, chosen over a student-made webhook or a student-made bot).
+Discord rules that shape it: only a bot can DM, and only someone it shares a server with (and who allows DMs from
+that server's members). A bot token can't ship inside the app, so this needs a relay.
+- **Connect:** Settings → Notifications → Connect Discord opens Discord OAuth (scopes `identify` + `guilds.join`)
+  in the browser (loopback, like Google). The relay exchanges the code (it holds the client secret), adds the user
+  to the official Duely server (so a DM is allowed), and returns a random device token to the app.
+- **Relay:** a Cloudflare Worker (the owner already has an account; free tier). Holds the bot token and the client
+  secret. Stores only {sha256(device token) -> Discord user id}. `POST /alert` {token, text}: opens a DM and sends it;
+  the text is never stored. Per-token rate limit and size cap; split at 2000 chars. `DELETE /link` to disconnect.
+- **App:** device token kept as the `discord_link` secret; the same alerts as desktop notifications; "Send test
+  alert"; clear errors when the DM is refused (DMs from server members turned off, left the Duely server).
+- **Privacy Policy rewrite when it ships:** alert text passes through the relay (not stored); the relay keeps the
+  Discord user id and the hashed token; how to disconnect and have the link deleted.
+- **Owner must do:** create the Discord application + bot and the Duely server, put their ids/secrets in the Worker,
+  approve the deploy.

@@ -15,7 +15,7 @@ To use Duely you connect accounts that belong to you:
 - your school's **Brightspace** (through its calendar and announcement links);
 - **Google**, through a Google Cloud client you create yourself;
 - an **AI provider** (OpenAI-compatible, Anthropic or Google Gemini), with your own API key;
-- optionally, later, **Discord** (a webhook link in a server you own, for alerts).
+- optionally, later, **Discord** (to get your alerts as direct messages).
 
 You are responsible for these accounts, for keeping your links and keys private, and for following each service's own terms.
 
