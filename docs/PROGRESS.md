@@ -74,3 +74,7 @@ that server's members). A bot token can't ship inside the app, so this needs a r
   Discord user id and the hashed token; how to disconnect and have the link deleted.
 - **Owner must do:** create the Discord application + bot and the Duely server, put their ids/secrets in the Worker,
   approve the deploy.
+- **Duely Discord server created** (owner's account, via Chrome): name "Duely", app icon, server id
+  `1558321208481685534` (the relay's `guilds.join` target). Still to do: @everyone read-only (no Send Messages,
+  threads, attachments, reactions, voice, invites), default notifications = mentions only, remove the voice
+  channel, a welcome note in #general. The browser tab stopped responding mid-way; nothing was saved there.
