@@ -10,6 +10,9 @@ export function setLocale(l: string | undefined) {
 const fmt = (tz: string, o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(LOCALE, { timeZone: tz, ...o });
 
 
+/** A calendar date ("YYYY-MM-DD") in the computer's locale, e.g. "Sep 7" / "7 Sept". */
+export const dayText = (day: string, o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(LOCALE, { timeZone: "UTC", ...o }).format(Date.parse(`${day}T12:00:00Z`));
+
 export function isoDay(t: number, tz: string): string {
   const p = Object.fromEntries(fmt(tz, { year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(t).map((x) => [x.type, x.value]));
   return `${p.year}-${p.month}-${p.day}`;

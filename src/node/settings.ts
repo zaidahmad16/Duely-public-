@@ -23,6 +23,12 @@ export function toSettings(saved: any, keySet: boolean): Settings {
     digestWeekly: !!c.digest_weekly,
     briefings: c.briefings !== false,
     calendarName: c.calendar_name,
+    terms: [...(c.term && c.classes?.length ? [{ ...c.term, classes: c.classes, key: "legacy" }] : []), ...(c.terms ?? []).map((t: any) => ({ ...t, key: t.start }))]
+      .map((t: any) => ({ key: t.key, name: String(t.name || "Term"), start: t.start, end: t.end, classes: (t.classes ?? []).length,
+        courses: [...new Set<string>((t.classes ?? []).map((x: any) => x.course))].sort() }))
+      .sort((a, b) => a.start.localeCompare(b.start)),
+    exams: (c.exams ?? []).map((e: any) => ({ key: `${e.course}|${e.date}|${e.start}`, course: e.course, title: e.title, date: e.date, start: e.start, end: e.end, room: e.room ?? "" })),
+    academicDatesUrl: c.academic_dates_url ?? "",
   };
 }
 
@@ -42,6 +48,7 @@ export function applyPatch(saved: any, p: SettingsPatch): any {
     const seen = new Set<string>();
     c.announcement_feeds = p.announcementFeeds.map((u) => httpsLink(u, "announcements link")).filter((u) => !seen.has(u) && !!seen.add(u));
   }
+  if (p.academicDatesUrl !== undefined) c.academic_dates_url = String(p.academicDatesUrl).trim() ? httpsLink(p.academicDatesUrl, "academic dates link") : "";
   if (p.ai) {
     const ai = { ...(c.ai ?? {}) };
     if (p.ai.provider !== undefined) {

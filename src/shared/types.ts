@@ -80,10 +80,21 @@ export type Settings = {
   digestWeekly: boolean;
   briefings: boolean;
   calendarName: string;
+  /** imported timetables (src/core/timetableImport.ts), newest term last */
+  terms: { key: string; name: string; start: string; end: string; classes: number; courses: string[] }[];
+  exams: { key: string; course: string; title: string; date: string; start: string; end: string; room: string }[];
+  /** the school's academic dates page, read when importing a timetable (optional) */
+  academicDatesUrl: string;
 };
 
 /** A partial settings change; `aiKey` is write-only (the key never comes back). */
-export type SettingsPatch = Partial<Omit<Settings, "ai">> & { ai?: Partial<Omit<Settings["ai"], "keySet" | "auto">>; aiKey?: string };
+export type SettingsPatch = Partial<Omit<Settings, "ai" | "terms" | "exams">> & { ai?: Partial<Omit<Settings["ai"], "keySet" | "auto">>; aiKey?: string };
+
+/** One term read from timetable screenshots, for review (same shape as src/core/timetableImport.ts Term). */
+export type TermDraft = { name: string; start: string; end: string; no_class: [string, string][]; day_swaps: Record<string, string>;
+  classes: { course: string; section: string; kind: string; days: string[]; start: string; end: string; room: string; crn: string }[];
+  dates_source?: string; tba: string[]; notes: string[] };
+export type ExamDraft = { course: string; title: string; date: string; start: string; end: string; room: string };
 
 export type CapResult = { ok: boolean; message: string; caps?: { label: string; ok: boolean; note: string }[]; /** the model tested, and whether Duely chose it */ model?: string; auto?: boolean };
 

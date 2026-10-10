@@ -40,7 +40,7 @@ export async function build(
   const minDay = strftime({ t: cutoff - 2 * 86400e3, tz: "UTC" }, "%Y%m%d");
   const items = buildItems(parse(feedText, tz, minDay), tz).filter((it) => last(it, tz) >= cutoff);
   let status = await apply(items, ctx, opts.ask);
-  items.push(...timetableItems(cfg, tz));
+  items.push(...timetableItems(cfg, tz, items));
   const [annItems, annStatus] = await announcementItems(ctx, items, { ask: opts.annAsk, fetchFeed: opts.annFetch, send: opts.send });
   items.push(...annItems);
   if (annStatus) status = status ? `${status}  ·  ${annStatus}` : annStatus;

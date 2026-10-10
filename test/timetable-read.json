@@ -1,0 +1,177 @@
+{
+ "terms": [
+  {
+   "name": "Fall 2026",
+   "start": "2026-09-07",
+   "end": "2026-12-11",
+   "no_class": [],
+   "day_swaps": [],
+   "dates_source": "academic calendar",
+   "classes": [
+    {
+     "course": "PSYC 2101",
+     "section": "A",
+     "kind": "Lecture",
+     "days": [
+      "MO",
+      "WE",
+      "FR"
+     ],
+     "start": "09:00",
+     "end": "09:50",
+     "room": "LA C164",
+     "crn": "31234"
+    },
+    {
+     "course": "ECON 2502",
+     "section": "A",
+     "kind": "Lecture",
+     "days": [
+      "MO",
+      "WE",
+      "FR"
+     ],
+     "start": "11:00",
+     "end": "12:20",
+     "room": "DT 1208",
+     "crn": "32145"
+    },
+    {
+     "course": "BIOL 2200",
+     "section": "C",
+     "kind": "Lecture",
+     "days": [
+      "MO",
+      "WE"
+     ],
+     "start": "15:30",
+     "end": "17:20",
+     "room": "SC 3105",
+     "crn": "38765"
+    },
+    {
+     "course": "MATH 2007",
+     "section": "B",
+     "kind": "Lecture",
+     "days": [
+      "TU",
+      "TH"
+     ],
+     "start": "08:30",
+     "end": "09:50",
+     "room": "MC 2031",
+     "crn": "33011"
+    },
+    {
+     "course": "COMP 3005",
+     "section": "A",
+     "kind": "Lecture",
+     "days": [
+      "TU",
+      "TH"
+     ],
+     "start": "13:00",
+     "end": "14:20",
+     "room": "AT 102",
+     "crn": "34567"
+    }
+   ],
+   "tba": [
+    "PHIL 1901 A - 31891 TBA",
+    "ARTH 2100 B - 32654 TBA"
+   ]
+  },
+  {
+   "name": "Winter 2027",
+   "start": "2027-01-11",
+   "end": "2027-04-16",
+   "no_class": [],
+   "day_swaps": [],
+   "dates_source": "academic calendar",
+   "classes": [
+    {
+     "course": "STAT 2607",
+     "section": "D",
+     "kind": "Lecture",
+     "days": [
+      "MO",
+      "WE",
+      "FR"
+     ],
+     "start": "09:00",
+     "end": "09:50",
+     "room": "LA B101",
+     "crn": "39812"
+    },
+    {
+     "course": "ENGL 2106",
+     "section": "C",
+     "kind": "Lecture",
+     "days": [
+      "MO",
+      "WE"
+     ],
+     "start": "12:30",
+     "end": "13:50",
+     "room": "LA C250",
+     "crn": "31209"
+    },
+    {
+     "course": "COMP 2166",
+     "section": "B",
+     "kind": "Lecture",
+     "days": [
+      "MO",
+      "WE"
+     ],
+     "start": "16:30",
+     "end": "18:20",
+     "room": "MC 2201",
+     "crn": "30123"
+    },
+    {
+     "course": "PHYS 1305",
+     "section": "A",
+     "kind": "Lecture",
+     "days": [
+      "TU",
+      "TH"
+     ],
+     "start": "10:00",
+     "end": "11:20",
+     "room": "SC 2303",
+     "crn": "35678"
+    },
+    {
+     "course": "HIST 2401",
+     "section": "A",
+     "kind": "Lecture",
+     "days": [
+      "TU",
+      "TH"
+     ],
+     "start": "15:00",
+     "end": "16:20",
+     "room": "DT 1004",
+     "crn": "37741"
+    },
+    {
+     "course": "ENGL 2166",
+     "section": "C",
+     "kind": "Lecture",
+     "days": [
+      "FR"
+     ],
+     "start": "12:30",
+     "end": "13:50",
+     "room": "LA C250",
+     "crn": "11209"
+    }
+   ],
+   "tba": [
+    "SOCI 2010 A - 31455 TBA",
+    "CHEM 1002 B - 30187 TBA"
+   ]
+  }
+ ]
+}

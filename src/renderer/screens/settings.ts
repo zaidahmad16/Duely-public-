@@ -5,6 +5,7 @@ import type { CapResult, Provider, Settings, SettingsPatch } from "../../shared/
 import { cloudSetup } from "../components/cloudSetup.ts";
 import { openDoc } from "../components/doc.ts";
 import { toast } from "../components/toast.ts";
+import { importExams, importTimetable, savedList } from "../components/timetableImport.ts";
 import { toggle } from "../components/toggle.ts";
 import { api } from "../ui/api.ts";
 import { ago } from "../ui/format.ts";
@@ -114,8 +115,22 @@ export function settingsScreen(app: AppCtx): Screen {
     const ann = settingRow("Announcements", "Each course's RSS link from Brightspace. Duely reads new posts for dates.", null, { stack: true });
     ann.append(h("div", { class: "setting-wide" }, list, add));
 
-    return section("Sources", calRow, ann,
-      settingRow("Timetable / exam schedule", "Import from a screenshot.", h("span", { class: "soon" }, "Coming soon"), { muted: true }));
+    // timetable and final exams from screenshots (like the personal Duely's Timetable page)
+    const repaint = (next: Settings) => { s = next; const old = body.querySelector(".section-sources"); if (old) old.replaceWith(sources(next)); };
+    const addTerms = h("button", { class: "btn btn-secondary btn-sm" }, icon("upload", 14, "btn-icon"), "Add terms from screenshots");
+    addTerms.addEventListener("click", () => void importTimetable(repaint));
+    const terms = settingRow("Class timetable", "Each term's classes repeat weekly from its first to last day of classes, skipping breaks and holidays.", addTerms);
+    terms.append(h("div", { class: "setting-wide" }, savedList(st, "terms", repaint)));
+    const addExams = h("button", { class: "btn btn-secondary btn-sm" }, icon("upload", 14, "btn-icon"), "Add final exams");
+    addExams.addEventListener("click", () => void importExams(repaint));
+    const exams = settingRow("Final exams", "When your school posts the exam schedule, add a screenshot of it. Each exam goes on your calendar.", addExams);
+    exams.append(h("div", { class: "setting-wide" }, savedList(st, "exams", repaint)));
+    const dates = field(st.academicDatesUrl, { label: "Academic dates page", placeholder: "Optional: https://…", onSave: (v) => ({ academicDatesUrl: v }) });
+    const datesRow = settingRow("Academic dates page", "Optional. When reading a timetable, Duely takes each term's dates, breaks and holidays from your school's page.", dates);
+
+    const el = section("Sources", calRow, ann, terms, exams, datesRow);
+    el.classList.add("section-sources");
+    return el;
   }
 
   // ---- AI

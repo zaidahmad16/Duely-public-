@@ -1,5 +1,5 @@
 // window.duely, typed. Calls resolve to the value or throw the main process's message.
-import type { Button, CapResult, ChatReply, Result, Settings, SettingsPatch, Status, Upcoming } from "../../shared/types.ts";
+import type { Button, CapResult, ChatReply, ExamDraft, Result, Settings, SettingsPatch, Status, TermDraft, Upcoming } from "../../shared/types.ts";
 
 type Raw = Record<string, (...a: unknown[]) => Promise<Result<any>>> & { onChanged(fn: () => void): void };
 declare global { interface Window { duely: Raw } }
@@ -21,6 +21,13 @@ export const api = {
   testAI: () => call<CapResult>("testAI"),
   /** the models the saved key can use (empty when the provider can't list them) */
   aiModels: () => call<string[]>("aiModels"),
+  /** screenshots (downscaled, base64) → what the AI read, for review; nothing is saved */
+  readTimetable: (images: { mime: string; b64: string }[]) => call<{ terms: TermDraft[] }>("readTimetable", images),
+  readExams: (images: { mime: string; b64: string }[]) => call<ExamDraft[]>("readExams", images),
+  addTerm: (term: TermDraft) => call<Settings>("addTerm", term),
+  removeTerm: (key: string) => call<Settings>("removeTerm", key),
+  addExams: (exams: ExamDraft[]) => call<Settings>("addExams", exams),
+  removeExam: (key: string) => call<Settings>("removeExam", key),
   connectGoogle: (clientJson?: string) => call<void>("connectGoogle", clientJson),
   disconnectGoogle: () => call<void>("disconnectGoogle"),
   syncNow: () => call<void>("syncNow"),

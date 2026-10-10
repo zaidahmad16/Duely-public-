@@ -125,7 +125,7 @@ Duely can read each course's announcements, add dates your profs post (like a mo
 
 Items Duely found in an announcement are marked **from announcement** in your lists. Double-check those against the post.
 
-**Timetable screenshot:** importing your weekly classes from a screenshot is coming soon.
+**Timetable screenshots:** you can add your weekly classes here too (see "Your timetable and exams" below).
 
 ## 5. Notifications
 
@@ -140,6 +140,26 @@ Duely can notify you on your computer about:
 Turn each one on or off in **Settings → Notifications** and **Settings → Study & digests**.
 
 Duely keeps working when you close its window. It stays in the system tray (or menu bar), and **Quit Duely** is in the tray menu. In the installed app, you can turn on **Start at login** in **Settings → Google**.
+
+## Your timetable and exams (optional)
+
+Duely can put your weekly classes and your final exams in your calendar from screenshots, so you don't type them in.
+
+**Classes:** in your school's registration system, open your timetable in **week view** and take a screenshot of each term (Fall and Winter together is fine). In Duely, go to **Settings → Sources → Class timetable → Add terms from screenshots** (or use the box in step 4 of setup) and choose the screenshots. Your AI reads them, then Duely shows each term for you to check:
+
+- the **first and last day of classes** (taken from the dates printed on the screenshot);
+- **No classes:** breaks and holidays. Breaks your Brightspace calendar already lists (like "Reading Week – No Classes") are filled in. Add any other days off, such as statutory holidays;
+- **Follows another day's schedule:** for days like a Friday that runs Monday's classes;
+- each **class**, with a switch to leave it out and the details (days, times, room) to fix anything that's off;
+- courses with **no meeting times** (online or TBA), which have nothing to add, and any course code that looks misread (for example the same class printed with two different numbers).
+
+Click **Add to calendar** for each term. Each class repeats weekly from the first to the last day of classes, skipping the days off. To take a term back out, click **×** next to it in Settings; its future classes leave your calendar at the next sync.
+
+**Academic dates page (optional):** if your school has a page listing each term's dates, breaks and holidays, paste its link in **Settings → Sources → Academic dates page**. Duely then takes the dates from there instead of guessing them from the screenshot.
+
+**Final exams:** when your school posts the exam schedule, take a screenshot and use **Settings → Sources → Final exams → Add final exams**. Check each exam and click **Add to calendar**.
+
+Screenshots go to your AI provider to be read, and aren't kept by Duely. This needs a model that can read images (Test connection shows ✓ for Screenshots).
 
 ## Using Duely
 

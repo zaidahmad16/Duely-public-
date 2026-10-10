@@ -10,8 +10,22 @@ import { aiSetup } from "../components/aiSetup.ts";
 import { cloudSetup } from "../components/cloudSetup.ts";
 import { TERMS_VERSION, helpLink, legalLine } from "../components/doc.ts";
 import { spinnerButton } from "./settings.ts";
+import { importTimetable } from "../components/timetableImport.ts";
 
 const STEPS = 5;
+
+/** Onboarding step 4's timetable: the same import as Settings, with what was added listed under it. */
+function timetableField(): HTMLElement {
+  const added = h("ul", { class: "saved-list" });
+  const pick = h("button", { class: "dropzone", type: "button" }, icon("upload", 16, "faint"),
+    h("span", null, "Add terms from screenshots of your weekly timetable"));
+  pick.addEventListener("click", () => void importTimetable((s) => {
+    added.replaceChildren(...s.terms.map((t) => h("li", { class: "saved-row" }, icon("check", 14, "state-ok"),
+      h("span", { class: "import-title" }, `${t.name}: ${t.classes} class${t.classes === 1 ? "" : "es"}`))));
+  }));
+  return h("div", { class: "field" }, h("label", { class: "field-label" }, "Timetable screenshots ", h("span", { class: "optional" }, "Optional")),
+    pick, added, h("p", { class: "help" }, "Fall and winter together is fine. You check everything before it's added."));
+}
 
 export function onboarding(done: () => void): HTMLElement {
   const bar = h("div", { class: "steps-bar", attrs: { role: "progressbar", "aria-valuemin": "1", "aria-valuemax": String(STEPS) } },
@@ -156,11 +170,10 @@ export function onboarding(done: () => void): HTMLElement {
         [h("div", { class: "field" }, h("label", { class: "field-label" }, "Announcements link ", h("span", { class: "optional" }, "Optional")), inp,
           h("p", { class: "help" }, "On a course's Announcements page, copy the RSS link. Add the rest in Settings.")),
           e,
-          h("div", { class: "field is-muted" }, h("label", { class: "field-label" }, "Timetable screenshot ", h("span", { class: "optional" }, "Optional")),
-            h("div", { class: "dropzone" }, icon("upload", 16, "faint"), h("span", null, "Screenshot import is coming soon")))],
+          timetableField()],
         [back(), h("button", { class: "btn btn-ghost", on: { click: () => void go(4) } }, "Skip for now"), next], "4. Course announcements");
     },
-    // 5. Notifications
+    // 5. Notifications (step 4's timetable field is below)
     () => {
       const finish = h("button", { class: "btn btn-primary" }, h("span", { class: "btn-label" }, "Start using Duely"));
       const e = err();

@@ -37,7 +37,7 @@ untouched. Copy code from it, never personal data.
 | P3 | UI from the owner's spec: onboarding, Upcoming, Chat, Settings; AI required; Terms + Privacy; setup guide | done (`p3-ui`), **owner hasn't done the UI review yet** |
 | **P3.5** | **Cloud engine**: Duely's engine as an Apps Script in each student's own Google account, so sync and AI announcement reading run 24/7 for $0 with no server of ours | **Phase 0 done live; Phase 1 steps 1–6 built; live end-to-end run in progress** |
 | P4 | Chat polish (history across sessions, proposal flows) | not started |
-| P5 | Screenshot import (timetable/exams); announcement warning moves into the script | not started |
+| P5 | Screenshot import (timetable/exams); announcement warning moves into the script | **import built 2026-10-10** (owner live test pending); announcement warning not started |
 | P6 | Discord alerts as DMs from a hosted Duely bot (alerts only, no chat) | planned only (see PROGRESS.md) |
 | P7 | Installers, Releases, auto-update, final docs | not started |
 
@@ -137,6 +137,20 @@ relaunch with `home-live` from the new location.
   now `gemini-flash-lite-latest` (0.5 s; passes chat, reading and screenshots).
 - `serial()` crash on saved items missing a date; review sessions and "Final Project" classed as exams;
   wrong locale (Chromium en-GB vs system en-CA).
+
+## Done 2026-10-10 (after the handoff above was written)
+- **Duely picks the AI model** (`src/llm/models.ts`): lists the key's models, tries Duely's suggestions in order,
+  skips overloaded/missing ones. The Model field is under Advanced (empty = automatic).
+- **Test data:** `test/demo/calendar.ics` (83 made-up events, 14 courses, Fall 2026 + Winter 2027) and
+  `test/demo/rss/*.xml` (9 announcement feeds). Raw links: `https://raw.githubusercontent.com/zaidahmad16/Duely-public-/p3-ui/test/demo/...`.
+  Test screenshots: `~/Downloads/fall26test.png`, `~/Downloads/winter27test.png`.
+- **Timetable and exam import (P5 part 1)**, matching the personal Duely's Timetable page (that repo is
+  read-only: port from it, never edit it). Core: `src/core/timetableImport.ts` (port of `term_import.py` and
+  `exam_import.py`, several terms per import, TBA list, odd-code note); UI: `src/renderer/components/timetableImport.ts`
+  (Settings → Sources and onboarding step 4). The engine now also skips classes on the feed's all-day
+  "No Classes" days (`timetableItems(cfg, tz, feedItems)`), locally and in the script. Live Gemini read of both test
+  screenshots was exact (recorded in `test/timetable-read.json`). Owner still has to try it in the test app.
+- "Tutorials classed as assignments" was **not a bug**: `src/core/kinds.ts` categorizes by title on purpose.
 
 ## Left to do (P3.5 Phase 1)
 1. Finish the end-to-end run above.

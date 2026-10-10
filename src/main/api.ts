@@ -4,6 +4,7 @@ import { app, ipcMain } from "electron";
 import { loadActions } from "../core/actions.ts";
 import { answer } from "../core/ask.ts";
 import { loadDone } from "../core/done.ts";
+import { cleanExams, cleanTerm, readExams, readTimetable, removeExam, removeTerm, saveExams, saveTerm } from "../core/timetableImport.ts";
 import { SCOPE, connect, parseClient } from "../google/oauth.ts";
 import { SCRIPT_API_SCOPES, accountEmail } from "../google/script.ts";
 import { makeLLM } from "../llm/adapters.ts";
@@ -15,7 +16,8 @@ import { applyDecision } from "../node/decisions.ts";
 import { loadCtx } from "../node/runner.ts";
 import { aiFingerprint, aiReady, applyPatch, autoModel, capResult, friendlyAIError, toSettings } from "../node/settings.ts";
 import { chatText, question, rowsFor, upcoming } from "../node/view.ts";
-import type { Button, CapResult, ChatReply, Question, Result, SettingsPatch, Status, Upcoming } from "../shared/types.ts";
+import type { Image } from "../llm/types.ts";
+import type { Button, CapResult, ChatReply, ExamDraft, Question, Result, SettingsPatch, Status, TermDraft, Upcoming } from "../shared/types.ts";
 import type { Jobs } from "./jobs.ts";
 import { type Services, openSafe } from "./services.ts";
 import { canStartAtLogin, setStartAtLogin, startsAtLogin } from "./tray.ts";
@@ -203,6 +205,61 @@ export function registerApi(c: Ctx): void {
     if (refresh) await fetch(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(refresh)}`, { method: "POST" }).catch(() => {});
     await svc.secrets.delete("google_refresh");
   });
+
+  // ---- timetable and exam screenshots (P5): read → the student reviews → "Add to calendar" saves
+  const readCtx = async () => {
+    const ctx = await loadCtx(svc.deps);
+    if (!ctx.llm) throw new Error("Set up your AI first, in Settings → AI.");
+    return ctx;
+  };
+  /** The screenshots as sent by the window: a few images, each a reasonable size. Never saved. */
+  const screenshots = (images: unknown): Image[] => {
+    const list = Array.isArray(images) ? images : [];
+    if (!list.length) throw new Error("Choose at least one screenshot.");
+    if (list.length > 10) throw new Error("That's a lot of screenshots: choose up to 10.");
+    return list.map((i: any) => {
+      if (!/^image\/(png|jpeg|webp)$/.test(String(i?.mime)) || typeof i?.b64 !== "string" || i.b64.length > 12e6) throw new Error("Those files need to be PNG, JPEG or WebP screenshots.");
+      return { mime: i.mime, b64: i.b64 };
+    });
+  };
+  const readError = (e: unknown) => {
+    const m = errText(e);
+    return new Error(/^No (classes|upcoming exams)|AI limit/.test(m) ? m : `Couldn't read the screenshots. ${friendlyAIError(m)}`);
+  };
+  /** A timetable or exam change: saved, then on the calendar at the next sync (here, or the script's). */
+  const saveEngine = async (next: any) => {
+    await store.put("config", next);
+    c.changed();
+    if (await cloudOn()) {
+      await svc.cloud.pushSettings(next);
+      void svc.cloud.sync().then(c.changed, () => {});                // Google starts it within a few minutes
+    } else syncSoon();
+    return toSettings(next, await svc.secrets.has("llm_key"));
+  };
+
+  handle("readTimetable", async (images: unknown) => {
+    const ctx = await readCtx();
+    try { return await readTimetable(ctx, screenshots(images), await items(), ctx.cfg.academic_dates_url ?? ""); } catch (e) { throw readError(e); }
+  });
+  handle("readExams", async (images: unknown) => {
+    const ctx = await readCtx();
+    try { return await readExams(ctx, screenshots(images)); } catch (e) { throw readError(e); }
+  });
+  handle("addTerm", async (draft: TermDraft) => {
+    let term;
+    try { term = cleanTerm(draft); } catch (e) { throw new Error(`Check the term dates: ${errText(e)}.`); }
+    if (!term.classes.length) throw new Error("Tick at least one class.");
+    if (term.classes.length < (draft?.classes?.length ?? 0)) throw new Error("Some classes have days or times Duely can't read. Fix or untick them.");
+    return saveEngine(saveTerm(await config(), term));
+  });
+  handle("removeTerm", async (key: string) => saveEngine(removeTerm(await config(), String(key))));
+  handle("addExams", async (drafts: ExamDraft[]) => {
+    const exams = cleanExams({ exams: drafts });
+    if (!exams.length) throw new Error("Tick at least one exam.");
+    if (exams.length < (drafts?.length ?? 0)) throw new Error("Some exams have a date or time Duely can't read. Fix or untick them.");
+    return saveEngine(saveExams(await config(), exams));
+  });
+  handle("removeExam", async (key: string) => saveEngine(removeExam(await config(), String(key))));
 
   handle("syncNow", async () => {
     if (await cloudOn()) { await svc.cloud.sync(); c.changed(); return; }

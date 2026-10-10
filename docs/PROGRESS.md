@@ -128,3 +128,10 @@ Phase 0, live half, in the throwaway test account (zaidahmad181818@gmail.com, Cl
   gemini-flash-latest. Default Gemini model suggestion is now `gemini-flash-latest` (always current).
 - Still open: email alerts live (needs a key in the
   test script); laptop-off test over hours.
+
+## 2026-10-10: automatic model choice, demo data, timetable and exam import (P5 part 1)
+- Test connection picks the model (provider's model list, Duely's suggestions, skip 503/404); Model under Advanced.
+- Made-up Brightspace calendar + 9 announcement feeds in `test/demo/` for live tests.
+- Screenshot import of timetables (several terms at once) and final exams, reviewed before anything is added,
+  like the personal Duely. Breaks from the Brightspace feed are skipped by the engine. Live-read with Gemini
+  `gemini-flash-lite-latest`: every class, room and TBA course right on both test screenshots (about 5 s).
