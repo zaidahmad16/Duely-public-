@@ -10,6 +10,7 @@ import { importExams, importTimetable, savedList } from "../components/timetable
 import { toggle } from "../components/toggle.ts";
 import { api } from "../ui/api.ts";
 import { ago } from "../ui/format.ts";
+import { splitLinks } from "../ui/links.ts";
 import { SLOW, slowHint } from "../ui/slow.ts";
 import { clear, h } from "../ui/h.ts";
 import { icon } from "../ui/icons.ts";
@@ -108,13 +109,30 @@ export function settingsScreen(app: AppCtx): Screen {
       }
     };
     paintLinks();
-    const add = h("input", { class: "input", placeholder: "Paste a course's announcements RSS link", attrs: { "aria-label": "Add an announcements link" } });
-    add.addEventListener("keydown", async (e) => {
-      if (e.key !== "Enter" || !add.value.trim()) return;
-      try { await save({ announcementFeeds: [...s!.announcementFeeds, add.value.trim()] }, true); add.value = ""; paintLinks(); enter(list.lastElementChild!, { y: 4 }); } catch { add.classList.add("is-invalid"); }
-    });
+    // paste one link or all of them at once (one per line); Enter adds, Shift+Enter starts a new line
+    const add = h("textarea", { class: "input input-multi", attrs: { rows: "2", "aria-label": "Add announcements links", placeholder: "Paste your courses' announcements RSS links, one per line" } });
+    const addBtn = h("button", { class: "btn btn-secondary btn-sm" }, "Add links");
+    const addErr = h("p", { class: "field-error", attrs: { role: "alert" } });
+    const addAll = async () => {
+      addErr.textContent = ""; add.classList.remove("is-invalid");
+      const { links, rest } = splitLinks(add.value, s!.announcementFeeds);
+      if (!links.length && !rest.length) return;
+      if (links.length) {
+        try {
+          await save({ announcementFeeds: [...s!.announcementFeeds, ...links] });
+          const before = list.childElementCount;
+          paintLinks();
+          [...list.children].slice(before).forEach((li) => enter(li, { y: 4 }));
+          toast(links.length === 1 ? "Link added" : `${links.length} links added`);
+        } catch (x) { addErr.textContent = (x as Error).message; add.classList.add("is-invalid"); return; }
+      }
+      add.value = rest.join("\n");                                   // what wasn't a link stays, to fix
+      if (rest.length) { addErr.textContent = rest.length === 1 ? "That isn't a link. Copy the RSS link from the course's Announcements page." : `${rest.length} of those aren't links. Copy the RSS links from each course's Announcements page.`; add.classList.add("is-invalid"); }
+    };
+    add.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void addAll(); } });
+    addBtn.addEventListener("click", () => void addAll());
     const ann = settingRow("Announcements", "Each course's RSS link from Brightspace. Duely reads new posts for dates.", null, { stack: true });
-    ann.append(h("div", { class: "setting-wide" }, list, add));
+    ann.append(h("div", { class: "setting-wide" }, list, add, h("div", { class: "row-btns" }, addBtn), addErr));
 
     // timetable and final exams from screenshots (like the personal Duely's Timetable page)
     const repaint = (next: Settings) => { s = next; const old = body.querySelector(".section-sources"); if (old) old.replaceWith(sources(next)); };

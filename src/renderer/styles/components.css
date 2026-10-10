@@ -254,3 +254,4 @@ input[type="time"].input, input[type="date"].input { font-variant-numeric: tabul
 button.dropzone { width: 100%; background: none; cursor: pointer; text-align: left; transition: border-color var(--t-fast) var(--ease-out), color var(--t-fast) var(--ease-out); }
 button.dropzone:hover { border-color: var(--accent); color: var(--text-2); }
 @media (max-width: 560px) { .import-grid.three, .import-grid.four { grid-template-columns: 1fr 1fr; } .import-details { padding-left: 12px; } }
+.input-multi { height: auto; min-height: 56px; padding: 7px 10px; line-height: 1.45; resize: vertical; font-family: inherit; }

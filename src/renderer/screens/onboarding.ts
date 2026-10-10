@@ -10,6 +10,7 @@ import { aiSetup } from "../components/aiSetup.ts";
 import { cloudSetup } from "../components/cloudSetup.ts";
 import { TERMS_VERSION, helpLink, legalLine } from "../components/doc.ts";
 import { spinnerButton } from "./settings.ts";
+import { splitLinks } from "../ui/links.ts";
 import { importTimetable } from "../components/timetableImport.ts";
 import { discordControl } from "../components/discordRow.ts";
 
@@ -156,20 +157,23 @@ export function onboarding(done: () => void): HTMLElement {
     },
     // 4. More context (optional)
     () => {
-      const inp = h("input", { class: "input", placeholder: "https://…/d2l/le/news/rss/…", attrs: { "aria-label": "Announcements link" } });
+      const inp = h("textarea", { class: "input input-multi", attrs: { rows: "3", "aria-label": "Announcements links", placeholder: "https://…/d2l/le/news/rss/…\nhttps://…/d2l/le/news/rss/…" } });
       const e = err();
       const next = h("button", { class: "btn btn-primary" }, "Continue");
       next.addEventListener("click", async () => {
         e.textContent = "";
         if (inp.value.trim()) {
-          try { const s = await api.settings(); await api.saveSettings({ announcementFeeds: [...s.announcementFeeds, inp.value.trim()] }); }
+          const s = await api.settings();
+          const { links, rest } = splitLinks(inp.value, s.announcementFeeds);
+          if (rest.length) { e.textContent = `Not a link: ${rest.slice(0, 2).join(", ")}${rest.length > 2 ? "…" : ""}. Copy the RSS links from each course's Announcements page.`; inp.classList.add("is-invalid"); return; }
+          try { if (links.length) await api.saveSettings({ announcementFeeds: [...s.announcementFeeds, ...links] }); }
           catch (x) { e.textContent = (x as Error).message; inp.classList.add("is-invalid"); return; }
         }
         await go(4);
       });
       return view("Add more context", "Both are optional. You can add more later in Settings.",
-        [h("div", { class: "field" }, h("label", { class: "field-label" }, "Announcements link ", h("span", { class: "optional" }, "Optional")), inp,
-          h("p", { class: "help" }, "On a course's Announcements page, copy the RSS link. Add the rest in Settings.")),
+        [h("div", { class: "field" }, h("label", { class: "field-label" }, "Announcements links ", h("span", { class: "optional" }, "Optional")), inp,
+          h("p", { class: "help" }, "On each course's Announcements page, copy the RSS link. Paste them all here, one per line.")),
           e,
           timetableField()],
         [back(), h("button", { class: "btn btn-ghost", on: { click: () => void go(4) } }, "Skip for now"), next], "4. Course announcements");

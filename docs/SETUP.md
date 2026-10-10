@@ -121,7 +121,7 @@ Duely can read each course's announcements, add dates your profs post (like a mo
 2. Open **Announcements** (in the course's top bar, or the Announcements widget on the course homepage).
 3. Click the **RSS** button or icon. A page of text opens in a new tab.
 4. Copy the address from your browser's address bar.
-5. Paste it into Duely: in setup, step 4; later, **Settings → Sources → Announcements**, then press **Enter**.
+5. Repeat for your other courses, then paste all the links into Duely at once, one per line: in setup, step 4; later, **Settings → Sources → Announcements**, then click **Add links** (or press **Enter**; **Shift+Enter** starts a new line).
 
 Items Duely found in an announcement are marked **from announcement** in your lists. Double-check those against the post.
 
