@@ -77,7 +77,10 @@ export function memStore(init: Record<string, unknown> = {}): Store & { data: Ma
   };
 }
 
-export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** Waiting. Timers by default; Apps Script has none (src/gas supplies Utilities.sleep). */
+let sleepSource: ((ms: number) => Promise<void>) | null = null;
+export function setSleepSource(f: ((ms: number) => Promise<void>) | null): void { sleepSource = f; }
+export const sleep = (ms: number): Promise<void> => (sleepSource ? sleepSource(ms) : new Promise((r) => setTimeout(r, ms)));
 
 export interface KVNamespace {
   get(key: string, type: "json"): Promise<any>;

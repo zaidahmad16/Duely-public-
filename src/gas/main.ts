@@ -4,10 +4,14 @@
 // desktop app runs (src/node/runner.ts) on a 10-minute timer.
 import type { Cal } from "../core/gcal.ts";
 import { setOffsetSource } from "../core/time.ts";
-import { type Store, setSha1Source } from "../core/util.ts";
+import { type Store, setSha1Source, setSleepSource } from "../core/util.ts";
 import { makeLLM } from "../llm/adapters.ts";
 import type { Provider } from "../llm/types.ts";
-import { type Deps, FULL_EVERY_MS, newSched, tick } from "../node/runner.ts";
+import { loadActions } from "../core/actions.ts";
+import { loadDone } from "../core/done.ts";
+import { loadStudy } from "../core/study.ts";
+import { applyDecision, parseDecision } from "../node/decisions.ts";
+import { type Deps, FULL_EVERY_MS, loadCtx, newSched, tick } from "../node/runner.ts";
 
 declare const Calendar: any, UrlFetchApp: any, Utilities: any, PropertiesService: any, ScriptApp: any, Session: any, MailApp: any, ContentService: any;
 
@@ -126,6 +130,7 @@ export function install(): void {
   if (typeof g.setTimeout !== "function") { g.setTimeout = () => 0; g.clearTimeout = () => {}; }
   setOffsetSource(gasOffset);
   setSha1Source(gasSha1);
+  setSleepSource(async (ms) => { Utilities.sleep(ms); });
 }
 
 function deps(store: Store): Deps {
@@ -158,12 +163,46 @@ export async function duelyTick(now = Date.now(), force = false): Promise<{ sync
   const saved = (await store.get<any>("sched")) ?? {};
   const sched = newSched();
   if (force) saved.lastFull = 0;
+  if (await processInbox(store, now)) saved.lastFull = 0;       // decisions change the calendar: sync now
   // a trigger "every 10 minutes" can fire a little early: count a full sync as due a bit before 10 min
   sched.lastFull = (saved.lastFull ?? 0) - 90e3;
   sched.lastQuick = saved.lastQuick ?? 0;
   const r = await tick(deps(store), sched, { now });
   await store.put("sched", { lastFull: sched.lastFull + (r.synced ? 0 : 90e3), lastQuick: sched.lastQuick });
+  await keepStorageSmall(store);
   return r;
+}
+
+/** The desktop's decisions, waiting in "inbox" (written by the channel, which must answer at once).
+ *  Applied in order with the engine's own rules; each result is kept briefly in "inbox-done" so the
+ *  desktop can drop its optimistic copy. Returns how many were applied. */
+export async function processInbox(store: ReturnType<typeof propsStore>, now = Date.now()): Promise<number> {
+  const items: any[] = store.getSync("inbox") ?? [];
+  if (!items.length) return 0;
+  store.putSync("inbox", []);                                    // taken: a crash can't apply them twice
+  const { tz } = await loadCtx(deps(store));
+  const results: any[] = (store.getSync<any[]>("inbox-done") ?? []).filter((x) => now - x.at < 3600e3);
+  for (const it of items) {
+    const d = parseDecision(it.decision);
+    try {
+      if (!d) throw new Error("That change wasn't understood.");
+      await applyDecision(store, d, tz, now);
+      results.push({ id: it.id, at: now, ok: true });
+    } catch (e) {
+      results.push({ id: it.id, at: now, ok: false, error: (e as Error)?.message ?? String(e) });
+    }
+  }
+  store.putSync("inbox-done", results.slice(-50));
+  return items.length;
+}
+
+/** Script properties hold 500 KB in all. The caches trim themselves to what's in the feeds; this is the
+ *  safety net: past 350 KB the AI cache (rebuilt on the next sync) and the logs go first. */
+export async function keepStorageSmall(store: ReturnType<typeof propsStore>): Promise<void> {
+  if (store.bytes() < 350 * 1024) return;
+  store.putSync("ai-cache", {});
+  store.putSync("outbox", (store.getSync<any[]>("outbox") ?? []).slice(-20));
+  store.putSync("errors", (store.getSync<any[]>("errors") ?? []).slice(-10));
 }
 
 /** Run once by the student (approves the script's permissions), then by itself never again. A first
@@ -206,22 +245,52 @@ const json = (data: unknown) => ContentService.createTextOutput(JSON.stringify(d
  *  a web app's answer is read as soon as doGet returns. */
 export function readState(): any {
   const store = propsStore();
-  return { ok: true, state: store.getSync("state"), health: store.getSync("health"), sched: store.getSync("sched"),
-    outbox: store.getSync("outbox") ?? [], bytes: store.bytes(), syncQueued: !!store.getSync("sync-queued"),
+  const actions = Object.values(store.getSync<Record<string, any>>("actions") ?? {});
+  const cfg = store.getSync<any>("config") ?? {};
+  return { ok: true, version: (globalThis as any).DUELY_ENGINE_VERSION ?? "", state: store.getSync("state"), health: store.getSync("health"),
+    sched: store.getSync("sched"), outbox: store.getSync("outbox") ?? [], bytes: store.bytes(), syncQueued: !!store.getSync("sync-queued"),
+    done: store.getSync("done") ?? {}, actions, study: store.getSync("study") ?? { approved: {} },
+    inbox: (store.getSync<any[]>("inbox") ?? []).map((x) => x.id), inboxDone: store.getSync("inbox-done") ?? [],
+    emailAlerts: !!cfg.email_alerts, aiKeySet: !!PropertiesService.getScriptProperties().getProperty("secret:llm_key"),
     triggers: ScriptApp.getProjectTriggers().map((t: any) => t.getHandlerFunction()) };
 }
 
-/** POST {op}: "sync" (queue a run within about a minute), "config" (merge settings), "secret"
- *  ({name, value}), "outbox-clear". Synchronous, like readState. */
+/** POST {op}: "sync" (queue a run within about a minute), "decision" (into the inbox, then a run is
+ *  queued), "config" (merge settings), "secret" ({name, value}), "email" (on/off), "outbox-clear",
+ *  "stop" (timer off), "forget" (timer off, keys and links removed). Synchronous, like readState. */
 export function command(body: any): any {
   const store = propsStore();
   const props = PropertiesService.getScriptProperties();
-  if (body?.op === "sync") {
+  const queueRun = () => {
     if (!store.getSync("sync-queued")) {
       ScriptApp.newTrigger("duelySyncNow").timeBased().after(1000).create();
       store.putSync("sync-queued", Date.now());
     }
-    return { ok: true, queued: true };
+  };
+  if (body?.op === "sync") { queueRun(); return { ok: true, queued: true }; }
+  if (body?.op === "decision") {
+    if (!parseDecision(body.decision)) return { ok: false, error: "That change wasn't understood." };
+    const id = typeof body.id === "string" && body.id.length <= 64 ? body.id : `d${Date.now().toString(36)}`;
+    const inbox: any[] = store.getSync<any[]>("inbox") ?? [];
+    if (inbox.length >= 100) return { ok: false, error: "Too many changes waiting; try again in a minute." };
+    store.putSync("inbox", [...inbox, { id, at: Date.now(), decision: body.decision }]);
+    queueRun();
+    return { ok: true, id, queued: true };
+  }
+  if (body?.op === "email") { store.putSync("config", { ...(store.getSync<any>("config") ?? {}), email_alerts: !!body.on }); return { ok: true }; }
+  if (body?.op === "start") {
+    for (const t of ScriptApp.getProjectTriggers()) if (t.getHandlerFunction() === "duelyTick") ScriptApp.deleteTrigger(t);
+    ScriptApp.newTrigger("duelyTick").timeBased().everyMinutes(10).create();
+    return { ok: true };
+  }
+  if (body?.op === "stop" || body?.op === "forget") {
+    for (const t of ScriptApp.getProjectTriggers()) ScriptApp.deleteTrigger(t);
+    if (body.op === "forget") {
+      props.deleteProperty("secret:llm_key");
+      const cfg = store.getSync<any>("config") ?? {};
+      store.putSync("config", { ...cfg, feed_url: "", announcement_feeds: [], email_alerts: false });
+    }
+    return { ok: true };
   }
   if (body?.op === "config") { store.putSync("config", { ...(store.getSync<any>("config") ?? {}), ...(body.config ?? {}) }); return { ok: true }; }
   if (body?.op === "secret" && ["llm_key"].includes(body.name)) {

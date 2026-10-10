@@ -1,13 +1,13 @@
 // Everything the UI can ask of the main process (exposed as window.duely by the preload). Thin glue:
 // the logic lives in src/node (view, settings, runner) and src/core. Secrets never leave this side.
 import { app, ipcMain } from "electron";
-import { decide, loadActions, record, recordDone } from "../core/actions.ts";
+import { loadActions } from "../core/actions.ts";
 import { answer } from "../core/ask.ts";
 import { loadDone } from "../core/done.ts";
-import { studyTimes } from "../core/studychange.ts";
 import { connect, parseClient } from "../google/oauth.ts";
 import { makeLLM } from "../llm/adapters.ts";
 import { probe } from "../llm/probe.ts";
+import { applyDecision } from "../node/decisions.ts";
 import { loadCtx } from "../node/runner.ts";
 import { aiFingerprint, aiReady, applyPatch, capResult, friendlyAIError, toSettings } from "../node/settings.ts";
 import { chatText, question, rowsFor, upcoming } from "../node/view.ts";
@@ -62,26 +62,14 @@ export function registerApi(c: Ctx): void {
   });
 
   handle("setDone", async (uid: string, name: string, done: boolean) => {
-    if (done) await recordDone(store, [{ uid, name }]);
-    else await record(store, { type: "undo_done", key: `undo_done:${uid}`, args: { uid, name }, summary: `Put *${name}* back on the list` });
+    const { tz } = await loadCtx({ ...svc.deps, llm: async () => undefined });
+    await applyDecision(store, done ? { kind: "done", uid, name } : { kind: "undo", uid, name }, tz);
     syncSoon();
   });
 
   handle("decide", async (id: string, button: Button, times?: { day: string; time: string }[]) => {
-    const yes = ["keep", "add", "yes"].includes(button) || (button === "change" && !!times);
-    let override: Record<string, unknown> | undefined;
-    if (button === "change") {
-      const a = (await loadActions(store))[id];
-      if (!a || a.type !== "add_study_blocks") throw new Error("That suggestion isn't open any more.");
-      const { tz } = await loadCtx({ ...svc.deps, llm: async () => undefined });
-      const values: any = {};
-      (times ?? []).forEach((t, i) => { values[`day${i}`] = { v: { selected_date: t.day } }; values[`time${i}`] = { v: { selected_time: t.time } }; });
-      const r = studyTimes(a.args.plan, values, tz, Date.now());
-      if ("errors" in r) throw new Error(Object.values(r.errors)[0]);
-      override = { plan: { ...a.args.plan, blocks: r.blocks } };
-    }
-    const d = await decide(store, id, yes, "button", Date.now(), override);
-    if (!d.action) throw new Error(d.text);
+    const { tz } = await loadCtx({ ...svc.deps, llm: async () => undefined });
+    await applyDecision(store, { kind: "decide", id, button, ...(times ? { times } : {}) }, tz);
     syncSoon();
   });
 

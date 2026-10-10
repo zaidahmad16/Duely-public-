@@ -5,6 +5,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
 import { build } from "esbuild";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -19,12 +20,16 @@ export const SCOPES = [
   "https://www.googleapis.com/auth/userinfo.email",         // whose inbox those emails go to
 ];
 
-export async function buildGas(timeZone = "America/Toronto"): Promise<{ code: string; manifest: string }> {
+export async function buildGas(timeZone = "America/Toronto"): Promise<{ code: string; manifest: string; version: string }> {
   const r = await build({
     entryPoints: [join(root, "src/gas/main.ts")], bundle: true, write: false, format: "iife", globalName: "Duely",
     platform: "neutral", target: "es2020", minify: false, legalComments: "none",
   });
-  const code = `${r.outputFiles[0].text}
+  const body = r.outputFiles[0].text;
+  // the engine's version: a hash of its code, so the app can tell when the installed script is older
+  const version = createHash("sha256").update(body).digest("hex").slice(0, 12);
+  const code = `${body}
+var DUELY_ENGINE_VERSION = ${JSON.stringify(version)};
 // Apps Script entry points (run by name)
 function duelyTick() { return Duely.duelyTick(); }
 function duelySetup() { return Duely.duelySetup(); }
@@ -48,7 +53,7 @@ function doPost(e) {
     webapp: { executeAs: "USER_DEPLOYING", access: "ANYONE_ANONYMOUS" },   // guarded by the channel key
     // the Calendar advanced service: switched on for the script by this line alone
     dependencies: { enabledAdvancedServices: [{ userSymbol: "Calendar", serviceId: "calendar", version: "v3" }] } }, null, 2);
-  return { code, manifest };
+  return { code, manifest, version };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

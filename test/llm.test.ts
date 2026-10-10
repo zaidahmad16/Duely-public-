@@ -116,3 +116,19 @@ test("probe: what a provider can do, and what the student is told", async () => 
   const down: LLM = { label: "d", chat: async () => { throw new Error("401: bad key"); } };
   assert.match(describeCaps(await probe(down))[0], /^Couldn't reach the AI: 401: bad key/);
 });
+
+test("a busy provider (503/429) gets one retry; a second refusal is reported", async () => {
+  const { retry, makeLLM } = await import("../src/llm/adapters.ts");
+  retry.delayMs = 0;
+  let calls = 0;
+  const flaky = (async () => { calls++; return calls === 1 ? new Response("{\"error\":{\"message\":\"high demand\"}}", { status: 503 })
+    : Response.json({ choices: [{ message: { content: "ready" } }] }); }) as unknown as typeof fetch;
+  const r = await makeLLM({ provider: "openai", apiKey: "k", model: "m" }, flaky).chat([{ role: "user", content: "hi" }]);
+  assert.equal(r.content, "ready");
+  assert.equal(calls, 2);
+  let n = 0;
+  const down = (async () => { n++; return new Response("{}", { status: 429 }); }) as unknown as typeof fetch;
+  await assert.rejects(makeLLM({ provider: "gemini", apiKey: "k", model: "m" }, down).chat([{ role: "user", content: "hi" }]), /429/);
+  assert.equal(n, 2, "one retry only");
+  retry.delayMs = 2000;
+});

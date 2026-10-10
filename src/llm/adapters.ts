@@ -1,11 +1,18 @@
 // The three API shapes. Each turns Duely's messages/tools into the provider's format and back.
+import { sleep } from "../core/util.ts";
 import { type ChatOpts, type ChatResult, type LLM, type LLMConfig, LLMError, type Msg, type Tool, type ToolCall } from "./types.ts";
 
 const jsonHint = (schema: object) =>
   `\n\nAnswer with ONLY a JSON object (no prose, no code fences) matching this JSON schema:\n${JSON.stringify(schema)}`;
 
+/** How long to wait before the one retry of a busy provider (tests set it to 0). */
+export const retry = { delayMs: 2000 };
+
 async function post(f: typeof fetch, url: string, headers: Record<string, string>, body: unknown, signal?: AbortSignal): Promise<any> {
-  const r = await f(url, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body), signal });
+  const send = () => f(url, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body), signal });
+  let r = await send();
+  // overloaded or rate-limited for a moment (Gemini's "high demand" 503): one retry after a short pause
+  if (r.status === 503 || r.status === 429) { await r.text().catch(() => ""); await sleep(retry.delayMs); r = await send(); }
   const text = await r.text();
   if (!r.ok) {
     let msg = text.slice(0, 300);

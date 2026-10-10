@@ -269,3 +269,72 @@ test("the bundle doesn't use Node's globals (process, Buffer, require)", async (
   const { code } = await buildGas();
   for (const g of ["process.", "Buffer.", "require("]) assert.ok(!code.includes(g), `bundle uses ${g}`);
 });
+
+const KEY = "k".repeat(43);
+const post = (s: any, body: object) => JSON.parse(vm.runInContext(`doPost({ postData: { contents: ${JSON.stringify(JSON.stringify({ ...body, key: KEY }))} } })`, s.ctx).text);
+const get = (s: any) => JSON.parse(vm.runInContext(`doGet({ parameter: { key: "${KEY}" } })`, s.ctx).text);
+
+test("decisions go through the inbox: a tick-done becomes a ✓ on the calendar event; undo puts it back", async () => {
+  const s = await sandbox();
+  s.props.setProperty("secret:channel_key", KEY);
+  await s.run("duelyTick");
+  const uid = "6606_2000_1@brightspace.example.ca";
+  const r = post(s, { op: "decision", id: "d1", decision: { kind: "done", uid, name: "COMP 2401 Assignment 3" } });
+  assert.deepEqual([r.ok, r.queued], [true, true]);
+  assert.deepEqual(get(s).inbox, ["d1"], "waiting");
+  await s.run("duelySyncNow");
+  const st = get(s);
+  assert.deepEqual(st.inbox, []);
+  assert.equal(st.inboxDone.find((x: any) => x.id === "d1").ok, true);
+  assert.ok(st.done[uid], "the desktop sees it done");
+  const ev = s.api.events().find((e: any) => e.extendedProperties.private.bsUid === uid);
+  assert.match(ev.summary, /^✓ /, "the calendar event got its ✓");
+  post(s, { op: "decision", id: "d2", decision: { kind: "undo", uid, name: "COMP 2401 Assignment 3" } });
+  await s.run("duelySyncNow");
+  assert.ok(!get(s).done[uid]);
+  assert.doesNotMatch(s.api.events().find((e: any) => e.extendedProperties.private.bsUid === uid).summary, /^✓/);
+  assert.equal(post(s, { op: "decision", decision: { kind: "nonsense" } }).ok, false, "bad decisions are refused at the door");
+});
+
+test("an accepted study suggestion becomes study blocks in the calendar", async () => {
+  const s = await sandbox();
+  s.props.setProperty("secret:channel_key", KEY);
+  const due = Date.parse("2030-10-09T23:59:00-04:00");
+  s.props.setProperty("v:actions", JSON.stringify({ a1: { id: "a1", type: "add_study_blocks", key: "study:x", status: "proposed", created: Date.now(), summary: "",
+    args: { name: "Assignment 3", plan: { uid: "6606_2000_1@brightspace.example.ca", course: "COMP 2401", title: "Assignment 3", kind: "assignment", due,
+      blocks: [{ s: due - 30 * 3600e3, e: due - 28 * 3600e3 }] } } } }));
+  s.props.setProperty("v:config", JSON.stringify({ ...CONFIG, study_blocks: true }));
+  assert.ok(get(s).actions.some((a: any) => a.id === "a1" && a.status === "proposed"), "the desktop sees the question");
+  post(s, { op: "decision", id: "d1", decision: { kind: "decide", id: "a1", button: "add" } });
+  await s.run("duelySyncNow");
+  assert.equal(get(s).inboxDone.find((x: any) => x.id === "d1").ok, true);
+  assert.ok(s.api.events().some((e: any) => /^study:/.test(e.extendedProperties.private.bsUid)), "study block in the calendar");
+});
+
+test("stop / start / forget / email, and the engine version", async () => {
+  const s = await sandbox();
+  s.props.setProperty("secret:channel_key", KEY);
+  s.props.setProperty("secret:llm_key", "k-1");
+  s.run("duelySetup");
+  assert.match(get(s).version, /^[0-9a-f]{12}$/);
+  assert.equal(get(s).aiKeySet, true);
+  post(s, { op: "email", on: true });
+  assert.equal(get(s).emailAlerts, true);
+  post(s, { op: "stop" });
+  assert.deepEqual(get(s).triggers, []);
+  post(s, { op: "start" });
+  assert.deepEqual(get(s).triggers, ["duelyTick"]);
+  post(s, { op: "forget" });
+  const st = get(s);
+  assert.deepEqual([st.triggers, st.aiKeySet, st.emailAlerts], [[], false, false]);
+  assert.equal(JSON.parse(s.props.m.get("v:config")!).feed_url, "", "the Brightspace link is gone");
+});
+
+test("the storage guard trims when script properties grow past 350 KB", async () => {
+  const s = await sandbox();
+  const big = Object.fromEntries(Array.from({ length: 2600 }, (_, i) => [`fp${i}`, { keep: true, type: "assignment", title: "x".repeat(120), reason: "" }]));
+  await vm.runInContext(`Duely.propsStore().put("ai-cache", ${JSON.stringify(big)})`, s.ctx);
+  assert.ok(vm.runInContext("Duely.propsStore().bytes()", s.ctx) > 350 * 1024);
+  await vm.runInContext("Duely.keepStorageSmall(Duely.propsStore())", s.ctx);
+  assert.ok(vm.runInContext("Duely.propsStore().bytes()", s.ctx) < 100 * 1024);
+});
