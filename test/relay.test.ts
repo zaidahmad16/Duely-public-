@@ -21,7 +21,7 @@ function memKV(): KV & { m: Map<string, string> } {
 }
 
 /** A fake Discord: OAuth, /users/@me, guild members, DMs. `dmClosed` users answer 50007. */
-function fakeDiscord(o: { members?: { id: string; bot?: boolean }[]; dmClosed?: string[] } = {}) {
+function fakeDiscord(o: { members?: { id: string; bot?: boolean; roles?: string[] }[]; dmClosed?: string[] } = {}) {
   const members = new Map((o.members ?? []).map((m) => [m.id, m]));
   const sent: { channel: string; content: string }[] = [];
   const calls: string[] = [];
@@ -34,13 +34,23 @@ function fakeDiscord(o: { members?: { id: string; bot?: boolean }[]; dmClosed?: 
     const ok = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s });
     if (path === "/oauth2/token") return String(init.body).includes("code=good") ? ok({ access_token: "user-access" }) : ok({ error: "invalid_grant" }, 400);
     if (path === "/users/@me") return ok({ id: "111", username: "student", global_name: "Sam" });
+    if (/^\/guilds\/\d+\/members\/\d+\/roles\/\d+$/.test(path) && method === "PUT") {
+      const [, , , , id, , role] = path.split("/");
+      const m = members.get(id); if (m) m.roles = [...new Set([...(m.roles ?? []), role])];
+      return new Response(null, { status: 204 });
+    }
     if (/^\/guilds\/\d+\/members\/\d+$/.test(path)) {
       const id = path.split("/").pop()!;
-      if (method === "PUT") { assert.equal(JSON.parse(init.body).access_token, "user-access"); assert.match(init.headers.authorization, /^Bot /); members.set(id, { id }); return new Response(null, { status: 201 }); }
+      if (method === "PUT") {
+        const b = JSON.parse(init.body);
+        assert.equal(b.access_token, "user-access"); assert.match(init.headers.authorization, /^Bot /);
+        if (members.has(id)) return new Response(null, { status: 204 });     // already in: Discord ignores roles here
+        members.set(id, { id, roles: b.roles ?? [] }); return new Response(null, { status: 201 });
+      }
       if (method === "DELETE") { members.delete(id); return new Response(null, { status: 204 }); }
     }
     if (/^\/guilds\/\d+$/.test(path)) return ok({ id: "g", owner_id: "8" });
-    if (path.startsWith("/guilds/") && path.includes("/members?")) return ok([...members.values()].map((m) => ({ user: { id: m.id, bot: !!m.bot } })));
+    if (path.startsWith("/guilds/") && path.includes("/members?")) return ok([...members.values()].map((m) => ({ user: { id: m.id, bot: !!m.bot }, roles: m.roles ?? [] })));
     if (path === "/users/@me/channels") { const id = JSON.parse(init.body).recipient_id; return ok({ id: `dm-${id}` }); }
     if (/^\/channels\/dm-\d+\/messages$/.test(path)) {
       const uid = path.split("/")[2].slice(3);
@@ -183,4 +193,23 @@ test("message splitting prefers line breaks and never cuts past the size", () =>
   const parts = chunks(`${"a".repeat(1500)}\n${"b".repeat(1500)}`);
   assert.deepEqual(parts.map((p) => p.length), [1500, 1500]);
   assert.ok(chunks("x".repeat(5000)).every((p) => p.length <= 2000));
+});
+
+test("the verified role: given on Connect (new or already a member), and by the hourly check to linked members missing it", async () => {
+  const d = fakeDiscord({ members: [{ id: "111" }, { id: "5" }] });
+  try {
+    const e = env(memKV(), { ROLE_ID: "777" });
+    await signIn(e);
+    assert.deepEqual(d.members.get("111")!.roles, ["777"], "already a member: the role is added directly");
+    const now = Date.now();
+    e.LINKS.m.set("link:x", JSON.stringify({ uid: "5", name: "x", created: now, seen: now }));
+    await sweep(e, now);
+    assert.deepEqual(d.members.get("5")!.roles, ["777"], "linked but missing the role: given");
+    const d2 = fakeDiscord();
+    try {
+      const e2 = env(memKV(), { ROLE_ID: "777" });
+      await signIn(e2);
+      assert.deepEqual(d2.members.get("111")!.roles, ["777"], "new member: joins with the role");
+    } finally { d2.restore(); }
+  } finally { d.restore(); }
 });

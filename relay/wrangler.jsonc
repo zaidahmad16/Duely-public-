@@ -6,7 +6,7 @@
   "compatibility_date": "2026-09-01",
   // hourly: remove links unseen for 30 days, and server members without a link
   "triggers": { "crons": ["17 * * * *"] },
-  "vars": { "GUILD_ID": "1558321208481685534", "ADMIN_IDS": "", "DISCORD_CLIENT_ID": "1558519461504614493" },
+  "vars": { "GUILD_ID": "1558321208481685534", "ADMIN_IDS": "", "ROLE_ID": "1558529099989913791", "DISCORD_CLIENT_ID": "1558519461504614493" },
   "kv_namespaces": [{ "binding": "LINKS", "id": "b614a6a551ce44e1ba849c6a361282bb" }],
   "observability": { "enabled": true },
   "workers_dev": true

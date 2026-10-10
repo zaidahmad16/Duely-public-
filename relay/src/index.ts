@@ -23,6 +23,8 @@ export interface Env {
   /** signs the OAuth state */
   STATE_KEY: string;
   GUILD_ID: string;
+  /** the "Duely user" role: given on Connect, the only role that can see the server's channels */
+  ROLE_ID?: string;
   /** Discord user ids the hourly sweep never removes (the owner), comma separated */
   ADMIN_IDS?: string;
   /** tests replace Discord's API */
@@ -102,8 +104,10 @@ async function callback(url: URL, env: Env): Promise<Response> {
   if (!me.ok) return back({ error: "failed" });
   const user = await me.json() as any;
   // into the Duely server, so the bot is allowed to DM them (201 joined, 204 already a member)
-  const join = await bot(env, "PUT", `/guilds/${env.GUILD_ID}/members/${user.id}`, { access_token: access });
+  const join = await bot(env, "PUT", `/guilds/${env.GUILD_ID}/members/${user.id}`, { access_token: access, ...(env.ROLE_ID ? { roles: [env.ROLE_ID] } : {}) });
   if (!join.ok) return back({ error: "join" });
+  // already a member (204): roles in the join are ignored, so give the verified role directly
+  if (env.ROLE_ID && join.status === 204) await bot(env, "PUT", `/guilds/${env.GUILD_ID}/members/${user.id}/roles/${env.ROLE_ID}`);
 
   const token = random(32);
   const name = String(user.global_name || user.username || "you").slice(0, 64);
@@ -215,7 +219,8 @@ const admins = (env: Env) => new Set((env.ADMIN_IDS ?? "").split(",").map((s) =>
 
 // ---------------------------------------------------------------- hourly sweep
 
-/** Removes links unseen for 30 days (and their members), then any member without a link. */
+/** Removes links unseen for 30 days (and their members), then any member without a link; linked members
+ *  missing the "Duely user" role get it. */
 export async function sweep(env: Env, now = Date.now()): Promise<{ stale: number; removed: number }> {
   const linked = new Set<string>();
   let stale = 0, cursor: string | undefined;
@@ -239,7 +244,11 @@ export async function sweep(env: Env, now = Date.now()): Promise<{ stale: number
     const members = await r.json() as any[];
     for (const m of members) {
       const id = String(m.user?.id ?? "");
-      if (!id || m.user?.bot || keep.has(id) || linked.has(id)) continue;
+      if (!id || m.user?.bot || keep.has(id)) continue;
+      if (linked.has(id)) {                                            // verified: make sure they have the role
+        if (env.ROLE_ID && !(m.roles ?? []).includes(env.ROLE_ID)) await bot(env, "PUT", `/guilds/${env.GUILD_ID}/members/${id}/roles/${env.ROLE_ID}`);
+        continue;
+      }
       await bot(env, "DELETE", `/guilds/${env.GUILD_ID}/members/${id}`);
       removed++;
     }
