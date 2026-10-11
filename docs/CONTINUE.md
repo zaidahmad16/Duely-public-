@@ -1,6 +1,6 @@
 # Continue here
 
-**Read `docs/HANDOFF.md` first** (current state, rules, live test setup, what's left). Older notes below.
+**Read `docs/HANDOFF.md` first** (local only, kept out of git) (current state, rules, live test setup, what's left). Older notes below.
 
 # Continue here (handoff for a fresh session)
 

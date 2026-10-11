@@ -5,3 +5,4 @@ dist/
 .DS_Store
 # local test secrets / recorded data with personal info
 test/.local/
+docs/HANDOFF.md
