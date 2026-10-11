@@ -7,6 +7,7 @@ import "./styles/components.css";
 import "./styles/screens.css";
 import type { Status } from "../shared/types.ts";
 import { type BannerSpec, setBanners } from "./components/banner.ts";
+import { openDoc } from "./components/doc.ts";
 import { toast } from "./components/toast.ts";
 import { aiGate } from "./screens/aiGate.ts";
 import { chatScreen } from "./screens/chat.ts";
@@ -160,7 +161,8 @@ function bannerSpecs(s: Status | null): BannerSpec[] {
       action: { label: "Try again", run: () => void ctx.sync() } });
   }
   if (s.weakKeychain) {
-    out.push({ id: "keyring", tone: "info", title: "Saved keys are only lightly protected", text: "This computer has no keyring, so the system can't encrypt them." });
+    out.push({ id: "keyring", tone: "info", title: "Saved keys are only lightly protected", text: "This computer has no keyring, so the system can't encrypt them.",
+      action: { label: "How to fix", run: () => openDoc("setup", "\"Saved keys are only lightly protected\"") } });
   }
   return out;
 }

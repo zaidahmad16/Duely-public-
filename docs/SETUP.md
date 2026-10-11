@@ -231,7 +231,11 @@ The course may be over or the link changed. Remove it in **Settings → Sources*
 Your desktop needs a notification service. Most desktops have one; minimal window managers may need one installed (for example `dunst`).
 
 **"Saved keys are only lightly protected" (Linux)**
-Your computer has no keyring, so Duely can't use the system's encryption for your keys. Install and unlock a keyring (GNOME Keyring or KWallet), then restart Duely and enter your key again.
+A keyring is your system's locked store for passwords; Duely uses it to encrypt your AI key and sign-ins. Most Linux desktops (GNOME, KDE, Cinnamon, Xfce) have one, but some minimal setups don't, so Duely can only scramble your keys. To fix it:
+
+1. Install a keyring: `sudo apt install gnome-keyring` (Ubuntu, Mint, Debian), `sudo dnf install gnome-keyring` (Fedora) or `sudo pacman -S gnome-keyring` (Arch). On KDE, turn on **KDE Wallet** in System Settings instead.
+2. Log out and back in, so it starts and unlocks with your login. (Using a window manager without a desktop? Start it from your session's startup file with `gnome-keyring-daemon --start --components=secrets`.)
+3. Open Duely. The message is gone, and Duely moves your saved keys into the keyring by itself. There's nothing to enter again.
 
 ## Privacy
 

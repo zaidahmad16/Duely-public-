@@ -7,6 +7,8 @@ export type Cipher = {
   available(): boolean;
   encrypt(text: string): Buffer;
   decrypt(data: Buffer): string;
+  /** saved without real encryption (Linux without a keyring); `reseal` upgrades these once a keyring works */
+  weak?(data: Buffer): boolean;
 };
 
 export type SecretName = "llm_key" | "google_client" | "google_refresh" | "discord_link" | "cloud_link";
@@ -16,6 +18,8 @@ export type Secrets = {
   set(name: SecretName, value: string): Promise<void>;
   delete(name: SecretName): Promise<void>;
   has(name: SecretName): Promise<boolean>;
+  /** Encrypts again every value saved while the computer had no keyring; returns how many. */
+  reseal(): Promise<number>;
 };
 
 export function secretStore(store: Store, cipher: Cipher): Secrets {
@@ -42,5 +46,25 @@ export function secretStore(store: Store, cipher: Cipher): Secrets {
       await store.put("secrets", all);
     },
     async has(name) { return !!(await load())[name]; },
+    async reseal() {
+      if (!cipher.weak) return 0;
+      const all = await load();
+      // look first: asking the keyring when there's nothing to redo could show an unlock prompt at every start
+      if (!Object.values(all).some((v) => cipher.weak!(Buffer.from(v, "base64"))) || !cipher.available()) return 0;
+      const out = { ...all };
+      let n = 0;
+      for (const [name, v] of Object.entries(all)) {
+        const data = Buffer.from(v, "base64");
+        if (!cipher.weak(data)) continue;
+        let text: string;
+        try { text = cipher.decrypt(data); } catch { continue; }                 // unreadable: left for the student to re-enter
+        const enc = cipher.encrypt(text);
+        if (cipher.weak(enc) || cipher.decrypt(enc) !== text) return 0;          // still no real encryption: change nothing
+        out[name] = enc.toString("base64");
+        n++;
+      }
+      if (n) await store.put("secrets", out);
+      return n;
+    },
   };
 }

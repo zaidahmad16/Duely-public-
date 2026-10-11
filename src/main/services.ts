@@ -39,6 +39,8 @@ const cipher: Cipher = {
   available: () => safeStorage.isEncryptionAvailable(),
   encrypt: (s) => safeStorage.encryptString(s),
   decrypt: (b) => safeStorage.decryptString(b),
+  // Chromium on Linux: "v10" = its fixed fallback key (no keyring), "v11" = a key kept in the keyring
+  weak: (b) => process.platform === "linux" && b.subarray(0, 3).toString() === "v10",
 };
 
 /** Links from notifications open in the browser only if they're web links. */
@@ -52,6 +54,8 @@ export function services(showWindow: () => void): Services {
   // Linux without a keyring: Electron falls back to a fixed key ("basic_text"); the UI warns about it
   const weakKeychain = process.platform === "linux" && safeStorage.getSelectedStorageBackend?.() === "basic_text";
   if (weakKeychain && !safeStorage.isEncryptionAvailable()) safeStorage.setUsePlainTextEncryption?.(true);
+  // a keyring now works: keys saved without one get its real encryption, with nothing to re-enter
+  if (!weakKeychain) void secrets.reseal().then((n) => { if (n) console.log(`saved keys now use the keyring (${n})`); }, () => {});
 
   let tokens: { key: string; get: () => Promise<string> } | null = null;
   const markExpired = async (on: boolean) => { if (!!(await store.get("google-expired")) !== on) await store.put("google-expired", on || null); };

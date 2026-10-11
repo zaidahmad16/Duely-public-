@@ -15,7 +15,7 @@ export const TERMS_VERSION = "2026-10-10c";
 const DOCS = { terms: { title: "Terms of Service", md: terms }, privacy: { title: "Privacy Policy", md: privacy }, setup: { title: "Setting up Duely", md: setup } };
 const REPO = "https://github.com/zaidahmad16/Duely-public-/blob/main/docs/";
 
-/** `section`: scroll to the first heading that starts with this text (e.g. "2. Google"). */
+/** `section`: scroll to the first heading (or bold troubleshooting entry) that starts with this text (e.g. "2. Google"). */
 export function openDoc(which: keyof typeof DOCS, section?: string): void {
   const d = DOCS[which];
   const open = (url: string) => {
@@ -43,7 +43,8 @@ export function openDoc(which: keyof typeof DOCS, section?: string): void {
   enter(sheet, { y: 8, dur: 220 });
   closeBtn.focus();
   if (section) {
-    const head = [...body.querySelectorAll("h2, h3")].find((x) => x.textContent?.startsWith(section));
+    // a heading, or a troubleshooting entry (a paragraph that starts in bold)
+    const head = [...body.querySelectorAll("h2, h3, p > strong:first-child")].find((x) => x.textContent?.startsWith(section));
     head?.scrollIntoView({ block: "start" });
   }
 }
