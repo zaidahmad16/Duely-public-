@@ -10,7 +10,7 @@ import { markdown } from "../ui/markdown.ts";
 import { enter, leave } from "../ui/motion.ts";
 
 /** Changes when TERMS.md changes; stored when the student agrees. */
-export const TERMS_VERSION = "2026-10-10c";
+export const TERMS_VERSION = "2026-10-11";
 
 const DOCS = { terms: { title: "Terms of Service", md: terms }, privacy: { title: "Privacy Policy", md: privacy }, setup: { title: "Setting up Duely", md: setup } };
 const REPO = "https://github.com/zaidahmad16/Duely-public-/blob/main/docs/";

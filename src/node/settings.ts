@@ -22,6 +22,7 @@ export function toSettings(saved: any, keySet: boolean, discord: Settings["disco
     digestTime: c.digest_time,
     digestWeekly: !!c.digest_weekly,
     briefings: c.briefings !== false,
+    usageCounts: c.usage_counts !== false,
     calendarName: c.calendar_name,
     terms: [...(c.term && c.classes?.length ? [{ ...c.term, classes: c.classes, key: "legacy" }] : []), ...(c.terms ?? []).map((t: any) => ({ ...t, key: t.start }))]
       .map((t: any) => ({ key: t.key, name: String(t.name || "Term"), start: t.start, end: t.end, classes: (t.classes ?? []).length,
@@ -88,6 +89,7 @@ export function applyPatch(saved: any, p: SettingsPatch): any {
   flag("digestDaily", "digest_daily");
   flag("digestWeekly", "digest_weekly");
   flag("briefings", "briefings");
+  flag("usageCounts", "usage_counts");
   if (p.digestTime !== undefined) {
     if (!HM.test(p.digestTime)) throw new Error("Pick a time for the morning digest.");
     c.digest_time = p.digestTime;

@@ -20,6 +20,7 @@ contextBridge.exposeInMainWorld("duely", {
   updateCheck: call("updateCheck"),
   updateRestart: call("updateRestart"),
   updateAuto: call("updateAuto"),
+  usageNoticeSeen: call("usageNoticeSeen"),
   chatClear: call("chatClear"),
   discordTest: call("discordTest"),
   discordDisconnect: call("discordDisconnect"),

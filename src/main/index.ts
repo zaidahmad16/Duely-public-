@@ -1,6 +1,7 @@
 // Duely's main process: owns the window, the engine (sync, AI, notifications) and the user's data.
 // The renderer only talks to it through the preload bridge (window.duely). Closing the window keeps
 // Duely running in the tray; Quit is in the tray menu.
+import { pingDaily } from "../node/analytics.ts";
 import { join } from "node:path";
 import { BrowserWindow, app, nativeTheme } from "electron";
 import { registerApi } from "./api.ts";
@@ -132,7 +133,15 @@ else {
       update: () => svc.updateEngine(),
     });
     void svc.discordCheckIn();
-    const checkIns = setInterval(() => void svc.discordCheckIn(), 6 * 3600e3);
+    // anonymous usage count (src/node/analytics.ts): once a day at most, only if the student allows it
+    const usage = () => void pingDaily({
+      store: svc.store,
+      enabled: async () => app.isPackaged && ((await svc.store.get<any>("config")) ?? {}).usage_counts !== false,   // dev builds never count
+      usage: async () => ({ version: app.getVersion(), os: process.platform, arch: process.arch,
+        mode: (await svc.cloudLink()) ? "cloud" : "local", packaged: app.isPackaged }),
+    });
+    setTimeout(usage, 60e3);
+    const checkIns = setInterval(() => { void svc.discordCheckIn(); usage(); }, 6 * 3600e3);
     app.on("before-quit", () => clearInterval(checkIns));
     app.on("activate", showWindow);
   });

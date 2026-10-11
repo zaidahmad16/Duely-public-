@@ -1,13 +1,13 @@
 # Privacy Policy
 
-**Effective:** October 10, 2026
+**Effective:** October 11, 2026
 
-Duely is a desktop app that puts your Brightspace deadlines, tests and classes in Google Calendar and answers questions about them with an AI provider you choose. This policy explains what Duely does with your information. The short version: **Duely runs on your computer and, if you turn it on, in your own Google account. There is no Duely account, no Duely server, and nothing is sent to the people who make Duely.**
+Duely is a desktop app that puts your Brightspace deadlines, tests and classes in Google Calendar and answers questions about them with an AI provider you choose. This policy explains what Duely does with your information. The short version: **Duely runs on your computer and, if you turn it on, in your own Google account. There is no Duely account and no Duely server. The only thing the people who make Duely receive is an anonymous daily count of how many copies are in use, which you can turn off.**
 
 ## What Duely does not do
 
 - It doesn't have accounts or a cloud backend run by its developers. ("Duely in your Google account", below, runs in *your* Google account, not ours.) The one exception is the small **Discord relay**, used only if you connect Discord (see "Discord alerts" below).
-- It doesn't collect analytics, usage statistics, telemetry or crash reports.
+- It doesn't collect crash reports or track what you do in the app. The only usage information is an anonymous daily count (see "Anonymous usage counts" below), which you can turn off.
 - It doesn't sell, rent or share your information with anyone.
 - It doesn't show ads.
 
@@ -60,6 +60,8 @@ Duely connects only to the services you set up, directly from your computer or, 
 | **Your AI provider** (OpenAI-compatible, Anthropic or Google Gemini, with your own API key) | Course codes, titles, dates and descriptions of your Brightspace items; the text of course announcements; your chat messages with the items they're about; and any screenshot you choose to import (it's read once and not kept). | To sort the feed, read announcements for dates, answer your questions and read screenshots. |
 | **Discord** (optional; only if you connect it) | The text of your alerts (for example a moved test, an important announcement, or your morning digest), sent through Duely's Discord relay to the Duely bot, which sends it to you as a direct message. See "Discord alerts" below. | So your alerts reach you on your phone too. |
 
+| **PostHog** (anonymous usage counts; on unless you turn it off) | Once a day at most: a random ID made on your computer (not linked to you or your accounts), Duely's version, your operating system, and whether Duely runs in your Google account. See "Anonymous usage counts" below. | So the developers know how many people use Duely and which versions are still in use. |
+
 Duely also checks **GitHub** (where it's published) for new versions every few hours. That request carries no information about you beyond what any web request does (your IP address and the app's version); GitHub's privacy policy applies.
 
 Each of these services handles the information it receives under its own terms and privacy policy, which you agreed to when you set up your account with it. In particular, check what your AI provider does with API requests (for example, whether it keeps or trains on them); many providers let you change this. A local model (such as Ollama or LM Studio) keeps everything on your computer.
@@ -93,11 +95,24 @@ Sending the alerts needs Duely's bot, and a bot's password can't be put inside a
 - **Automatic removal:** if the relay hasn't heard from your Duely for **30 days**, it deletes your link and removes you from the Duely server. Anyone in the server without a link is removed every hour.
 - **Disconnect** (Settings → Notifications → Discord) deletes your link at the relay at once, removes you from the server, and deletes the token from your computer and your Google account. Leaving the Duely server in Discord has the same effect on alerts.
 
+## Anonymous usage counts
+
+So its developers know whether people use Duely and which versions are still out there, the installed app sends one small event a day to **PostHog**, an analytics service (posthog.com). It contains:
+
+- a random ID created on your computer the first time (it isn't based on your name, email, accounts or hardware);
+- Duely's version, your operating system and processor type;
+- whether Duely runs in your Google account or on this computer only.
+
+It never contains your name, email, school, courses, calendar items, announcements, chat messages, screenshots or keys. Duely asks PostHog not to build a profile of anyone and not to look up a location from your IP address. PostHog receives your IP address as part of any web request, like every website does; its own privacy policy applies. Copies of Duely you build yourself from the source code don't send anything.
+
+You can turn this off at any time in **Settings → About → Send anonymous usage counts**. Turning it off also deletes the random ID, so if you turn it back on later, Duely starts a new one that isn't linked to the old one.
+
 ## Your choices
 
 - **Disconnect Google** in Settings → Google. If Duely is running in your Google account, the script first stops its timer and deletes your AI key and Brightspace links from its storage; then Duely revokes its access with Google. The "Duely" script project (with the schedule it read and your done marks) and the calendar it created stay in your Google account until you delete them.
 - **Turn off email alerts** in Settings → Google.
 - **Change or remove your AI key** in Settings → AI, or revoke it on your provider's website.
+- **Turn off anonymous usage counts** in Settings → About.
 - **Turn off notifications** in Settings → Notifications. Discord alerts follow the same switches.
 - **Disconnect Discord** in Settings → Notifications → Discord.
 - **Delete everything:** in Settings → Notifications, disconnect Discord if you connected it. In Settings → Google, choose Disconnect. Then quit Duely, uninstall it, and delete the data folder listed above. In your Google account, delete the "Duely" project at [script.google.com](https://script.google.com) (this removes everything it stored), delete Duely's calendar in Google Calendar, and check its access is gone at [myaccount.google.com/permissions](https://myaccount.google.com/permissions).

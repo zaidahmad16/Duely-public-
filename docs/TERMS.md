@@ -1,6 +1,6 @@
 # Terms of Service
 
-**Effective:** October 10, 2026
+**Effective:** October 11, 2026
 
 These terms cover your use of Duely, a free, open-source desktop app. By installing or using Duely, you agree to them. If you don't agree, please don't use Duely.
 
@@ -53,7 +53,7 @@ To the fullest extent the law allows, Duely's developers and contributors are no
 
 ## 9. Privacy
 
-How Duely handles your information is described in the [Privacy Policy](PRIVACY.md). In short: everything stays on your computer, and in your own Google account if you turn that on, except what Duely sends to the services you connect.
+How Duely handles your information is described in the [Privacy Policy](PRIVACY.md). In short: everything stays on your computer, and in your own Google account if you turn that on, except what Duely sends to the services you connect and an anonymous daily usage count, which you can turn off in Settings → About.
 
 ## 10. Stopping
 

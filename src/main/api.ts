@@ -1,5 +1,6 @@
 // Everything the UI can ask of the main process (exposed as window.duely by the preload). Thin glue:
 // the logic lives in src/node (view, settings, runner) and src/core. Secrets never leave this side.
+import { forget as forgetUsage } from "../node/analytics.ts";
 import { app, ipcMain } from "electron";
 import { loadActions } from "../core/actions.ts";
 import { answer } from "../core/ask.ts";
@@ -74,6 +75,7 @@ export function registerApi(c: Ctx): void {
       feedSet: !!cfg.feed_url,
       google: await svc.secrets.has("google_refresh"),
       googleExpired: !!(await store.get("google-expired")) && await svc.secrets.has("google_refresh"),
+      usageNotice: !!cfg.onboarded && cfg.usage_counts !== false && !cfg.usage_notice_seen,
       googleClient: await svc.secrets.has("google_client"),
       aiReady: aiReady(cfg, (await svc.secrets.get("llm_key").catch(() => null)) ?? ""),
       weakKeychain: svc.weakKeychain,
@@ -167,6 +169,7 @@ export function registerApi(c: Ctx): void {
   handle("chatClear", async () => { await clearChat(store); });
 
   handle("settings", async () => settingsOut(await config()));
+  handle("usageNoticeSeen", async () => { await store.put("config", { ...(await config()), usage_notice_seen: true }); });
 
   handle("saveSettings", async (p: SettingsPatch) => {
     const before = await config();
@@ -176,6 +179,7 @@ export function registerApi(c: Ctx): void {
       if (k) await svc.secrets.set("llm_key", k); else await svc.secrets.delete("llm_key");
     }
     await store.put("config", next);
+    if (p?.usageCounts === false) await forgetUsage(store);              // off: the install id goes too
     if (p?.ai || p?.aiKey !== undefined) c.changed();                   // AI changed: it needs testing again (aiReady)
     if (await cloudOn()) {                                               // the engine is in the script: it gets the settings too
       await svc.cloud.pushSettings(next);
