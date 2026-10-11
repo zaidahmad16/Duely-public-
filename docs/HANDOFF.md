@@ -109,11 +109,47 @@ AppImage+deb. `.github/workflows/release.yml`: tag `v*` → build + packaged smo
 Windows/AppImage install on restart, macOS/deb get a Download link. How to cut a release: `docs/DEVELOPING.md`
 (**check the draft's tag is `v…` before publishing**; editing a draft via the API once left it `untagged-…`).
 
-**Website.** `~/Documents/GitHub/ZaidAhmadWebsite` (pushing `main` deploys zaidahmad.dev via Cloudflare's Git
-integration; ask before pushing). Has the Duely project page `projects/duely.html`; the owner asked that the
-personal app (Syllabus) not be mentioned anywhere on the site. Security headers in `_headers` (CSP allows only
-own scripts + Google Fonts, jsDelivr, raw.githubusercontent.com, Web3Forms, Cloudflare Insights); `.assetsignore`
-hides repo files. Owner still to turn on Cloudflare "Always Use HTTPS".
+## The owner's other two projects (context)
+
+**Personal Duely** (the private version this app was made from). Local `~/Documents/GitHub/Syllabus` (internal
+name Syllabus; private GitHub repo `zaidahmad16/Duely`). **Read-only for this work: read and port from it, never
+edit, run or deploy it, never copy its personal data.** It's the owner's daily tool, hard-wired to them:
+- a GTK4/libadwaita **Python** desktop app (control panel), `syllabus/` (e.g. `syllabus/core/term_import.py`,
+  `exam_import.py`, `syllabus/app.py` for the Timetable page and review dialogs Duely Public copied);
+- a **Cloudflare Worker** (`worker/`, TypeScript) that does the syncing, AI and chat every minute; Duely Public's
+  `src/core` engine was ported from `worker/src`, and `test/regression_cases.ts` / the oracle cases came from there;
+- alerts and chat as **Slack** DMs (not Discord), school email via forwarding, an hourly GitHub watchdog.
+- Its own runbook is `CLAUDE.md` in that folder (local only, never pushed); it has personal IDs, so never copy
+  from it into this public repo.
+- If something there looks broken, tell the owner instead of fixing it.
+
+**Personal website** `~/Documents/GitHub/ZaidAhmadWebsite` → **zaidahmad.dev** (public GitHub repo
+`zaidahmad16/ZaidAhmadWebsite`). Plain HTML/CSS/JS, no build step.
+- **Deploy:** pushing `main` deploys at once through Cloudflare's Git integration (a Workers static-assets site,
+  `wrangler.jsonc` with `assets.directory: "."`). **Ask before pushing** (it's public). The old GitHub deploy
+  workflow was removed 2026-10-10 (it had failed since September).
+- **Design system:** read `design.md` (locked; tokens in `tokens.css`, Inter + JetBrains Mono, one blue accent,
+  dark default) and `PRODUCT.md` before any change. Project pages follow the "Long Document" pattern: copy
+  `projects/salah.html` or `projects/duely.html` (`pp-*` classes: kicker, lead, tags, `pp-links`, `pp-stats`,
+  `pp-images` with figures, sections). Images go in `static/images/<project>/*.webp`. Homepage rows are
+  `li.proj-row` in `index.html` under "Selected work". Keep the easter eggs (terminal, Pokémon battle, sprite
+  toggle) and their class names.
+- **Duely page:** `projects/duely.html` (owner-approved text, humanized). **Never mention Syllabus / the personal
+  app anywhere on the site** (owner's instruction 2026-10-10; its pages were deleted). The timetable screenshot
+  there is light-themed; swap for a dark one when Gemini quota allows.
+- **Security (2026-10-10 audit, fixed):** `_headers` sets CSP, HSTS, X-Frame-Options SAMEORIGIN, nosniff,
+  Referrer-Policy, Permissions-Policy. The CSP allows only the site's own scripts plus Google Fonts, jsDelivr,
+  raw.githubusercontent.com (Pokémon sprites/cries), Web3Forms (contact form) and Cloudflare Insights (injected
+  analytics). **Adding any outside script, font, image or API means updating the CSP.** No inline scripts or
+  `onclick=` (start-up code is `static/js/boot.js`). `.assetsignore` keeps `.git`, `wrangler.jsonc`, design notes
+  and tool logs from being served. Still open (owner): Cloudflare "Always Use HTTPS"; optionally restrict the
+  Web3Forms key to the domain.
+- **Testing a change:** `python3 ~/.local/share/duely-dev/tools/hserve.py ~/Documents/GitHub/ZaidAhmadWebsite`
+  (serves on :8771 with the `_headers` headers), then
+  `node ~/.local/share/duely-dev/tools/csp-check.mjs http://127.0.0.1:8771 index.html projects/duely.html …`
+  (headless Chrome over DevTools: prints any CSP violation or JS exception; works on the live site too). Full-page
+  previews: `google-chrome --headless=new --force-prefers-reduced-motion --window-size=1280,6000 --screenshot=…`
+  (the site's scroll-reveal blurs sections otherwise). `wrangler dev` reloads endlessly in that folder; don't use it.
 
 ## Live test setup (throwaway Google account)
 - Account `zaidahmad181818@gmail.com` (Chrome profile slot `/u/2/`), Cloud project **duely-511212** (consent screen
