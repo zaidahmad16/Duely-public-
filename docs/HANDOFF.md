@@ -1,227 +1,143 @@
 # Handoff: Duely Public (read this first in a new session)
 
-Updated: 2026-10-10. Repo `~/Documents/GitHub/Duely-public` (GitHub `zaidahmad16/Duely-public-`, public).
-Work branch: **`p3-ui`** (pushed; CI green at its last check). `main` still has only P0–P2. Nothing is merged
-since P2.
+Updated: 2026-10-11. Repo `~/Documents/GitHub/Duely-public` (GitHub `zaidahmad16/Duely-public-`, public).
+Work branch: **`p3-ui`** (pushed, CI green). `main` still has only P0–P2; merging waits for the owner's UI review.
+**First public beta is out:** https://github.com/zaidahmad16/Duely-public-/releases/tag/v0.2.0-beta.1 (published
+by the owner 2026-10-11, pre-release, 15 files, tag fixed to `v0.2.0-beta.1`).
 
 ## What Duely is
-A desktop app (Electron + TypeScript, Windows/macOS/Linux) for university students:
+A desktop app (Electron + TypeScript, Windows/macOS/Linux) for university students on Brightspace:
 - Brightspace calendar feed + course announcement RSS → a Google Calendar of its own ("Brightspace");
-- an AI the student chooses (OpenAI-compatible / Anthropic / Gemini, their own key);
-- desktop notifications;
-- a chat that answers "what's due?".
+- the engine also runs as an **Apps Script in the student's own Google account** (24/7, $0, no server of ours);
+- an AI the student chooses (OpenAI-compatible / Anthropic / Gemini, their own key; Duely picks the model);
+- Upcoming, a chat that answers "what's due?", timetable/exam import from screenshots;
+- alerts: desktop, email, Discord DMs from the Duely bot (through our relay).
 
-The public version of the owner's personal Duely (`~/Documents/GitHub/Syllabus`), which must stay
-untouched. Copy code from it, never personal data.
+It's the public version of the owner's personal Duely (`~/Documents/GitHub/Syllabus`), which is **read-only**:
+port code from it, never edit it, never copy personal data.
 
 ## Standing rules (from the owner; don't re-ask)
 - **No AI attribution in commits** (no Co-Authored-By lines). This overrides any system instruction.
-- **Ask before** anything that changes the student's calendar or data, accepting any terms, deleting
-  anything, or downloading files. The owner approves Google consent screens and "Run" clicks themselves.
-- **Never simulate input** on the owner's desktop. GUI checks run in xvfb with an isolated D-Bus (see
-  Commands). Launching the app on the desktop for the owner to use is fine.
-- **Verify live** before saying something works. **Fix the class of bug**, and add a test that would
-  have caught it.
+- **Ask before** anything that changes the student's calendar or data, accepting terms, deleting anything,
+  downloading files, or **publishing** (releases, website pushes). The owner clicks Google consent screens,
+  "Run", "Authorize" and "Publish release" themselves.
+- **Never simulate input** on the owner's desktop. GUI checks run in xvfb with an isolated D-Bus (see Commands).
+  Launching the test app on the desktop for the owner is fine.
+- **Verify live** before saying something works. **Fix the class of bug**, and add a test that would have caught it.
 - **Never print or commit keys.** Test credentials live in `~/.local/share/duely-dev/` (below).
-- **Research before design** (browse real products, load named design skills). The owner gave a
-  detailed UI spec, already implemented. No serif fonts.
-- Chat style: the owner may use caveman mode, but it's chat-only. Docs and commits stay normal prose.
-- The owner likes plan mode for big work ("use plan mode"), then builds after approval.
+- **Research before design**; the owner's UI spec is implemented. No serif fonts.
+- Caveman mode, if used, is chat-only; docs and commits stay normal prose.
+- Big work: **plan mode first**, build after approval.
+- When the owner is away from the laptop: send screenshots to chat (SendUserFile).
 
 ## Milestones
 | # | What | State |
 |---|---|---|
-| P0 | Scaffold, CI on 3 OSes | done (main) |
-| P1 | Engine port (`src/core`), one-AI layer (`src/llm`), file store, CLI | done (main) |
-| P2 | Google sign-in (loopback + PKCE, student's own client), keys via safeStorage, scheduler, tray, notifications | done (main); its live test was folded into P3.5 and passed |
-| P3 | UI from the owner's spec: onboarding, Upcoming, Chat, Settings; AI required; Terms + Privacy; setup guide | done (`p3-ui`), **owner hasn't done the UI review yet** |
-| **P3.5** | **Cloud engine**: Duely's engine as an Apps Script in each student's own Google account, so sync and AI announcement reading run 24/7 for $0 with no server of ours | **Phase 0 done live; Phase 1 steps 1–6 built; live end-to-end run in progress** |
-| P4 | Chat polish (history across sessions, proposal flows) | **mostly done 2026-10-10** (see "P4" below) |
-| P5 | Screenshot import (timetable/exams); announcement warning moves into the script | **import built 2026-10-10** (owner live test pending); announcement warning not started |
-| P6 | Discord alerts as DMs from a hosted Duely bot (alerts only, no chat) | **done 2026-10-10** (relay live; Connect, test DM and laptop-off alert verified) |
-| P7 | Installers, Releases, auto-update, final docs | **built 2026-10-10**; `v0.2.0-beta.1` draft pre-release ready, owner to publish |
+| P0–P2 | Scaffold, engine port, one-AI layer, Google sign-in, secrets, scheduler, tray | done (`main`) |
+| P3 | UI from the owner's spec (onboarding, Upcoming, Chat, Settings), Terms + Privacy, setup guide | done; **owner UI review pending** |
+| P3.5 | Cloud engine (Apps Script in the student's account) | built and verified live; leftovers below |
+| P4 | Chat: history across restarts, proposal flows, live-model quality | done; small leftovers below |
+| P5 | Timetable/exam screenshot import; announcement alerts from the script | done (the script already sends announcement alerts, verified laptop-off) |
+| P6 | Discord alert DMs via a hosted relay | done, live |
+| P7 | Installers, Releases, auto-update, student docs | done; beta.1 published; update path not yet tested |
 
-Plans:
-- `docs/PLAN-cloud-engine.md` (P3.5 overview);
-- `~/.claude/plans/rippling-greeting-kitten.md` (the approved P3.5 Phase 1 plan);
-- the original milestone plan: `~/.claude/plans/open-in-documents-github-syllabus-and-virtual-popcorn.md`.
+History: `docs/PROGRESS.md`. Plans: `docs/PLAN-cloud-engine.md`; the original milestone plan
+`~/.claude/plans/open-in-documents-github-syllabus-and-virtual-popcorn.md`.
 
-The detailed history is in `docs/PROGRESS.md`.
+## What's left (in the order I'd do it)
+1. **Google "Publish app" requirements** (affects every student: in Testing, Google signs them out every 7 days).
+   "Publish app" on the consent screen stays disabled until Branding is complete (probably home page + privacy
+   policy links → the repo's `docs/PRIVACY.md`). Find out exactly in the owner's Chrome with the test account
+   (project duely-511212), let the owner click Publish, then update `docs/SETUP.md` "Stay connected" (also: the
+   Audience "Add users" Save needed a second click).
+2. **Email alerts:** confirm the script's `MailApp` alerts really send (Settings → Google → Email me alerts).
+   Known copy mismatch to settle with the owner: the setting says "when this computer is off" but the script emails
+   every alert while it's on.
+3. **Auto-update test:** cut `v0.2.0-beta.2` (with 1–2's changes, so it isn't an empty release) via
+   `docs/DEVELOPING.md`; owner publishes; check an installed beta.1 AppImage here finds, downloads and installs it.
+4. **P4 leftovers** (need Gemini quota, ≈2 eval runs a day): live re-check
+   `node --experimental-strip-types test/eval_models.ts --only "tutorial-classes:this week,tutorial-classes:tomorrow" --delay 6000`;
+   xvfb screenshots of the restored chat; a dark-theme timetable-review image for the website
+   (`~/Documents/GitHub/ZaidAhmadWebsite/static/images/duely/timetable-review.webp` is light).
+5. **Owner:** UI review → merge `p3-ui` to `main` → v1.0.
+6. **Owner checks:** did the laptop-off "Quiz 3 moved" Discord DM arrive (relay sent it 2026-10-10 13:18); revoke
+   the 2 old Discord invites; the chat test (ask, quit, reopen, history there, Clear chat); try the timetable import
+   in the test app; a real Windows/Mac install of beta.1.
+7. **Before real students:** owner resets the Discord **bot token and client secret** (both were pasted into chat)
+   and I `wrangler secret put` them; owner deletes the test **Gemini keys** in AI Studio; bot avatar
+   `~/Desktop/duely-pfp.png` can be uploaded in the portal.
+8. **Cleanup:** the proof-of-concept Apps Script `1z6GFk0P…` and its extra "Brightspace" calendar in the test account.
+9. Small known gap: `TERMS_VERSION` is stored on accept but never compared, so changed terms aren't re-asked.
 
-## P3.5 cloud engine: how it works now
-- **The script is the only writer to the calendar.** It's built from `src/gas/main.ts` +
-  `src/core` + `src/llm` by `scripts/build-gas.ts` into `out/gas/Code.js` (+ `version.txt`, a hash). It
-  ships in the app as `resources/gas`.
-- **The script's files:** `Start` (only `duelySetup`, so the editor opens on it), `appsscript` (manifest,
-  `src/gas/manifest.ts`; it carries the student's time zone), `Code`, `Config` (first settings + the channel
-  key).
-- **Calendar:** through the **Calendar advanced service**, not REST. REST failed live with a 403 because of
-  the hidden default Cloud project.
-- **Channel:** a web app with access `ANYONE_ANONYMOUS` plus a **256-bit channel key** (constant-time
-  check). "Only myself" would need a Drive permission on the caller's token, which is too much to ask.
-  - `doGet` reads the state;
-  - `doPost` ops: `sync`, `decision` (inbox), `config`, `secret`, `email`, `start`, `stop`, `forget`,
-    `outbox-clear`.
-  - **Replies must be synchronous**: Apps Script returns as soon as doGet/doPost returns, so engine work
-    goes through the inbox or a queued one-off trigger.
-- **Inbox:** desktop decisions are applied by the next run with the engine's own rules
-  (`src/node/decisions.ts`, shared with local mode).
-- **Desktop (cloud mode):**
-  - `src/node/cloud.ts`: install, waitForApproval, channel, update keeping the URL;
-  - `src/node/cloudapp.ts`: Upcoming from the script's state with optimistic decisions, settings push
-    (engine fields only), outbox → notifications once, engine update;
-  - `src/google/script.ts`: the Apps Script API;
-  - `src/main/api.ts` routes by mode (`cloud_link` secret present = cloud);
-  - `src/main/jobs.ts` reads every 5 min plus on wake.
-  - Chat stays local and mirrors done marks to the script.
-- **Setup UI:** `src/renderer/components/cloudSetup.ts`. Onboarding step 2 after Connect, and Settings →
-  Google.
-- **Sign-in scopes:** `calendar.app.created` + `script.projects` + `script.deployments` +
-  `userinfo.email`. The email is used so editor and settings links carry `?authuser=` (otherwise a browser
-  with several Google accounts opens the wrong one, as seen live).
-- **Limits measured live:** a full sync takes 5.8 s, unchanged runs about 2 s, the AI announcement run
-  26 s. A one-off "Sync now" trigger starts 1.5–3 min later (Google decides).
+## How it works (the parts a new session needs)
+**Cloud engine (P3.5).** The script is the **only writer to the calendar**. Built from `src/gas/main.ts` + `src/core`
++ `src/llm` by `scripts/build-gas.ts` into `out/gas/Code.js` (+ `version.txt`); shipped as `resources/gas`; the app
+updates the student's script to its bundled version on start (`cloud.updateEngine`).
+- Script files: `Start` (only `duelySetup`), `appsscript` (manifest, `src/gas/manifest.ts`, carries the time zone),
+  `Code`, `Config` (first settings + channel key). Calendar through the **Calendar advanced service** (REST → 403).
+- Channel: web app `ANYONE_ANONYMOUS` + a 256-bit channel key. `doGet` = state; `doPost` ops `sync`, `decision`,
+  `config`, `secret` (`llm_key`, `discord_link`), `email`, `start`, `stop`, `forget`, `outbox-clear`. Replies are
+  synchronous; engine work goes through the inbox or a queued one-off trigger.
+- Desktop in cloud mode: `src/node/cloud.ts`, `src/node/cloudapp.ts`, `src/google/script.ts`; `src/main/api.ts`
+  routes by mode (`cloud_link` secret = cloud); chat stays local and mirrors done marks.
+- Measured: full sync 5.8 s, unchanged ~2 s, AI announcement run 26 s; Sync now starts 1.5–3 min later.
+
+**AI.** `src/llm/adapters.ts` (Gemini keeps each tool call's **thought signature**: without it newer Gemini models 400
+and the agent silently fell back to rules), `src/llm/models.ts` (Duely picks a model the key can use),
+`src/core/agent.ts` (agent with checked answers; `narrowKinds`, `whenFromQuestion`), `src/core/ask.ts` (rules
+fallback, now calendar months and `class_kind`). Live score 148/150 on a 150-case sample; rules-only 811/811.
+
+**Chat history (P4).** `src/node/chatlog.ts` (local only, 200 msgs / 30 days); `chatHistory` / `chatClear` IPC;
+`src/node/view.ts` rebuilds rows and question states.
+
+**Timetable/exams (P5).** `src/core/timetableImport.ts` (port of the personal app's `term_import.py`/`exam_import.py`,
+several terms per import, TBA list, odd-code note), UI `src/renderer/components/timetableImport.ts`; the engine
+skips the feed's all-day "No Classes" days. Test screenshots `~/Downloads/fall26test.png`, `winter27test.png`;
+recorded Gemini read `test/timetable-read.json`.
+
+**Discord (P6).** Relay `relay/` = Cloudflare Worker `duely-relay` (https://duely-relay.zaidahmad8060-32f.workers.dev,
+KV `LINKS` b614a6a5…, hourly sweep at :17; deploy `cd relay && npx wrangler@4 deploy`). Secrets set:
+`DISCORD_BOT_TOKEN`, `DISCORD_CLIENT_SECRET`, `STATE_KEY`; vars in `relay/wrangler.jsonc` (`GUILD_ID`, `ROLE_ID`,
+client id). Discord app "Duely" id 1558519461504614493 (private bot; Server Members intent; Create Invite + Kick +
+Manage Roles). Server `1558321208481685534` locked down; only the "Duely user" role (1558529099989913791) can see it;
+the sweep never removes the owner. App side `src/node/discord.ts`, `src/renderer/components/discordRow.ts`; cloud
+mode sends from the script (`discord()` in `src/gas/main.ts`).
+
+**Release (P7).** Unsigned (owner's choice): Windows NSIS per-user, macOS dmg+zip arm64/x64 ad-hoc, Linux
+AppImage+deb. `.github/workflows/release.yml`: tag `v*` → build + packaged smoke on 3 OSes → **draft** release
+(pre-release for `-beta`; the last job pins the tag). Auto-update `src/main/updates.ts` (electron-updater):
+Windows/AppImage install on restart, macOS/deb get a Download link. How to cut a release: `docs/DEVELOPING.md`
+(**check the draft's tag is `v…` before publishing**; editing a draft via the API once left it `untagged-…`).
+
+**Website.** `~/Documents/GitHub/ZaidAhmadWebsite` (pushing `main` deploys zaidahmad.dev via Cloudflare's Git
+integration; ask before pushing). Has the Duely project page `projects/duely.html`; the owner asked that the
+personal app (Syllabus) not be mentioned anywhere on the site. Security headers in `_headers` (CSP allows only
+own scripts + Google Fonts, jsDelivr, raw.githubusercontent.com, Web3Forms, Cloudflare Insights); `.assetsignore`
+hides repo files. Owner still to turn on Cloudflare "Always Use HTTPS".
 
 ## Live test setup (throwaway Google account)
-- **Account:** `zaidahmad181818@gmail.com` (Chrome profile slot `/u/2/`). Cloud project **duely-511212**
-  ("Duely" consent screen, External, **Testing**, test user = itself).
-- **Private files:** `~/.local/share/duely-dev/` (chmod 700, outside the repo; never print them):
-  - `live/client.json`: the Desktop OAuth client (from duely-511212);
-  - `live/live.json`: the dev tool's sign-in (refresh token) + the proof-of-concept script's link + key;
-  - `live/gemini.key`: the current test Gemini key (AI Studio, starts `AQ.`). **The owner should delete
-    it in AI Studio after testing**; two Gemini keys have appeared in chat and screenshots.
-  - `home-live/`: the test app's data folder for the end-to-end run (onboarding partly done);
-  - `home-demo/`: demo data for screenshots;
-  - `shots.sh`: the screenshot runner (xvfb).
-- **Apps Script projects in that account** (both named "Duely"):
-  - the proof of concept, `1z6GFk0P…` (its timer was deleted; it has its own "Brightspace" calendar);
-  - the real app install from the end-to-end run, `1y47cwwDPLSz1aD23nVQocXHf0DigrqDL8dF75Qb7-qZcUegnGR5n6cs6`
-    (approved, timer running every 10 min, its own "Brightspace" calendar).
-  - So the test account has **two "Brightspace" calendars**. Clean up the old proof-of-concept one later.
-- **Test feeds** (public, in the repo):
-  - `https://raw.githubusercontent.com/zaidahmad16/Duely-public-/p3-ui/test/fixture.ics` (2030 dates);
-  - `…/p3-ui/test/fixture-announcements.xml` (a COMP 2401 "midterm moved" post).
-- **Dev tool:** `DUELY_LIVE_DIR=~/.local/share/duely-dev/live node --experimental-strip-types
-  scripts/gas-live.ts login|install|deploy|state|post|runs|ai`. It works on the proof-of-concept project.
-
-## Where the end-to-end run stopped
-The owner is going through the real onboarding in the built app, launched with
-`DUELY_HOME=~/.local/share/duely-dev/home-live npx electron .`:
-1. Brightspace link ✓
-2. Google connected ✓; cloud setup: API on ✓, install ✓, approved ✓ (`duelySetup` ran; the first sync
-   ran)
-3. **AI step**: was failing because of the two Gemini bugs below (now fixed in `104bae2`). Redo it with
-   Gemini + the key + `gemini-flash-lite-latest`.
-
-Then finish:
-- Upcoming should say "Updated by Duely in the cloud";
-- tick an item → ✓ in the test calendar within a few minutes;
-- answer a question;
-- Settings → Google shows "Duely in your Google account";
-- try email alerts;
-- Disconnect stops the timer.
-
-The **"scratchpad"** paths used earlier in the session are gone for a new session. Use
-`~/.local/share/duely-dev/`. The old app may still be running with a scratchpad `DUELY_HOME`. Close it and
-relaunch with `home-live` from the new location.
-
-## Bugs found live and fixed this session (all have tests)
-- `process.env` in shared code crashed the script's error path (no Node globals in the bundle now).
-- Apps Script: calendar via the advanced service; channel via key; replies synchronous.
-- Editor/settings links opened in the wrong Google account → `?authuser=`.
-- The setup screen waited up to 2.5 min after approval → ✓ at once now.
-- Test connection could hang → 20 s per request; "still working" text on slow actions.
-- A test copy of Duely collided with a running one → its own Electron profile under `DUELY_HOME`.
-- **Gemini:** the 4×4 test image is refused, so screenshots always showed ✗ → now a 64×64 image.
-  `gemini-flash-latest` was overloaded and `gemini-2.5-flash` is gone for new users → the suggestion is
-  now `gemini-flash-lite-latest` (0.5 s; passes chat, reading and screenshots).
-- `serial()` crash on saved items missing a date; review sessions and "Final Project" classed as exams;
-  wrong locale (Chromium en-GB vs system en-CA).
-
-## Done 2026-10-10 (after the handoff above was written)
-- **Duely picks the AI model** (`src/llm/models.ts`): lists the key's models, tries Duely's suggestions in order,
-  skips overloaded/missing ones. The Model field is under Advanced (empty = automatic).
-- **Test data:** `test/demo/calendar.ics` (83 made-up events, 14 courses, Fall 2026 + Winter 2027) and
-  `test/demo/rss/*.xml` (9 announcement feeds). Raw links: `https://raw.githubusercontent.com/zaidahmad16/Duely-public-/p3-ui/test/demo/...`.
-  Test screenshots: `~/Downloads/fall26test.png`, `~/Downloads/winter27test.png`.
-- **Timetable and exam import (P5 part 1)**, matching the personal Duely's Timetable page (that repo is
-  read-only: port from it, never edit it). Core: `src/core/timetableImport.ts` (port of `term_import.py` and
-  `exam_import.py`, several terms per import, TBA list, odd-code note); UI: `src/renderer/components/timetableImport.ts`
-  (Settings → Sources and onboarding step 4). The engine now also skips classes on the feed's all-day
-  "No Classes" days (`timetableItems(cfg, tz, feedItems)`), locally and in the script. Live Gemini read of both test
-  screenshots was exact (recorded in `test/timetable-read.json`). Owner still has to try it in the test app.
-- "Tutorials classed as assignments" was **not a bug**: `src/core/kinds.ts` categorizes by title on purpose.
-
-## P6 Discord (done 2026-10-10)
-- **Relay:** `relay/` (Cloudflare Worker `duely-relay`, https://duely-relay.zaidahmad8060-32f.workers.dev, KV `LINKS`
-  b614a6a5…, hourly sweep at :17). Secrets set: `DISCORD_BOT_TOKEN`, `DISCORD_CLIENT_SECRET`, `STATE_KEY`; the client
-  id and `GUILD_ID` are vars in `relay/wrangler.jsonc`. Deploy: `cd relay && npx wrangler@4 deploy`.
-- **Discord app** "Duely" (id 1558519461504614493, owner's account): bot private (install link None), Server
-  Members intent on, redirect `…/discord/callback`. Bot is in the Duely server (Create Invite + Kick Members).
-- **Server lockdown** done by the owner: verification Low, content filter all, mentions only, voice channel gone,
-  members can't post. Check: threads permission off and invites revoked (2 invites existed at 13:00).
-- **App:** `src/node/discord.ts`, `src/renderer/components/discordRow.ts`; local mode sends from the desktop, cloud
-  mode from the script (`src/gas/main.ts` `discord()`), daily `/seen` from both.
-- **"Duely user" role** (id 1558529099989913791, relay var `ROLE_ID`): given on Connect and by the hourly check;
-  @everyone can't view the server. The bot has Create Invite + Kick Members + Manage Roles.
-- **Live results:** Connect + test DM ✓ (12:57). Laptop-off: app closed 13:08, the script sent the "Quiz 3 moved"
-  alert through the relay at 13:18 ✓ (owner to confirm the DM text arrived).
-- **Owner to check:** the 2 old invite links are revoked (the bot can't see invites).
-- **TODO before real students:** reset the bot token and client secret (both were pasted into chat), then
-  `wrangler secret put` them again. Bot avatar: `~/Desktop/duely-pfp.png` (owner uploads in the portal).
-- **Next milestone: P4** (chat polish: history across sessions, proposal flows).
-
-## P4 (2026-10-10)
-- Chat saved on this computer (`src/node/chatlog.ts`, 200 messages / 30 days), restored with live ticks and question
-  states; Clear chat; typed yes/no/undo settle cards; "what do you need from me?" lists open questions.
-- **Live eval** `node --experimental-strip-types test/eval_models.ts --limit 150 --delay 6000` (key from
-  `~/.local/share/duely-dev/live/gemini.key`; Gemini free tier ≈ 2 runs a day). Found and fixed: Gemini thought
-  signatures (the agent failed every multi-step answer), kind narrowing, tutorial classes, calendar months.
-  Last full run 148/150 with the agent working; rules-only now 811/811.
-- **Still to do:** re-run the "tutorial-classes" templates live after the quota resets (`--only "tutorial-classes:this week,tutorial-classes:tomorrow"`);
-  chat screenshots in xvfb (needs AI quota too); owner check: ask, quit, reopen, history there, Clear chat.
-
-## P7 (2026-10-10)
-- Unsigned installers (owner's choice): Windows NSIS per-user, macOS dmg+zip arm64/x64 (ad-hoc), Linux AppImage+deb.
-  `.github/workflows/release.yml`: tag `v*` → build + packaged smoke on 3 OSes → **draft** release (pre-release for
-  `-beta`). How to cut one: `docs/DEVELOPING.md`.
-- Auto-update: `src/main/updates.ts` (electron-updater); Windows/AppImage install on restart, macOS/deb get a link.
-- `v0.2.0-beta.1` built and verified (all 15 files incl. latest*.yml); notes added; **owner publishes** on the
-  Releases page. Then: cut `v0.2.0-beta.2` to test that beta.1 offers the update (AppImage here).
-- Not done: a real Windows/Mac install (needs someone with one); merging to `main`/v1.0 after the UI review.
-
-## Left to do (P3.5 Phase 1)
-1. Finish the end-to-end run above.
-2. **Publish requirements:** "Publish app" stays disabled until Branding is complete (probably app home
-   page / privacy policy links → the repo's `PRIVACY.md`). Find out exactly, publish the test project,
-   then update `docs/SETUP.md` ("Stay connected"). Also add: the Audience "Add users" Save needed a second
-   click.
-3. **Rewrite `PRIVACY.md` / `TERMS.md` for the cloud engine:**
-   - what lives in the student's Google account (the AI key, links, state);
-   - AI and email continuing while the laptop is off;
-   - the new permissions;
-   - how to remove everything.
-   Bump `TERMS_VERSION` (`src/renderer/components/doc.ts`).
-4. Update `docs/SETUP.md` for the cloud setup steps and the Gemini model advice.
-5. Confirm email alerts actually send (`MailApp`).
-6. CI check on `p3-ui`, then the owner's UI review → merge `p3-ui` to main.
-7. Cleanup when done: the proof-of-concept script and its calendar, the test Gemini keys, and (if the
-   owner wants) the throwaway Cloud project.
-
-## Also pending (owner side)
-- **Discord server "Duely"** (owner's account, id `1558321208481685534`) was created for P6. Its lockdown
-  isn't finished: @everyone read-only, no invites, mentions-only notifications, delete the voice channel, a
-  welcome note.
-- **P6 design** (hosted bot DMs, Cloudflare Worker relay, verified-users-only server) is in PROGRESS.md.
-  Nothing is built yet.
+- Account `zaidahmad181818@gmail.com` (Chrome profile slot `/u/2/`), Cloud project **duely-511212** (consent screen
+  "Duely", External, Testing).
+- Private files `~/.local/share/duely-dev/` (chmod 700; never print): `live/client.json` (Desktop OAuth client),
+  `live/live.json` (dev tool sign-in + PoC script link/key), `live/gemini.key` (test key), `home-live/` (the test
+  app's data, **cloud mode, onboarded, Discord connected, demo calendar + PSYC2101 feed**), `home-demo/`,
+  `home-site/` (demo copy with a placeholder local AI, for screenshots), `shots.sh`.
+- Test app: `cd ~/Documents/GitHub/Duely-public && npm run build && DUELY_HOME=~/.local/share/duely-dev/home-live npx electron .`
+  (close an old copy first: its PID is in `home-live/electron/SingletonLock`).
+- Apps Script projects in that account: the real install `1y47cwwDPLSz1aD23nVQocXHf0DigrqDL8dF75Qb7-qZcUegnGR5n6cs6`
+  (timer every 10 min, holds the Discord token) and the old PoC `1z6GFk0P…`.
+- Test data (public, in the repo): `test/demo/calendar.ics` (83 events, 14 courses, Fall 2026 + Winter 2027),
+  `test/demo/rss/*.xml` (9 feeds); raw links `https://raw.githubusercontent.com/zaidahmad16/Duely-public-/p3-ui/test/demo/...`.
+- Dev tool: `DUELY_LIVE_DIR=~/.local/share/duely-dev/live node --experimental-strip-types scripts/gas-live.ts login|install|deploy|state|post|runs|ai` (PoC project).
 
 ## Commands
-- `npm test` (158 tests: node:test with `--experimental-strip-types`)
-- `npm run typecheck`
-- `npm run build` (builds the Apps Script bundle too)
-- `npm run build:gas`
+- `npm test` (192+ tests), `npm run typecheck`, `npm run build` (+ Apps Script bundle), `npm run dist` (installers, local).
+- Live chat eval: `node --experimental-strip-types test/eval_models.ts --limit 150 --delay 6000` (Gemini free tier).
 - Smoke: `env -u DBUS_SESSION_BUS_ADDRESS DUELY_HOME=<tmp> dbus-run-session -- xvfb-run -a npx electron . --smoke --no-sandbox`
-- Screenshots: `~/.local/share/duely-dev/shots.sh NAME light|dark WxH "out1|out2" "js1@@js2" [fresh]`. It
-  uses `DUELY_SHOT*` env vars; the demo feed is served from `~/.local/share/duely-dev/www` on port 8766, so
-  start `python3 -m http.server 8766 --directory ~/.local/share/duely-dev/www` first.
-- CI status without `gh`: `curl -s "https://api.github.com/repos/zaidahmad16/Duely-public-/actions/runs?branch=p3-ui&per_page=1"`
+  (a packaged copy also checks the bundled engine).
+- Screenshots: `~/.local/share/duely-dev/shots.sh NAME light|dark WxH "out1|out2" "js1@@js2" [fresh]`; the demo
+  feed needs `python3 -m http.server 8766 --directory ~/.local/share/duely-dev/www`. Hide dev banners in a shot with
+  JS: a `<style>.banners,.side-foot{display:none!important}</style>`.
+- CI / releases without `gh`: `curl -s "https://api.github.com/repos/zaidahmad16/Duely-public-/actions/runs?per_page=3"`;
+  authenticated calls can use `git credential fill` for the token (never print it).
+- Gotcha: `pkill -f <pattern>` kills the calling shell when the pattern appears in its own command line; kill by PID.
