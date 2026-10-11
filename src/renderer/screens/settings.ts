@@ -328,14 +328,16 @@ export function settingsScreen(app: AppCtx): Screen {
   }
 
   // ---- About
-  function about() {
+  function about(st: Settings) {
     const link = (label: string, run: () => void) => h("button", { class: "btn btn-ghost btn-sm", on: { click: run } }, label);
     const el = section("About",
       updateRow(),
       settingRow("Terms of Service", null, link("Read", () => openDoc("terms"))),
-      settingRow("Privacy Policy", "Your data stays on this computer and in your own Google account, except what goes to the services you connect.", link("Read", () => openDoc("privacy"))),
+      settingRow("Privacy Policy", "Your data stays on this computer and in your own Google account, except what goes to the services you connect and the anonymous usage count below.", link("Read", () => openDoc("privacy"))),
       settingRow("Setup guide", "Step by step: Brightspace, Google, your AI, announcements.", link("Read", () => openDoc("setup"))),
-      settingRow("Source code", "Open source under the MIT License.", link("GitHub", () => void api.openLink("https://github.com/zaidahmad16/Duely-public-"))));
+      settingRow("Source code", "Open source under the MIT License.", link("GitHub", () => void api.openLink("https://github.com/zaidahmad16/Duely-public-"))),
+      settingRow("Send anonymous usage counts", "Once a day: a random ID, Duely's version and your OS, so the developer knows how many people use it. Nothing about you, your courses or your calendar.",
+        toggle(st.usageCounts, (v) => save({ usageCounts: v }), { label: "Send anonymous usage counts" })));
     el.classList.add("section-about");
     return el;
   }
@@ -369,14 +371,14 @@ export function settingsScreen(app: AppCtx): Screen {
   function paint() {
     if (!s) return;
     clear(body);
-    body.append(sources(s), ai(s), notifications(s), study(s), google(s), about());
+    body.append(sources(s), ai(s), notifications(s), study(s), google(s), about(s));
   }
 
   return {
     el: root,
     mount: () => { void api.settings().then((v) => { s = v; paint(); }); },
     refresh: () => {},
-    status: () => { const old = body.querySelector(".section-about"); if (old) old.replaceWith(about()); },   // update progress
+    status: () => { const old = body.querySelector(".section-about"); if (old && s) old.replaceWith(about(s)); },   // update progress
     destroy: () => {},
   };
 }

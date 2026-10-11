@@ -22,6 +22,7 @@ export const api = {
   updateCheck: () => call<void>("updateCheck"),
   updateRestart: () => call<void>("updateRestart"),
   updateAuto: (on: boolean) => call<void>("updateAuto", on),
+  usageNoticeSeen: () => call<void>("usageNoticeSeen"),
   settings: () => call<Settings>("settings"),
   saveSettings: (p: SettingsPatch) => call<Settings>("saveSettings", p),
   testAI: () => call<CapResult>("testAI"),

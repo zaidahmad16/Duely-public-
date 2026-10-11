@@ -56,6 +56,8 @@ export type Status = {
   google: boolean;
   /** connected, but Google's sign-in expired (a client in "Testing" expires every 7 days); one click reconnects */
   googleExpired: boolean;
+  /** show the one-time note about anonymous usage counts (until the student clicks Got it) */
+  usageNotice: boolean;
   /** a Google client file was given before (reconnecting doesn't need it again) */
   googleClient: boolean;
   /** the AI is set up and its connection test passed (required to use the app) */
@@ -83,6 +85,8 @@ export type Settings = {
   digestTime: string;
   digestWeekly: boolean;
   briefings: boolean;
+  /** anonymous daily usage count to the developer (PostHog); on unless turned off */
+  usageCounts: boolean;
   calendarName: string;
   /** imported timetables (src/core/timetableImport.ts), newest term last */
   terms: { key: string; name: string; start: string; end: string; classes: number; courses: string[] }[];

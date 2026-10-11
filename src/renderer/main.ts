@@ -160,6 +160,11 @@ function bannerSpecs(s: Status | null): BannerSpec[] {
     out.push({ id: "cloud-quiet", tone: "warn", title: "Can't reach Duely in your Google account", text: "Showing the last update. Duely keeps trying.",
       action: { label: "Try again", run: () => void ctx.sync() } });
   }
+  if (s.usageNotice) {
+    out.push({ id: "usage", tone: "info", title: "Duely sends an anonymous daily usage count",
+      text: "Just a random ID, the version and your OS. Turn it off in Settings → About.",
+      action: { label: "Got it", run: () => void api.usageNoticeSeen().then(() => ctx.refreshStatus()) } });
+  }
   if (s.weakKeychain) {
     out.push({ id: "keyring", tone: "info", title: "Saved keys are only lightly protected", text: "This computer has no keyring, so the system can't encrypt them.",
       action: { label: "How to fix", run: () => openDoc("setup", "\"Saved keys are only lightly protected\"") } });
