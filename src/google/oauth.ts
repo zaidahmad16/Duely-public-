@@ -89,6 +89,21 @@ export async function connect(client: Client, opts: { open: (url: string) => Pro
   }
 }
 
+/** Remembers whether Google's sign-in has expired: `mark(true)` when a token call needs a new sign-in,
+ *  `mark(false)` when one works again. A client in Google's "Testing" status expires every 7 days. */
+export function trackExpiry(get: () => Promise<string>, mark: (expired: boolean) => Promise<void>): () => Promise<string> {
+  return async () => {
+    try {
+      const t = await get();
+      await mark(false);
+      return t;
+    } catch (e) {
+      if (e instanceof NeedsAuth) await mark(true);
+      throw e;
+    }
+  };
+}
+
 /** Access tokens from the refresh token, reused until a minute before they expire. */
 export function tokenSource(client: Client, refreshToken: string, f: typeof fetch = fetch): () => Promise<string> {
   let cached: { token: string; until: number } | null = null;

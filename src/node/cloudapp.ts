@@ -3,6 +3,7 @@
 // against the real bundle in the Apps Script sandbox (test/cloudapp.test.ts).
 import { randomBytes } from "node:crypto";
 import type { Store } from "../core/util.ts";
+import { NeedsAuth } from "../core/gcal.ts";
 import type { ScriptApi } from "../google/script.ts";
 import type { Upcoming } from "../shared/types.ts";
 import { type Bundle, type CloudLink, type CloudState, cached, channel, keep, update } from "./cloud.ts";
@@ -115,13 +116,20 @@ export function cloudApp(d: CloudAppDeps) {
     async start(): Promise<void> { await (await ch()).post({ op: "start" }); },
     async forget(): Promise<void> { await (await ch()).post({ op: "forget" }); },
 
-    /** Puts this app's engine in the script when it's newer. `needsApproval`: run setup again. */
-    async updateEngine(): Promise<{ changed: boolean; needsApproval: boolean }> {
+    /** Puts this app's engine in the script when it's newer. `needsApproval`: run setup again.
+     *  `needsGoogle`: the desktop's Google sign-in expired, so the old engine keeps running until the
+     *  student reconnects (only this update needs the sign-in; syncing doesn't). */
+    async updateEngine(): Promise<{ changed: boolean; needsApproval: boolean; needsGoogle: boolean }> {
       const l = await d.link(), b = d.bundle?.();
-      if (!l || !b || !d.scriptApi) return { changed: false, needsApproval: false };
-      const r = await update(await d.scriptApi(), l, b, d.tz());
-      if (r.changed) await d.saveLink(r.link);
-      return { changed: r.changed, needsApproval: r.needsApproval };
+      if (!l || !b || !d.scriptApi) return { changed: false, needsApproval: false, needsGoogle: false };
+      try {
+        const r = await update(await d.scriptApi(), l, b, d.tz());
+        if (r.changed) await d.saveLink(r.link);
+        return { changed: r.changed, needsApproval: r.needsApproval, needsGoogle: false };
+      } catch (e) {
+        if (e instanceof NeedsAuth) return { changed: false, needsApproval: false, needsGoogle: true };
+        throw e;
+      }
     },
   };
 }

@@ -86,3 +86,18 @@ test("offline: the last state is shown; Sync now waits for the script's run", as
   const r = await app.sync({ everyMs: 0, sleep: async () => { if (!ran) { ran = true; await s.run("duelySyncNow"); } } });
   assert.equal(r.syncQueued, false);
 });
+
+test("an engine update with an expired Google sign-in waits for a reconnect instead of failing", async () => {
+  const { NeedsAuth } = await import("../src/core/gcal.ts");
+  const saved: CloudLink[] = [];
+  const expired = async () => { throw new NeedsAuth("Google sign-in expired"); };
+  const api = { upload: expired, version: expired, redeploy: expired } as any;
+  const app = cloudApp({ store: memStore(), link: async () => LINK, saveLink: async (l) => { saved.push(l!); }, fetch: fetch,
+    tz: () => "America/Toronto", notify: async () => {}, bundle: () => ({ code: "x", version: "v2" }), scriptApi: async () => api });
+  assert.deepEqual(await app.updateEngine(), { changed: false, needsApproval: false, needsGoogle: true });
+  assert.equal(saved.length, 0, "the link keeps the old version, so the update is tried again after reconnecting");
+  const broken = { upload: async () => { throw new Error("500"); } } as any;
+  const app2 = cloudApp({ store: memStore(), link: async () => LINK, saveLink: async () => {}, fetch: fetch,
+    tz: () => "America/Toronto", notify: async () => {}, bundle: () => ({ code: "x", version: "v2" }), scriptApi: async () => broken });
+  await assert.rejects(app2.updateEngine(), /500/, "other failures still surface");
+});

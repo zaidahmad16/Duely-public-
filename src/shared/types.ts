@@ -54,6 +54,8 @@ export type Status = {
   onboarded: boolean;
   feedSet: boolean;
   google: boolean;
+  /** connected, but Google's sign-in expired (a client in "Testing" expires every 7 days); one click reconnects */
+  googleExpired: boolean;
   /** a Google client file was given before (reconnecting doesn't need it again) */
   googleClient: boolean;
   /** the AI is set up and its connection test passed (required to use the app) */

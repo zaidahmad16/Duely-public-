@@ -133,6 +133,7 @@
 .setting > .test-results, .setting > .edit-line, .setting > .confirm-line { grid-column: 1 / -1; }
 .inline-state, .pair { display: flex; align-items: center; gap: 10px; }
 .state-ok { display: inline-flex; align-items: center; gap: 5px; color: var(--success); font-size: 13px; font-weight: 500; }
+.state-warn { display: inline-flex; align-items: center; gap: 5px; color: var(--warn); font-size: 13px; font-weight: 500; }
 .value-text { color: var(--text-2); font-size: 13.5px; }
 .edit-line, .confirm-line { display: flex; gap: 8px; align-items: center; }
 .edit-line .input { flex: 1; }

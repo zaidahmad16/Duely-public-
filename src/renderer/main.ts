@@ -126,14 +126,26 @@ function paintStatus() {
   current?.status();
 }
 
+/** Signs in to Google again with the client file saved before (no Google Cloud steps, nothing disconnected). */
+async function reconnectGoogle(): Promise<boolean> {
+  toast("Finish signing in in your browser…");
+  try { await api.connectGoogle(); await ctx.refreshStatus(); toast("Google connected"); return true; }
+  catch (e) { toast((e as Error).message); return false; }
+}
+
 function bannerSpecs(s: Status | null): BannerSpec[] {
   if (!s) return [];
   const out: BannerSpec[] = [];
   const settings = () => show("settings");
   if (!s.google) {
     out.push({ id: "google", tone: "warn", title: "Google Calendar isn't connected", text: "Duely can't add anything to your calendar yet.", action: { label: "Connect", run: settings } });
-  } else if (s.sync.needsGoogle) {
-    out.push({ id: "google", tone: "warn", title: "Google needs to be reconnected", text: "Duely can't update your calendar until access is restored.", action: { label: "Reconnect", run: settings } });
+  } else if (s.googleExpired || s.sync.needsGoogle) {
+    // Google's sign-in expired (every 7 days while the student's client is in "Testing"). In cloud mode the
+    // script keeps syncing; the desktop only needs Google to put a new engine version in it.
+    const reconnect = s.googleClient ? () => void reconnectGoogle() : settings;
+    out.push(s.engine === "cloud"
+      ? { id: "google", tone: "info", title: "Sign in to Google again to finish an update", text: "Your calendar keeps updating in the meantime.", action: { label: "Reconnect", run: reconnect } }
+      : { id: "google", tone: "warn", title: "Google needs to be reconnected", text: "Duely can't update your calendar until you sign in again.", action: { label: "Reconnect", run: reconnect } });
   } else if (s.sync.error) {
     out.push({ id: "sync", tone: "warn", title: "Sync isn't working", text: s.sync.error, action: { label: "Try again", run: () => void ctx.sync() } });
   }

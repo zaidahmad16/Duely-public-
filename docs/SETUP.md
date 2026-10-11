@@ -73,12 +73,12 @@ Right after you connect, Duely offers to run in your own Google account, so your
 
 When it's on, **Settings → Google** shows **Duely in your Google account** (with a switch to pause it) and **Email me alerts**, which also sends your alerts to your Gmail. Your AI key is kept in the script too, so it can read announcements while your computer is off (see the [Privacy Policy](PRIVACY.md)).
 
-### Stay connected (recommended)
+### Google's weekly sign-out
 
-While your Google client is in **Testing**, Google signs Duely out every **7 days**, and you'd see "Google needs to be reconnected". To stop that:
+Your Google client stays in **Testing**, and that's fine: there's nothing to publish. Google ends a Testing client's sign-in after **7 days**, but that only matters to Duely now and then:
 
-1. In Google Cloud, go to **Google Auth Platform → Audience** and click **Publish app**, then confirm. The status changes to **In production**. You don't need to submit it for verification, because only you use it.
-2. In Duely, go to **Settings → Google**, click **Disconnect**, then connect again (step "Connect it in Duely" above). The new sign-in doesn't expire.
+- **If Duely runs in your Google account** (above), it keeps syncing, reading announcements and sending alerts after the 7 days. Duely only needs your sign-in again when a new version has to update its script. Then you'll see **Sign in to Google again to finish an update**: click **Reconnect**, choose your account and allow. Nothing else changes.
+- **If Duely runs on this computer only**, it uses the sign-in for every sync, so about once a week you'll see **Google needs to be reconnected**. Click **Reconnect** (one Google sign-in, no Google Cloud steps). To avoid this, set up **Keep syncing when this computer is off** in **Settings → Google**.
 
 ## 3. Your AI
 
@@ -197,8 +197,8 @@ If Duely runs in your Google account, a new version updates that script too, by 
 
 ## Troubleshooting
 
-**"Google needs to be reconnected"**
-Your Google client is still in Testing, so the sign-in expired after 7 days. Publish it (see "Stay connected") and connect again.
+**"Google needs to be reconnected" / "Sign in to Google again to finish an update"**
+Google ended Duely's sign-in (it does that every 7 days for a client in Testing, see "Google's weekly sign-out"). Click **Reconnect** and sign in again. If Reconnect says the client was deleted or disabled, use **Disconnect** and connect again with a new client file.
 
 **"Google Apps Script API" is still off**
 Open [script.google.com/home/usersettings](https://script.google.com/home/usersettings) in the same Google account you connected, switch it on, wait a few seconds, and click **I turned it on** again.
@@ -207,7 +207,7 @@ Open [script.google.com/home/usersettings](https://script.google.com/home/userse
 If you're signed in to several Google accounts, check the account picture at the top right of the editor. Duely opens links in the account you connected, but if you switched accounts, close the tab and click **Open it again** in Duely.
 
 **"Access blocked" or "Error 403: access_denied" when connecting Google**
-Your account isn't a test user of your Google client. Add it under **Google Auth Platform → Audience → Test users**, or publish the app.
+Your account isn't a test user of your Google client. Add it under **Google Auth Platform → Audience → Test users**.
 
 **"That's a Web application client"**
 You created the wrong kind of client. Create a new one with application type **Desktop app**, and download its JSON.

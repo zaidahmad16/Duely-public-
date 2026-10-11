@@ -73,6 +73,7 @@ export function registerApi(c: Ctx): void {
       onboarded: !!cfg.onboarded,
       feedSet: !!cfg.feed_url,
       google: await svc.secrets.has("google_refresh"),
+      googleExpired: !!(await store.get("google-expired")) && await svc.secrets.has("google_refresh"),
       googleClient: await svc.secrets.has("google_client"),
       aiReady: aiReady(cfg, (await svc.secrets.get("llm_key").catch(() => null)) ?? ""),
       weakKeychain: svc.weakKeychain,
@@ -237,8 +238,10 @@ export function registerApi(c: Ctx): void {
     const refresh = await connect(client, { open: (url) => openSafe(url), scopes: [SCOPE, ...SCRIPT_API_SCOPES] });
     await svc.secrets.set("google_client", text);
     await svc.secrets.set("google_refresh", refresh);
+    await store.put("google-expired", null);
     c.showWindow();
     syncSoon();
+    if (await cloudOn()) void svc.updateEngine().then(c.changed, (e) => console.error("engine update failed:", e));   // one that waited for this sign-in
   });
 
   handle("disconnectGoogle", async () => {

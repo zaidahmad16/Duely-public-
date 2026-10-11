@@ -261,7 +261,16 @@ export function settingsScreen(app: AppCtx): Screen {
     const connected = !!app.status?.google;
     const acct = h("div", { class: "inline-state" });
     const file = h("input", { type: "file", accept: ".json,application/json", class: "sr-only", attrs: { "aria-label": "Google client file" } });
-    if (connected) acct.append(h("span", { class: "state-ok" }, icon("check", 14), "Connected"));
+    if (connected && app.status?.googleExpired && app.status.googleClient) {
+      // the sign-in expired: sign in again with the saved client; Duely's script and calendar stay as they are
+      const again = h("button", { class: "btn btn-primary btn-sm" }, h("i", { class: "spinner" }), h("span", { class: "btn-label" }, "Reconnect"));
+      again.addEventListener("click", async () => {
+        spinnerButton(again, true, "Finish in your browser…");
+        try { await api.connectGoogle(); await app.refreshStatus(); toast("Google connected"); paint(); }
+        catch (e) { toast((e as Error).message); spinnerButton(again, false, "Reconnect"); }
+      });
+      acct.append(h("span", { class: "state-warn" }, icon("warn", 14), "Sign-in expired"), again);
+    } else if (connected) acct.append(h("span", { class: "state-ok" }, icon("check", 14), "Connected"));
     else {
       // with a client saved before, connecting again doesn't need the file
       const saved = !!app.status?.googleClient;

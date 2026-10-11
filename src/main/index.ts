@@ -129,10 +129,7 @@ else {
     jobs = startJobs(svc.deps, changed, {
       on: async () => !!(await svc.cloudLink()),
       read: () => svc.cloud.refresh(),
-      async update() {
-        const r = await svc.cloud.updateEngine();
-        if (r.needsApproval) await svc.store.put("config", { ...((await svc.store.get<any>("config")) ?? {}), cloud_needs_approval: true });
-      },
+      update: () => svc.updateEngine(),
     });
     void svc.discordCheckIn();
     const checkIns = setInterval(() => void svc.discordCheckIn(), 6 * 3600e3);

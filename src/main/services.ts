@@ -8,7 +8,7 @@ import { scriptApi } from "../google/script.ts";
 import type { Bundle, CloudLink } from "../node/cloud.ts";
 import { type CloudApp, cloudApp } from "../node/cloudapp.ts";
 import { NeedsAuth, googleCal } from "../core/gcal.ts";
-import { type Client, parseClient, tokenSource } from "../google/oauth.ts";
+import { type Client, parseClient, tokenSource, trackExpiry } from "../google/oauth.ts";
 import { makeLLM } from "../llm/adapters.ts";
 import type { LLM, Provider } from "../llm/types.ts";
 import { RELAY_URL, checkIn, parseLink, sendAlert } from "../node/discord.ts";
@@ -21,7 +21,7 @@ export type Services = {
   deps: Deps; secrets: Secrets; store: ReturnType<typeof fileStore>; weakKeychain: boolean;
   /** cloud mode (P3.5): the engine in the student's Google account */
   cloud: CloudApp; cloudLink(): Promise<CloudLink | null>; saveCloudLink(l: CloudLink | null): Promise<void>;
-  scriptApi(): ReturnType<typeof scriptApi>; bundle(): Bundle | null; googleToken(): Promise<string>;
+  scriptApi(): ReturnType<typeof scriptApi>; bundle(): Bundle | null; googleToken(): Promise<string>; updateEngine(): Promise<void>;
   /** Discord's daily check-in (the relay removes links unseen for 30 days); at most once a day */
   discordCheckIn(): Promise<void>;
 };
@@ -54,13 +54,14 @@ export function services(showWindow: () => void): Services {
   if (weakKeychain && !safeStorage.isEncryptionAvailable()) safeStorage.setUsePlainTextEncryption?.(true);
 
   let tokens: { key: string; get: () => Promise<string> } | null = null;
+  const markExpired = async (on: boolean) => { if (!!(await store.get("google-expired")) !== on) await store.put("google-expired", on || null); };
   /** An access token from the student's Google sign-in (cached until it nearly expires). */
   async function googleToken(): Promise<string> {
     const [clientText, refresh] = await Promise.all([secrets.get("google_client"), secrets.get("google_refresh")]);
     if (!clientText || !refresh) throw new NeedsAuth("Google isn't connected yet. Connect it in Duely's settings.");
     const client: Client = parseClient(clientText);
     const key = `${client.client_id}\u0000${refresh}`;
-    if (tokens?.key !== key) tokens = { key, get: tokenSource(client, refresh) };
+    if (tokens?.key !== key) tokens = { key, get: trackExpiry(tokenSource(client, refresh), markExpired) };
     return tokens.get();
   }
   const deps: Deps = {
@@ -113,7 +114,12 @@ export function services(showWindow: () => void): Services {
     store, link: cloudLink, saveLink: saveCloudLink, fetch: (i, init) => fetch(i, init), notify: deps.notify,
     tz: () => Intl.DateTimeFormat().resolvedOptions().timeZone, bundle: loadBundle, scriptApi: async () => api(),
   });
-  return { deps, secrets, store, weakKeychain, cloud, cloudLink, saveCloudLink, scriptApi: api, bundle: loadBundle, googleToken, discordCheckIn };
+  /** The bundled engine into the student's script, when it's newer (at start, and after Google is reconnected). */
+  async function updateEngine(): Promise<void> {
+    const r = await cloud.updateEngine();
+    if (r.needsApproval) await store.put("config", { ...((await store.get<any>("config")) ?? {}), cloud_needs_approval: true });
+  }
+  return { deps, secrets, store, weakKeychain, cloud, cloudLink, saveCloudLink, scriptApi: api, bundle: loadBundle, googleToken, discordCheckIn, updateEngine };
 }
 
 /** Linux: is there a notification service that answers? Without one, libnotify blocks the whole
