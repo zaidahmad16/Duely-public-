@@ -28,7 +28,7 @@ To cut a release:
 3. Commit, then tag and push: `git tag v0.3.0-beta.1 && git push origin v0.3.0-beta.1`.
 4. The workflow builds everything and creates a **draft** release (a pre-release for `-beta` tags) with the
    installers and the `latest*.yml` update files.
-5. Check the draft's files and notes, then click **Publish release**. Running copies offer the update within six hours
+5. Check the draft's files and notes, and that its tag is `v…` (not `untagged-…`; a draft edited through the API can lose it, which once published the beta on a stray tag). Then click **Publish release**. Running copies offer the update within six hours
    (or at once with Settings → About → Check for updates).
 
 "Run workflow" on the Release workflow (once it's on `main`) builds the installers without publishing them; they're

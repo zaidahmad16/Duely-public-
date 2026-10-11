@@ -58,4 +58,4 @@ jobs:
     steps:
       - env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release edit "${{ github.ref_name }}" --repo "${{ github.repository }}" --prerelease --draft=true
+        run: gh release edit "${{ github.ref_name }}" --repo "${{ github.repository }}" --tag "${{ github.ref_name }}" --prerelease --draft=true
