@@ -1,11 +1,18 @@
 // The three API shapes. Each turns Duely's messages/tools into the provider's format and back.
+import { sleep } from "../core/util.ts";
 import { type ChatOpts, type ChatResult, type LLM, type LLMConfig, LLMError, type Msg, type Tool, type ToolCall } from "./types.ts";
 
 const jsonHint = (schema: object) =>
   `\n\nAnswer with ONLY a JSON object (no prose, no code fences) matching this JSON schema:\n${JSON.stringify(schema)}`;
 
+/** How long to wait before the one retry of a busy provider (tests set it to 0). */
+export const retry = { delayMs: 2000 };
+
 async function post(f: typeof fetch, url: string, headers: Record<string, string>, body: unknown, signal?: AbortSignal): Promise<any> {
-  const r = await f(url, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body), signal });
+  const send = () => f(url, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body), signal });
+  let r = await send();
+  // overloaded or rate-limited for a moment (Gemini's "high demand" 503): one retry after a short pause
+  if (r.status === 503 || r.status === 429) { await r.text().catch(() => ""); await sleep(retry.delayMs); r = await send(); }
   const text = await r.text();
   if (!r.ok) {
     let msg = text.slice(0, 300);
@@ -25,7 +32,7 @@ const parseArgs = (a: unknown) => {
 export function openai(cfg: LLMConfig, f: typeof fetch = fetch): LLM {
   const base = (cfg.baseUrl || "https://api.openai.com/v1").replace(/\/+$/, "");
   return {
-    label: `${base.includes("openai.com") ? "OpenAI" : new URL(base).host} · ${cfg.model}`,
+    label: `${base.includes("openai.com") ? "OpenAI" : (/^[a-z]+:\/\/([^/]+)/i.exec(base)?.[1] ?? base)} · ${cfg.model}`,
     async chat(messages: Msg[], opts: ChatOpts = {}): Promise<ChatResult> {
       const msgs = messages.map((m) => {
         if (m.role === "tool") return { role: "tool", tool_call_id: m.toolCallId, content: m.content };
@@ -128,7 +135,8 @@ export function gemini(cfg: LLMConfig, f: typeof fetch = fetch): LLM {
         } else if (m.role === "assistant") {
           const parts: any[] = [];
           if (m.content) parts.push({ text: m.content });
-          for (const c of m.toolCalls ?? []) parts.push({ functionCall: { name: c.name, args: c.args ?? {} } });
+          // newer Gemini models refuse a conversation whose tool calls come back without their thought signature
+          for (const c of m.toolCalls ?? []) parts.push({ functionCall: { name: c.name, args: c.args ?? {} }, ...(c.sig ? { thoughtSignature: c.sig } : {}) });
           contents.push({ role: "model", parts: parts.length ? parts : [{ text: "" }] });
         } else {
           contents.push({ role: "user", parts: [...(m.images ?? []).map((i) => ({ inlineData: { mimeType: i.mime, data: i.b64 } })), { text: m.content }] });
@@ -142,7 +150,8 @@ export function gemini(cfg: LLMConfig, f: typeof fetch = fetch): LLM {
       const parts: any[] = j.candidates?.[0]?.content?.parts ?? [];
       return {
         content: parts.filter((p) => typeof p.text === "string").map((p) => p.text).join(""),
-        toolCalls: parts.filter((p) => p.functionCall).map((p, i) => ({ id: `call${i}`, name: String(p.functionCall.name), args: p.functionCall.args ?? {} })),
+        toolCalls: parts.filter((p) => p.functionCall).map((p, i) => ({ id: `call${i}`, name: String(p.functionCall.name), args: p.functionCall.args ?? {},
+          ...(typeof p.thoughtSignature === "string" ? { sig: p.thoughtSignature } : {}) })),
         usage: { input: Number(j.usageMetadata?.promptTokenCount) || 0, output: Number(j.usageMetadata?.candidatesTokenCount) || 0 },
       };
     },

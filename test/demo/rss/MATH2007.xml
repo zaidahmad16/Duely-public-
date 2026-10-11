@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+<channel>
+<title>Announcements - MATH 2007B Elementary Calculus II (Fall 2026)</title>
+<link>https://brightspace.example.ca/d2l/home/7102</link>
+<description>Made-up announcements for Duely's tests (no real course).</description>
+<item>
+<title>Crowdmark access</title>
+<link>https://brightspace.example.ca/d2l/le/news/7102/9001/view</link>
+<guid>7102-9001</guid>
+<pubDate>Wed, 09 Sep 2026 18:00:00 GMT</pubDate>
+<description>&lt;p&gt;You should have received a Crowdmark email. Contact me if not.&lt;/p&gt;</description>
+</item>
+<item>
+<title>Midterm room change</title>
+<link>https://brightspace.example.ca/d2l/le/news/7102/9002/view</link>
+<guid>7102-9002</guid>
+<pubDate>Wed, 07 Oct 2026 18:00:00 GMT</pubDate>
+<description>&lt;p&gt;The midterm on Thursday October 22 is now in Loeb Building LA A720 from 6:00 to 7:30 PM, not Southam Hall. Bring your student card.&lt;/p&gt;</description>
+</item>
+</channel>
+</rss>

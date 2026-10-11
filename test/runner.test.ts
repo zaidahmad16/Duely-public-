@@ -141,3 +141,12 @@ test("tick: full sync every 10 minutes, nothing before setup, overlapping ticks 
 test("plainText turns Slack markup into notification text", () => {
   assert.equal(plainText("*Today* <https://x.ca/a|Quiz 2> and _soon_ <https://y.ca>"), "Today Quiz 2 and soon https://y.ca");
 });
+
+test("a kept item saved without every date field doesn't break the sync", async () => {
+  const { deps, store } = setup();
+  await store.put("actions", { a1: { id: "a1", type: "keep_vanished", key: "vanished:x", status: "proposed", created: Date.now(), summary: "",
+    args: { items: [{ uid: "old-q", course: "COMP 1", title: "Quiz 2", type: "quiz", role: "deadline", start: "2030-10-20T23:59:00-04:00", end: "2030-10-20T23:59:00-04:00", keep: true }] } } });
+  const r = await syncOnce(deps, true);
+  assert.equal(r.error, "");
+  assert.ok(r.items.some((i: any) => i.uid === "old-q"), "kept on the calendar while asked about");
+});

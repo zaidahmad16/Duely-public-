@@ -25,11 +25,13 @@ export function setStartAtLogin(on: boolean): void {
   writeFileSync(file, `[Desktop Entry]\nType=Application\nName=Duely\nExec="${exe.replace(/"/g, '\\"')}" --hidden\nX-GNOME-Autostart-enabled=true\n`);
 }
 
-export function makeTray(icon: string, actions: { open(): void; syncNow(): void; quit(): void }): Tray | null {
+export function makeTray(icon: string, actions: { open(): void; syncNow(): void; quit(): void;
+  /** an update waiting: "Restart to update (v…)" */ update?: () => { label: string; click(): void } | null }): { refresh(): void } | null {
   try {
     const tray = new Tray(nativeImage.createFromPath(icon));
     tray.setToolTip("Duely");
     const menu = () => Menu.buildFromTemplate([
+      ...(() => { const u = actions.update?.(); return u ? [{ label: u.label, click: u.click }, { type: "separator" as const }] : []; })(),
       { label: "Open Duely", click: actions.open },
       { label: "Sync now", click: actions.syncNow },
       { type: "separator" },
@@ -40,7 +42,7 @@ export function makeTray(icon: string, actions: { open(): void; syncNow(): void;
     ]);
     tray.setContextMenu(menu());
     tray.on("click", actions.open);
-    return tray;
+    return { refresh: () => tray.setContextMenu(menu()) };
   } catch (e) {
     console.error("no tray on this desktop:", e);                 // the window still works
     return null;

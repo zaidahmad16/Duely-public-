@@ -1,3 +1,7 @@
+# Continue here
+
+**Read `docs/HANDOFF.md` first** (local only, kept out of git) (current state, rules, live test setup, what's left). Older notes below.
+
 # Continue here (handoff for a fresh session)
 
 Read this, then `docs/PROGRESS.md`, then the plan at
@@ -34,7 +38,8 @@ is separate and must stay untouched; code is copied from it, never personal data
   the sample feed into a new "Brightspace (Duely test)" calendar. The user has to click through Google's
   consent page. Offer to reuse their Desktop client (~/.config/syllabus/client_secret.json) with a temp
   DUELY_HOME, or have them make a fresh one. Don't drive the consent page for them.
-- Next: P3 UI (wizard, Upcoming, Settings; also show the stored proposals).
+- Branch `p3-ui`: P3 UI built to the owner's design spec (see PROGRESS.md). Next: owner reviews the feel with
+  `npm run dev` on their desktop; then P4 polish of chat / P5 announcements + screenshots.
 - Running the GUI headless: `env -u DBUS_SESSION_BUS_ADDRESS DUELY_HOME=<tmp> dbus-run-session -- xvfb-run -a npx electron . --no-sandbox`
   (own D-Bus session so nothing reaches the real desktop; `DUELY_DEBUG=1` logs ticks and notifications).
 
@@ -57,4 +62,4 @@ Google OAuth (loopback redirect + PKCE, student's own client JSON) in `src/googl
 sleep/wake (`powerMonitor`); tray (Sync now / Open / Quit, start at login optional); desktop notifications;
 `safeStorage` secrets. Done when a test account's calendar fills from the sample feed (needs the user's
 Google OAuth client + a throwaway test calendar — ask for those).
-Then P3 UI, P4 chat, P5 announcements + screenshots, P6 Slack, P7 packaging.
+Then P3 UI, P4 chat, P5 announcements + screenshots, P6 Discord alerts (webhook), P7 packaging.

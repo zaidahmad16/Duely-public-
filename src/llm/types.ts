@@ -3,7 +3,7 @@
 // talks to it through this interface, so the engine never knows which one it is.
 
 export type Image = { mime: string; b64: string };
-export type ToolCall = { id: string; name: string; args: any };
+export type ToolCall = { id: string; name: string; args: any; /** Gemini: the call's thought signature, sent back with it next turn */ sig?: string };
 export type Msg =
   | { role: "system" | "user"; content: string; images?: Image[] }
   | { role: "assistant"; content: string; toolCalls?: ToolCall[] }

@@ -1,0 +1,45 @@
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 400 var(--fs-body)/1.45 var(--font);
+  font-feature-settings: "cv11", "ss01";   /* Inter: single-storey a, open digits */
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  user-select: none;
+}
+h1, h2, h3, p { margin: 0; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+input, textarea { user-select: text; }
+a { color: var(--accent-text); text-decoration: none; }
+a:hover { text-decoration: underline; }
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: var(--r-control); }
+::selection { background: var(--accent-line); }
+
+.page-title { font-size: var(--fs-title); font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; }
+.section-title { font-size: var(--fs-section); font-weight: 600; letter-spacing: -0.01em; }
+.meta { font-size: var(--fs-meta); color: var(--text-2); }
+.muted { color: var(--text-2); }
+.faint { color: var(--text-3); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* scrollbars: thin and quiet */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 10px; border: 3px solid var(--bg); }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* height collapse without animating height: grid rows 1fr <-> 0fr */
+.collapse { display: grid; grid-template-rows: 1fr; opacity: 1;
+  transition: grid-template-rows var(--t-panel) var(--ease-in-out), opacity var(--t-panel) var(--ease-in-out); }
+.collapse > .collapse-inner { min-height: 0; overflow: hidden; }
+.collapse.is-closed { grid-template-rows: 0fr; opacity: 0; }
+
+/* reduced motion: movement goes, fades and colour changes stay (ui/motion.ts does the same for JS) */
+@media (prefers-reduced-motion: reduce) {
+  .no-move-reduced, .no-move-reduced * { transform: none !important; }
+}

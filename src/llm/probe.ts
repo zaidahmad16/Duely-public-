@@ -5,31 +5,35 @@ import type { LLM } from "./types.ts";
 
 export type Capabilities = { chat: boolean; json: boolean; tools: boolean; vision: boolean; error?: string };
 
-// a 4x4 red PNG
-const RED_PNG = "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAEklEQVR4nGP4z8CAB+GTG8HSALfKY52fTcuYAAAAAElFTkSuQmCC";
+// a 64x64 red PNG (a 4x4 one is refused outright by Gemini: "Unable to process input image")
+const RED_PNG = "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAT0lEQVR42u3PQQkAAAgEsEty/UMZxgi+hcEKLNO+FgEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBywLPLIEA68ZURwAAAABJRU5ErkJggg==";
+
+/** Each test request gets this long; a provider that hangs fails the test instead of spinning forever. */
+export const PROBE_TIMEOUT_MS = 20000;
+const limit = () => (typeof AbortSignal !== "undefined" && "timeout" in AbortSignal ? AbortSignal.timeout(PROBE_TIMEOUT_MS) : undefined);
 
 export async function probe(llm: LLM): Promise<Capabilities> {
   const caps: Capabilities = { chat: false, json: false, tools: false, vision: false };
   try {
-    const r = await llm.chat([{ role: "user", content: "Reply with the single word: ready" }], { maxTokens: 20 });
+    const r = await llm.chat([{ role: "user", content: "Reply with the single word: ready" }], { maxTokens: 20, signal: limit() });
     caps.chat = r.content.trim().length > 0 || r.toolCalls.length > 0;   // any answer: models paraphrase ("Go.", "Ready!")
   } catch (e) {
     caps.error = (e as Error).message;
     return caps;                                                       // bad key / model / URL: nothing else will work
   }
   try {
-    const j = await askJSON(llm, "What is 2 + 3? Give the number as `answer`.", { type: "object", properties: { answer: { type: "integer" } }, required: ["answer"] }, { maxTokens: 50 });
+    const j = await askJSON(llm, "What is 2 + 3? Give the number as `answer`.", { type: "object", properties: { answer: { type: "integer" } }, required: ["answer"] }, { maxTokens: 50, signal: limit() });
     caps.json = Number(j?.answer) === 5;
   } catch { /* no JSON */ }
   try {
     const r = await llm.chat([{ role: "user", content: "What's the weather in Ottawa? Use the tool." }], {
-      maxTokens: 100,
+      maxTokens: 100, signal: limit(),
       tools: [{ name: "get_weather", description: "Current weather for a city", parameters: { type: "object", properties: { city: { type: "string" } }, required: ["city"] } }],
     });
     caps.tools = r.toolCalls.some((c) => c.name === "get_weather");
   } catch { /* no tools */ }
   try {
-    const r = await llm.chat([{ role: "user", content: "What colour is this image? One word.", images: [{ mime: "image/png", b64: RED_PNG }] }], { maxTokens: 20 });
+    const r = await llm.chat([{ role: "user", content: "What colour is this image? One word.", images: [{ mime: "image/png", b64: RED_PNG }] }], { maxTokens: 20, signal: limit() });
     caps.vision = /red/i.test(r.content);
   } catch { /* no images */ }
   return caps;

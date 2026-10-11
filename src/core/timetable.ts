@@ -1,6 +1,6 @@
 // Weekly class timetable from config -> recurring calendar items (port of core/timetable.py).
 import type { Item } from "./classify.ts";
-import { strftime, strftimeDate, zoned, type DT } from "./time.ts";
+import { isDate, strftime, strftimeDate, zoned, type DT, type When } from "./time.ts";
 
 const WEEKDAY_CODE = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
 
@@ -15,15 +15,30 @@ function days(a: string, b: string): string[] {
   return out;
 }
 
-export function timetableItems(cfg: any, tz: string): Item[] {
+export function timetableItems(cfg: any, tz: string, feed: Item[] = []): Item[] {
   // Long-finished terms are skipped: their events stay as a record (only future events are removed).
   const cutoff = new Date(Date.now() - (cfg.lookback_days ?? 14) * 86400e3).toISOString().slice(0, 10);
   const out: Item[] = [];
   for (const [t, classes, tag] of [[cfg.term, cfg.classes, ""], ...(cfg.terms ?? []).map((t: any) => [t, t.classes, "@" + t.start])]) {
-    if (t && (t.end ?? "9999") >= cutoff) out.push(...termItems(t, classes, tag, tz));
+    // breaks the Brightspace feed knows ("Reading Week - No Classes") count as no-class days too
+    if (t && (t.end ?? "9999") >= cutoff) out.push(...termItems({ ...t, no_class: [...(t.no_class ?? []), ...feedBreaks(feed, t)] }, classes, tag, tz));
   }
   out.push(...examItems(cfg, tz, cutoff));
   return out;
+}
+
+/** Breaks the Brightspace feed already knows ("Fall Reading Week - No Classes", all day) inside a term. */
+export function feedBreaks(items: Item[], term: { start: string; end: string }): [string, string][] {
+  const out: [string, string][] = [];
+  for (const it of items) {
+    if (!it.all_day || it.source === "timetable" || !/no class|reading week|\bbreak\b|holiday|classes cancel/i.test(`${it.title} ${it.raw_title}`)) continue;
+    const day = (w: When) => (isDate(w) ? w : strftime(w, "%Y-%m-%d"));
+    const a = day(it.start);
+    let b = it.end ? day(it.end) : a;
+    if (b > a) b = dayStr(dayNum(b) - 1);                            // all-day ends are exclusive
+    if (b >= term.start && a <= term.end && !out.some(([x, y]) => x === a && y === b)) out.push([a, b]);
+  }
+  return out.sort();
 }
 
 /** Final exams from cfg.exams (syllabus/core/exam_import.py) as exam events (twin: timetable.py exam_items). */

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+<channel>
+<title>Announcements - BIOL 2200C Cell Biology (Fall 2026)</title>
+<link>https://brightspace.example.ca/d2l/home/7105</link>
+<description>Made-up announcements for Duely's tests (no real course).</description>
+<item>
+<title>Lab safety training</title>
+<link>https://brightspace.example.ca/d2l/le/news/7105/9001/view</link>
+<guid>7105-9001</guid>
+<pubDate>Mon, 14 Sep 2026 18:00:00 GMT</pubDate>
+<description>&lt;p&gt;Complete the online safety module before your first lab, or you will not be admitted.&lt;/p&gt;</description>
+</item>
+<item>
+<title>Quiz 3 added</title>
+<link>https://brightspace.example.ca/d2l/le/news/7105/9002/view</link>
+<guid>7105-9002</guid>
+<pubDate>Thu, 08 Oct 2026 18:00:00 GMT</pubDate>
+<description>&lt;p&gt;There will be an additional online Quiz 3 on organelles, open from Friday October 30 at 9:00 AM until Sunday November 1 at 11:59 PM.&lt;/p&gt;</description>
+</item>
+</channel>
+</rss>

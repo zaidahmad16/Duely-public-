@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+<channel>
+<title>Announcements - COMP 2401A Introduction to Systems Programming (Fall 2030)</title>
+<link>https://brightspace.example.ca/d2l/home/6606</link>
+<description>Sample announcements feed for Duely's tests (no real course).</description>
+<item>
+<title>Midterm moved and room change</title>
+<link>https://brightspace.example.ca/d2l/le/news/6606/9001/view</link>
+<guid>6606-9001</guid>
+<pubDate>Sat, 10 Oct 2026 12:59:07 GMT</pubDate>
+<description>&lt;p&gt;Hi everyone, because of the reading week schedule the midterm exam has moved to Monday, October 21, 2030 from 6:00 PM to 8:00 PM. It will be held in Southam Hall SA 302 (not our usual lecture room). It covers chapters 1 to 5. Bring your student card.&lt;/p&gt;</description>
+</item>
+<item>
+<title>Office hours this week</title>
+<link>https://brightspace.example.ca/d2l/le/news/6606/9002/view</link>
+<guid>6606-9002</guid>
+<pubDate>Sat, 10 Oct 2026 12:59:07 GMT</pubDate>
+<description>&lt;p&gt;Office hours are as usual this week. Good luck with your assignments!&lt;/p&gt;</description>
+</item>
+</channel>
+</rss>

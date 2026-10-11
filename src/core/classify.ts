@@ -1,5 +1,6 @@
 // Merge open/close pairs, guess type, rule-based junk filter: port of syllabus/core/classify.py.
 import type { RawEvent } from "./ical.ts";
+import { NOT_TEST_RE } from "./kinds.ts";
 import { type When, asDT } from "./time.ts";
 
 export type Item = {
@@ -38,10 +39,16 @@ function splitTitle(summary: string): [string, string] {
   return [m[1].trim() || summary.trim(), kind];
 }
 
-function guessType(title: string, kind: string): string {
-  if (EXAM_RE.test(title)) return "exam";
+/** The title decides; `text` (title + start of the description) only fills in when it says nothing. */
+function guessType(text: string, kind: string, title = text): string {
+  // "Midterm Review Session" is an event and "Final Project - Due" is a hand-in, not exams
+  const exam = (s: string) => EXAM_RE.test(s) && !NOT_TEST_RE.test(title) && kind !== "due";
+  // the title decides first ("Quiz 3" whose description mentions the midterm is a quiz)
+  if (exam(title)) return "exam";
   if (QUIZ_RE.test(title)) return "quiz";
-  if (kind === "due" || ASSIGN_RE.test(title)) return "assignment";
+  if (exam(text)) return "exam";
+  if (QUIZ_RE.test(text)) return "quiz";
+  if (kind === "due" || ASSIGN_RE.test(text)) return "assignment";
   return "event";
 }
 
@@ -74,7 +81,7 @@ export function buildItems(events: RawEvent[], localTz: string): Item[] {
 
 function item(ev: Ev, role: Item["role"], opens?: Ev): Item {
   const title = ev.base;
-  const type = role !== "event" ? guessType(title + " " + head(ev.description, 200), ev.kind) : guessType(title, "event");
+  const type = role !== "event" ? guessType(title + " " + head(ev.description, 200), ev.kind, title) : guessType(title, "event");
   const it: Item = {
     uid: ev.uid, raw_title: ev.summary, title, course: ev.course, role, type,
     start: ev.start, end: ev.end, all_day: ev.all_day, opens: opens ? opens.start : null,

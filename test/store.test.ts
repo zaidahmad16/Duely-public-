@@ -63,3 +63,40 @@ test("llmFrom: config or environment picks the provider; nothing set = no AI", (
   assert.match(llmFrom({ ai: { provider: "gemini", model: "gemini-x", apiKey: "k" } }, {})!.label, /^Gemini · gemini-x$/);
   assert.match(llmFrom({}, { DUELY_PROVIDER: "anthropic", DUELY_MODEL: "claude-x", DUELY_API_KEY: "k" } as any)!.label, /^Anthropic · claude-x$/);
 });
+
+test("reseal: keys saved without a keyring get real encryption once one works; nothing else changes", async () => {
+  const { secretStore } = await import("../src/node/secrets.ts");
+  const { memStore } = await import("../src/core/util.ts");
+  let strong = false;                                  // the computer has no keyring yet
+  const cipher = {
+    available: () => true,
+    encrypt: (t: string) => Buffer.from((strong ? "v11" : "v10") + t),
+    decrypt: (b: Buffer) => b.subarray(3).toString(),
+    weak: (b: Buffer) => b.subarray(0, 3).toString() === "v10",
+  };
+  const store = memStore();
+  const secrets = secretStore(store, cipher);
+  await secrets.set("llm_key", "sk-1");
+  assert.equal(await secrets.reseal(), 0, "still no keyring: nothing changes");
+  strong = true;                                       // a keyring was installed
+  await secrets.set("google_refresh", "r-1");
+  assert.equal(await secrets.reseal(), 1, "only the weak one is redone");
+  const raw = (await store.get<Record<string, string>>("secrets"))!;
+  assert.ok(Object.values(raw).every((v) => Buffer.from(v, "base64").subarray(0, 3).toString() === "v11"));
+  assert.equal(await secrets.get("llm_key"), "sk-1");
+  assert.equal(await secrets.get("google_refresh"), "r-1");
+  assert.equal(await secrets.reseal(), 0, "a second run has nothing to do");
+});
+
+test("reseal doesn't touch the keyring when no key needs it", async () => {
+  const { secretStore } = await import("../src/node/secrets.ts");
+  const { memStore } = await import("../src/core/util.ts");
+  let asked = 0;
+  const cipher = { available: () => { asked++; return true; }, encrypt: (t: string) => Buffer.from("v11" + t),
+    decrypt: (b: Buffer) => b.subarray(3).toString(), weak: (b: Buffer) => b.subarray(0, 3).toString() === "v10" };
+  const store = memStore();
+  assert.equal(await secretStore(store, cipher).reseal(), 0);
+  await store.put("secrets", { llm_key: Buffer.from("v11sk").toString("base64") });
+  assert.equal(await secretStore(store, cipher).reseal(), 0);
+  assert.equal(asked, 0, "no keyring call (it could show an unlock prompt)");
+});

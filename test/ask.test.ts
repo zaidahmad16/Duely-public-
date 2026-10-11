@@ -94,7 +94,7 @@ test("rules: ranges, 'next', counts and categories", () => {
     "COMP 2406: Assignment 1 - Client-side Programming", "COMP 2406: Tutorial 3", "COMP 2406: Tutorial 4",
     "FILM 1101: Optional Quiz 3", "COMP 3106: Assignment 1"]);
   assert.match(a("friday"), /10:05 AM  COMP 2406: Tutorial · MC 2000/, "a single day includes classes");
-  assert.match(a("how many quizzes this month"), /^\*You have 2 quizzes due in the next 30 days\.\*/);
+  assert.match(a("how many quizzes this month"), /^\*You have 2 quizzes due in October\.\*/);
   assert.equal(a("any COMP 3106 tests?"), "No COMP 3106 tests for the rest of the term. 🎉");
 });
 
@@ -263,4 +263,13 @@ test("announcements: the AI answers from the posts and cites them", async () => 
   assert.match(prompt, /Test 1.* IS its midterm/);
   assert.match(prompt, /CALENDAR TESTS[^]*STAT 2507 \| test \| Test 1/, "their real tests from the calendar");
   assert.match(prompt.split("QUESTION")[0], /\[1\] STAT 2507 \| posted \S+ \S+ \d+ \| Test 1 details/, "best match first");
+});
+
+test("rules (also the fallback when the AI quota runs out): calendar months, and tutorial classes mean the timetable (2026-10-10 eval)", async () => {
+  const store = memStore();
+  const at = Date.parse("2026-10-08T12:00:00-04:00");
+  const two = await answer("What test do I have this month and next month", ITEMS, {}, store, "America/Toronto", fetch, at);
+  assert.match(two, /STAT 2507: Test 1/, two);
+  const tut = await answer("when are my tutorial classes this week", ITEMS, {}, memStore(), "America/Toronto", fetch, Date.parse("2026-10-11T23:30:00-04:00"));
+  assert.doesNotMatch(tut, /Lecture|Tutorial 3|Tutorial 4/, tut);
 });

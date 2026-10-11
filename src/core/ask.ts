@@ -8,7 +8,7 @@
 // reasoning get a second AI call that sees only the selected items, and its answer is checked by
 // code (guard.ts) before it's sent.
 import { nextOccurrence } from "./ical.ts";
-import { type DT, addDays, localDate, strftime, strftimeDate, weekday } from "./time.ts";
+import { type DT, addDays, localDate, offsetMin, strftime, strftimeDate, weekday } from "./time.ts";
 import type { Store } from "./util.ts";
 import { CATEGORIES, category, isWork } from "./kinds.ts";
 import { fetchRss, parseRss } from "./announcements.ts";
@@ -35,6 +35,7 @@ export type Intent = {
   target?: string;                   // done/undone: which item ("comp 2406 a1", "2")
   topic?: string;                    // announcements: what about ("midterm")
   defaulted?: boolean;               // the window was our default, not something they said
+  class_kind?: string;               // "tutorial classes": only that kind of class (tutorial / lab / seminar / lecture)
   broadened?: boolean;               // already widened once after finding nothing
 };
 
@@ -62,13 +63,7 @@ export type Occ = { t: number; allDay: boolean; day: string; it: any };
 
 /** Milliseconds to add so a time moved by whole days keeps its wall-clock time across a DST change. */
 function dstShift(from: number, to: number, tz: string): number {
-  const off = (t: number) => {
-    const p = new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "longOffset" }).formatToParts(new Date(t))
-      .find((x) => x.type === "timeZoneName")?.value ?? "GMT";
-    const m = /GMT([+-])(\d{2}):?(\d{2})?/.exec(p);
-    return m ? (m[1] === "-" ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3] ?? 0)) * 60e3 : 0;
-  };
-  return off(from) - off(to);
+  return (offsetMin(from, tz) - offsetMin(to, tz)) * 60e3;
 }
 
 const parseWhen = (s: string | null | undefined, tz: string): DT | null =>
@@ -123,6 +118,7 @@ function matches(o: Occ, q: Intent): boolean {
   const cat = category(it);
   const cats = q.categories;
   if (cat === "class" && !(q.include_classes || cats.includes("class"))) return false;
+  if (q.class_kind && (cat !== "class" || !CLASS_KIND[q.class_kind]?.test(String(it.title ?? "")))) return false;
   if (cats.length && !cats.includes(cat)) return false;
   if (q.due_only && it.role !== "deadline" && !(cat === "test" && cats.includes("test"))) return false;   // "tests due" = tests, though not handed in
   return true;
@@ -288,6 +284,10 @@ const NUM: Record<string, number> = {
 };
 const N = String.raw`(\d{1,3}|one|an?|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|(?:a )?couple(?: of)?|(?:a )?few)`;
 const num = (s: string) => (/^\d+$/.test(s) ? Number(s) : NUM[s.trim()] ?? NUM[s.replace(/^a /, "").trim()] ?? 1);
+/** "tutorial classes", "lab sections", "tutorials on my timetable": the timetable, never the hand-ins (2026-10-10 eval). */
+const CLASS_KIND: Record<string, RegExp> = { tutorial: /\btutorial\b|\(TUT\)/i, lab: /\blab\b|\(LAB\)/i, seminar: /\bseminar\b|\(SEM\)/i, lecture: /\blecture\b|\(LEC\)/i };
+const CLASS_WORDS = /\b(tutorial|lab|seminar)s? (?:class(?:es)?|sections?|sessions?|times?)\b|\b(tutorial|lab|seminar)s? (?:on|in) my (?:timetable|schedule)\b/i;
+
 const CAT_WORDS: [RegExp, string][] = [
   [/\b(assignments?|a\d+)\b/i, "assignment"],
   [/\btutorials?\b/i, "tutorial"],
@@ -299,6 +299,12 @@ const CAT_WORDS: [RegExp, string][] = [
   [/\bstudy(ing)? (blocks?|sessions?|time|plan)\b|\bwhen (should|do|can) i study\b/i, "study"],
 ];
 const GENERIC = /\b(upcoming|coming up|due|deadlines?|next|soon|left|busy|free|what'?s on|anything|plans?|homework|hw|work|deliverables?|submit|submissions?)\b/i;
+
+/** The last day of this month (k = 0) or k months on. */
+function monthEnd(d: string, k: number): string {
+  const y = Number(d.slice(0, 4)), m = Number(d.slice(5, 7)) - 1 + k + 1;          // the month after, 0-based
+  return addDays(`${y + Math.floor(m / 12)}-${String((m % 12) + 1).padStart(2, "0")}-01`, -1);
+}
 
 /** Understand a question with rules, or null if it needs an AI. */
 const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
@@ -339,8 +345,10 @@ export function parseQuery(text: string, tz: string, now = Date.now()): Intent |
   else if (/\bnext week\b/.test(q)) { from = addDays(d, 7 - weekday(d) + (weekday(d) >= 5 ? 7 : 0)); to = addDays(from, 6); }   // Sat/Sun: "this week" is the coming one, so "next" is the one after
   else if (/\bthis week\b|\bweek\b/.test(q)) to = addDays(d, 6 - weekday(d) + (weekday(d) >= 5 ? 7 : 0));   // Sat/Sun: the coming week
   else if (/\bweekend\b/.test(q)) { from = addDays(d, (5 - weekday(d) + 7) % 7); to = addDays(from, 1); }
-  else if (/\bnext month\b/.test(q)) { from = addDays(d, 30); to = addDays(d, 60); }
-  else if (/\bthis month\b|\bmonth\b/.test(q)) to = addDays(d, 30);
+  // calendar months, not 30-day spans ("this month and next month" asked on Oct 8 = Oct 8 .. Nov 30; 2026-10-10 eval)
+  else if (/\bthis month\b.*\bnext( month)?\b|\bnext (two|2) months\b/.test(q)) to = monthEnd(d, 1);
+  else if (/\bnext month\b/.test(q)) { from = addDays(monthEnd(d, 0), 1); to = monthEnd(d, 1); }
+  else if (/\bthis month\b|\bmonth\b/.test(q)) to = monthEnd(d, 0);
   else if (/\b(rest of (the )?(term|semester)|this (term|semester)|all)\b/.test(q)) to = addDays(d, 120);
   else if ((m = /\b(?:in|during|for|this|next)?\s*(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sept?|oct|nov|dec)\b/.exec(q))
     && !/\bmay i\b/.test(q)) {
@@ -358,7 +366,9 @@ export function parseQuery(text: string, tz: string, now = Date.now()): Intent |
   const c = COURSE.exec(q);
   const courses = c ? [`${c[1].toUpperCase()} ${c[2]}`] : [];
   const categories: string[] = [];
-  for (const [re, cat] of CAT_WORDS) if (re.test(q) && !categories.includes(cat)) categories.push(cat);
+  const ck = CLASS_WORDS.exec(q);
+  if (ck) categories.push("class");
+  for (const [re, cat] of CAT_WORDS) if (re.test(ck ? q.replace(CLASS_WORDS, " ") : q) && !categories.includes(cat)) categories.push(cat);
   const due_only = /\b(due|deadlines?|homework|hw|deliverables?|submit|submissions?|hand in)\b/.test(q) && !categories.length;
   if (!to && !courses.length && !categories.length && !GENERIC.test(q)) return null;
 
@@ -376,7 +386,7 @@ export function parseQuery(text: string, tz: string, now = Date.now()): Intent |
     to = addDays(d, mode === "next" ? 180 : testsOnly ? 120 : courses.length && !categories.length ? 30 : 14);
   }
   const include_classes = categories.includes("class") || (single && !categories.length && !due_only);
-  return { mode, from, to, courses, categories, due_only, include_classes, limit, defaulted };
+  return { mode, from, to, courses, categories, due_only, include_classes, limit, defaulted, ...(ck ? { class_kind: (ck[1] ?? ck[2]).toLowerCase() } : {}) };
 }
 
 // ---------------------------------------------------------------- AI: question -> filter
@@ -769,6 +779,10 @@ async function reply(text: string, items: any[], cfg: any, store: Store, tz: str
         intent.from = ruled.from; intent.to = ruled.to; intent.defaulted = false;
         if (ruled.from === ruled.to && !intent.due_only && !intent.categories.length) intent.include_classes = true;
       }
+    }
+    // "tutorial classes": the timetable, whatever kind the AI picked
+    if (intent && ruled?.class_kind && ["list", "next", "count"].includes(intent.mode)) {
+      intent.categories = ["class"]; intent.class_kind = ruled.class_kind; intent.include_classes = true; intent.due_only = false;
     }
     if (!intent) intent = followUp(n, ruled, last) ?? ruled;
     if (!intent && raw) intent = { mode: "free_text", from: day, to: addDays(day, 30), courses: [], categories: [], due_only: false, include_classes: false, limit: null, defaulted: true };

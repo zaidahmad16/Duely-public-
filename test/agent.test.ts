@@ -224,3 +224,14 @@ test("the student's own time words win over the model's paraphrase", async () =>
   assert.match(r!.text, /^No deadlines Oct 12 – Oct 25\. 🎉$/, "nothing due in either week; the message covers both");
   assert.equal(singular("You have 5 work due next week"), "You have 5 things due next week");
 });
+
+test("narrowKinds: one kind named wins over a broader pick; tutorial classes are the timetable (2026-10-10 live eval)", async () => {
+  const { narrowKinds } = await import("../src/core/agent.ts");
+  const broad = { when: "this week", kinds: ["assignment", "quiz", "tutorial_work"] };
+  assert.deepEqual(narrowKinds("assignments due this week", broad).kinds, ["assignment"]);
+  assert.deepEqual(narrowKinds("when are my tutorial classes this week", { when: "this week", kinds: ["tutorial_work"] }).kinds, ["tutorial"]);
+  assert.deepEqual(narrowKinds("lab sections tomorrow?", { kinds: ["lab_work"] }).kinds, ["lab"]);
+  for (const q of ["assignments and quizzes this week", "when is the quiz review session", "tutorials due friday", "what's due this week"]) {
+    assert.deepEqual(narrowKinds(q, broad), broad, q);
+  }
+});

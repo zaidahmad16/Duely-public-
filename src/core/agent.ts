@@ -7,7 +7,7 @@
 // (Duely Public: the student's one provider, through src/llm; was Workers AI in the personal version.)
 import { type Occ, dayHeader, describeRange, line, occurrences, parseQuery } from "./ask.ts";
 import { type GuardItem, guard } from "./guard.ts";
-import { category } from "./kinds.ts";
+import { NOT_TEST_RE, category } from "./kinds.ts";
 import { addDays, localDate, strftime, strftimeDate } from "./time.ts";
 import type { LLM, Msg, Tool } from "../llm/types.ts";
 
@@ -342,7 +342,7 @@ const TOOL_DEFS: Tool[] = TOOLS.map((t) => t.function as Tool);
 /** One model call, normalised. */
 async function call(llm: LLM, messages: Msg[], tools: boolean): Promise<{ content: string; calls: { id: string; name: string; args: any }[] }> {
   const r = await llm.chat(messages, { ...(tools ? { tools: TOOL_DEFS } : {}), maxTokens: 500, temperature: 0 });
-  return { content: r.content, calls: r.toolCalls.map((c) => ({ id: c.id, name: c.name, args: c.args ?? {} })) };
+  return { content: r.content, calls: r.toolCalls.map((c) => ({ ...c, args: c.args ?? {} })) };
 }
 
 const GROUP = /[[(]\s*#?\d{1,3}(?:\s*(?:,|and|&)\s*#?\d{1,3})*\s*,?\s*[\])]|(?<![\w[])#\d{1,3}\b/g;
@@ -459,17 +459,23 @@ export function fixCount(message: string, n: number): string {
     });
 }
 
-/** The student named one specific kind ("assignments", "quizzes", "tests") but the model picked a broad
- *  set ("work" / everything): narrow it. On 2026-10-04 "assignments" listing tutorials and modules was
- *  a reported bug. */
+/** The student named one specific kind ("assignments", "quizzes", "tests") but the model picked a broader
+ *  set: narrow it. On 2026-10-04 "assignments" listing tutorials and modules was a reported bug; the
+ *  2026-10-10 live eval still saw it ~1 in 4 times with the model adding quizzes and tutorial hand-ins.
+ *  Tutorial / lab *classes* (the timetable) are never their hand-ins (same eval). */
 export function narrowKinds(question: string, show: any): any {
   if (!show) return show;
-  const ks: string[] = Array.isArray(show.kinds) ? show.kinds : [];
-  if (ks.length && !(ks.length === 1 && ks[0] === "work")) return show;
   const q = question.toLowerCase();
-  const named = [["assignment", /\bassignments?\b|\bassigments?\b/], ["quiz", /\bquiz(zes)?\b/], ["test", /\b(tests?|midterms?|exams?|finals?)\b/],
-    ["module", /\bmodules?\b/], ["lecture", /\blectures?\b/]].filter(([, re]) => (re as RegExp).test(q)).map(([k]) => k as string);
-  return named.length === 1 ? { ...show, kinds: [named[0]] } : show;
+  // tutorial / lab / seminar *classes* are the timetable, never their hand-ins
+  const cls = /\b(tutorial|lab|seminar)s? (?:class(?:es)?|sections?|sessions?|times?)\b|\b(tutorial|lab|seminar)s? (?:on|in) my (?:timetable|schedule)\b/.exec(q);
+  if (cls) return { ...show, kinds: [cls[1] ?? cls[2]] };
+  const NAMED: [string, RegExp][] = [["assignment", /\bassignments?\b|\bassigments?\b/], ["quiz", /\bquiz(zes)?\b/], ["test", /\b(tests?|midterms?|exams?|finals?)\b/],
+    ["module", /\bmodules?\b/], ["lecture", /\blectures?\b/], ["tutorial", /\btutorials?\b/], ["lab", /\blabs?\b/], ["event", /\bevents?\b/]];
+  const named = NAMED.filter(([, re]) => re.test(q)).map(([k]) => k);
+  // one clear kind named ("tutorials" / "labs" / "events" can mean classes or hand-ins: the model decides those)
+  if (named.length !== 1 || ["tutorial", "lab", "event"].includes(named[0]) || NOT_TEST_RE.test(q)) return show;   // "quiz review session" is an event
+  const ks: string[] = Array.isArray(show.kinds) ? show.kinds : [];
+  return ks.length === 1 && ks[0] === named[0] ? show : { ...show, kinds: [named[0]] };
 }
 
 const TIME_START = /^(next|this|today|tonight|tomorrow|the|before|after|between|from|until|till|by|up|on|in|during|over|monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|tues|wed|thu|thurs|fri|sat|sun|january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec|rest|end|later|\d{1,2}(?:st|nd|rd|th)?)\b/;

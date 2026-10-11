@@ -1,7 +1,7 @@
 {
   "name": "duely",
   "productName": "Duely",
-  "version": "0.1.0",
+  "version": "0.2.0-beta.1",
   "description": "Your course assistant: Brightspace deadlines, tests and classes in Google Calendar, with an AI that answers what's coming up.",
   "license": "MIT",
   "author": "Zaid Ahmad",
@@ -9,36 +9,79 @@
   "type": "module",
   "scripts": {
     "dev": "electron-vite dev",
-    "build": "electron-vite build",
+    "build": "npm run build:gas && electron-vite build",
     "start": "electron-vite preview",
     "test": "node --experimental-strip-types --no-warnings --test \"test/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
-    "smoke": "electron-vite build && electron . --smoke",
-    "dist": "electron-vite build && electron-builder"
+    "smoke": "npm run build && electron . --smoke",
+    "dist": "npm run build && electron-builder",
+    "build:gas": "node --experimental-strip-types --no-warnings scripts/build-gas.ts"
   },
   "build": {
     "appId": "app.duely.desktop",
     "productName": "Duely",
     "directories": {
-      "output": "dist"
+      "output": "dist",
+      "buildResources": "resources"
     },
     "files": [
       "out/**",
       "package.json"
     ],
     "win": {
-      "target": "nsis"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "Duely-Setup-${version}.${ext}"
     },
     "mac": {
-      "target": "dmg",
-      "category": "public.app-category.education"
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "category": "public.app-category.education",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "artifactName": "Duely-${version}-${arch}.${ext}"
     },
     "linux": {
       "target": [
-        "AppImage",
-        "deb"
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
-      "category": "Education"
+      "category": "Education",
+      "maintainer": "Zaid Ahmad <109442753+zaidahmad16@users.noreply.github.com>",
+      "synopsis": "Brightspace deadlines in Google Calendar, with an AI that answers what's due",
+      "artifactName": "Duely-${version}-${arch}.${ext}",
+      "syncDesktopName": true
     },
     "extraResources": [
       {
@@ -47,15 +90,46 @@
         "filter": [
           "*.png"
         ]
+      },
+      {
+        "from": "out/gas",
+        "to": "gas",
+        "filter": [
+          "Code.js",
+          "version.txt"
+        ]
       }
-    ]
+    ],
+    "icon": "resources/icon.png",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "zaidahmad16",
+        "repo": "Duely-public-",
+        "releaseType": "draft"
+      }
+    ],
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Duely",
+      "deleteAppDataOnUninstall": false
+    }
   },
   "devDependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
     "@types/node": "^22.20.5",
     "electron": "^44.7.0",
     "electron-builder": "^26.15.3",
     "electron-vite": "^5.0.0",
+    "lucide": "^1.54.0",
     "typescript": "^7.0.2",
     "vite": "^7.3.7"
-  }
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
+  },
+  "desktopName": "duely.desktop"
 }

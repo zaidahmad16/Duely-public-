@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import { test } from "node:test";
 import { NeedsAuth } from "../src/core/gcal.ts";
 import { memStore } from "../src/core/util.ts";
-import { SCOPE, connect, parseClient, pkce, tokenSource } from "../src/google/oauth.ts";
+import { SCOPE, connect, parseClient, pkce, tokenSource, trackExpiry } from "../src/google/oauth.ts";
 import { type Cipher, secretStore } from "../src/node/secrets.ts";
 
 const CLIENT = { client_id: "123-abc.apps.googleusercontent.com", client_secret: "GOCSPX-test" };
@@ -99,4 +99,20 @@ test("secrets: no keychain -> refuses to save; a key that won't decrypt says to 
   await secretStore(store, xor).set("llm_key", "x");
   const broken = secretStore(store, { ...xor, decrypt: () => { throw new Error("bad"); } });
   await assert.rejects(broken.get("llm_key"), /Enter it again/);
+});
+
+test("trackExpiry: an expired sign-in is remembered until a token works again; other errors aren't", async () => {
+  const marks: boolean[] = [];
+  let next: "ok" | "expired" | "down" = "expired";
+  const get = trackExpiry(async () => {
+    if (next === "expired") throw new NeedsAuth("expired");
+    if (next === "down") throw new Error("offline");
+    return "tok";
+  }, async (on) => { marks.push(on); });
+  await assert.rejects(get(), NeedsAuth);
+  next = "down";
+  await assert.rejects(get(), /offline/);
+  next = "ok";
+  assert.equal(await get(), "tok");
+  assert.deepEqual(marks, [true, false], "only the expiry and the recovery are marked");
 });

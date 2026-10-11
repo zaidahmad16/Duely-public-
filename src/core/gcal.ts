@@ -1,4 +1,6 @@
 // Google OAuth (refresh token) + the few Calendar v3 calls the sync needs.
+import { qs } from "./util.ts";
+
 const BASE = "https://www.googleapis.com/calendar/v3";
 
 export class NeedsAuth extends Error {}
@@ -15,7 +17,7 @@ export async function accessToken(env: { GOOGLE_CLIENT_ID: string; GOOGLE_CLIENT
   const r = await f("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
+    body: qs({
       client_id: env.GOOGLE_CLIENT_ID, client_secret: env.GOOGLE_CLIENT_SECRET,
       refresh_token: env.GOOGLE_REFRESH_TOKEN, grant_type: "refresh_token",
     }),
@@ -54,7 +56,7 @@ export function googleCal(token: string, f = fetch): Cal {
     async listEvents(calId) {
       let out: any[] = [], token = "";
       do {
-        const q = new URLSearchParams({ maxResults: "2500", showDeleted: "false", ...(token ? { pageToken: token } : {}) });
+        const q = qs({ maxResults: "2500", showDeleted: "false", ...(token ? { pageToken: token } : {}) });
         const page = (await req("GET", `/calendars/${enc(calId)}/events?${q}`)) ?? {};
         out = out.concat(page.items ?? []);
         token = page.nextPageToken ?? "";

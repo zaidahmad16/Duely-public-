@@ -1,0 +1,61 @@
+name: Release
+# A pushed tag v* builds the installers on all three systems and puts them in a DRAFT GitHub Release
+# (the owner checks it and clicks Publish). "Run workflow" builds them without publishing, to try.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  installers:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Installers
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --publish ${{ startsWith(github.ref, 'refs/tags/v') && 'always' || 'never' }}
+      # the installed app opens, its bridge works, and it carries the cloud engine
+      - name: Smoke (packaged, Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a ./dist/linux-unpacked/duely --smoke --no-sandbox
+      - name: Smoke (packaged, Windows)
+        if: runner.os == 'Windows'
+        run: ./dist/win-unpacked/Duely.exe --smoke
+      - name: Smoke (packaged, macOS)
+        if: runner.os == 'macOS'
+        run: ./dist/mac-arm64/Duely.app/Contents/MacOS/Duely --smoke
+      - name: Keep the installers (manual runs)
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: installers-${{ runner.os }}
+          path: |
+            dist/*.exe
+            dist/*.dmg
+            dist/*.zip
+            dist/*.AppImage
+            dist/*.deb
+            dist/latest*.yml
+          retention-days: 7
+  prerelease:
+    # a -beta tag: mark the draft as a pre-release (it stays a draft until the owner publishes it)
+    needs: installers
+    if: startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '-')
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release edit "${{ github.ref_name }}" --repo "${{ github.repository }}" --tag "${{ github.ref_name }}" --prerelease --draft=true
