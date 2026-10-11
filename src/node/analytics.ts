@@ -7,7 +7,7 @@ import { randomUUID } from "node:crypto";
 import type { Store } from "../core/util.ts";
 
 /** PostHog project API key (a write-only "phc_…" key, meant to ship in apps) and its host. */
-export const POSTHOG_KEY = "";
+export const POSTHOG_KEY = "phc_wWygnod7i4JmXGsGtXkHwXAzKf7nfcdZ7ybpiXBifrMK";
 export const POSTHOG_HOST = "https://us.i.posthog.com";
 
 export type Usage = { version: string; os: string; arch: string; mode: "cloud" | "local"; packaged: boolean };
